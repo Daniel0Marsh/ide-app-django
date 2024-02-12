@@ -42,7 +42,10 @@ class Project(models.Model):
 
     project_name = models.CharField(max_length=100)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
-    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
+    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')\
+
+    def __str__(self):
+        return self.project_name
 
 
 class File(models.Model):
@@ -56,8 +59,11 @@ class File(models.Model):
     """
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files')
-    file_name = models.CharField(max_length=255)
     contents = models.TextField(blank=True, null=True)
+    file_name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.file_name
 
 
 class Directory(models.Model):
@@ -75,3 +81,6 @@ class Directory(models.Model):
     directory_name = models.CharField(max_length=255)
     files = models.ManyToManyField('File')
     parent_directory = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subdirectories')
+
+    def __str__(self):
+        return self.directory_name

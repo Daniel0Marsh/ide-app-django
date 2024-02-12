@@ -11,7 +11,6 @@
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'ide.css' %}">
     <script src="{% static ide.js %}"></script>
-
 </head>
 
 <nav class="navbar navbar-expand-lg navbar-dark border-bottom bg-dark">
@@ -101,12 +100,17 @@
                 {% endif %}
                 {% endfor %}
                 {% for file in project.files.all %}
-                <li>
-                    <button class="btn btn-sm file-item" name="open_file" value="{{file.id}}" type="submit">
-                        <i class="bi bi-arrow-return-right"></i> {{file.file_name}}
-                    </button>
-                </li>
+                    {% if not file.directory_set.exists %}
+                        {% if not file.subdirectories.exists %}
+                            <li>
+                                <button class="btn btn-sm file-item" name="open_file" value="{{ file.id }}" type="submit">
+                                    <i class="bi bi-arrow-return-right"></i> {{ file.file_name }}
+                                </button>
+                            </li>
+                        {% endif %}
+                    {% endif %}
                 {% endfor %}
+
             </ul>
         </li>
     </ul>
@@ -124,24 +128,25 @@
     <input type="hidden" id="selectedSyntaxInput" name="selected_syntax" value="auto">
 
     <div class="card-header">
-        <div class="row">
-            <div class="col">
+        <div class="hstack gap-3 align-middle">
+            <div class="p-2">
                 <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
                     <i class="bi bi-pencil"></i> {{file.file_name}}
                 </button>
             </div>
-            <div class="col">
+            <div class="vr"></div>
+            <div class="p-2">
                 <button class="btn file-item" name="save_file" type="submit">
                     <i class="bi bi-save"></i> Save
                 </button>
             </div>
-            <div class="col">
+            <div class="p-2">
                 <button class="btn file-item" name="delete" type="submit">
                     <i class="bi bi-trash"></i> Delete
                 </button>
             </div>
             <!-- Add dropdown buttons -->
-            <div class="col">
+            <div class="p-2 ms-auto">
                 <div class="dropdown">
                     <button class="btn btn-secondary dropdown-toggle" id="themeDropdown"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -149,23 +154,36 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="themeDropdown">
                         <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('dracula')">Dracula</a></li>
-                        <!-- Add more themes as needed -->
+                        <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
                     </ul>
                 </div>
             </div>
-            <div class="col">
+            <div class="p-2">
                 <div class="dropdown">
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="syntaxDropdown"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                        Syntax Highlighting: <span id="currentSyntax">Auto</span>
+                        Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('auto')">Auto Detect</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto Detect</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('javascript')">JavaScript</a></li>
@@ -173,7 +191,7 @@
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">C++</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
@@ -186,7 +204,7 @@
             </div>
         </div>
     </div>
-    <textarea name='contents' id="myTextarea">{{ file.contents|safe }}</textarea>
+    <textarea name='contents' id="myTextarea" style="display: none;">{{ file.contents|escape }}</textarea>
 </form>
 </body>
 
@@ -196,7 +214,7 @@
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="renameModalLabel">Rename...</h1>
+                <h1 class="modal-title fs-5" id="renameModalLabel">Rename Or Create File</h1>
             </div>
             <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="modal-body">
                 {% csrf_token %}
@@ -244,13 +262,13 @@
                 <input type="text" name="item_name" placeholder="Directory Name"
                        class="form-control bg-dark text-light border-secondary mb-4">
                 <input type="hidden" name="project_id" value="{{project.id}}">
-                <select name="parent_dir" class="form-control bg-dark text-light border-secondary mb-4">
+                <select name="parent_dir_id" class="form-control bg-dark text-light border-secondary mb-4">
                     <option value="">/{{project.project_name}}</option>
                     {% for directory in project.directories.all %}
-                    <option value="{{ directory.id }}">/{{project.project_name}}/{{directory.directory_name}}</option>
+                    <option value="{{directory.id}}">/{{project.project_name}}/{{directory.directory_name}}</option>
                     {% endfor %}
                     {% for subdirectory in directory.subdirectories.all %}
-                    <option value="{{ subdirectory.id }}">
+                    <option value="{{subdirectory.id}}">
                         {{project.project_name}}/{{directory.directory_name}}/{{subdirectory.directory_name}}
                     </option>
                     {% endfor %}
@@ -325,67 +343,87 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/typescript/typescript.min.js"></script>
 
 <!-- Here are all the links to the different themes for CodeMirror -->
-<!-- Dracula Theme CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/dracula.min.css">
-<!-- Monokai Theme CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
-<!-- Material Theme CSS -->
+<!-- Light Mode -->
+<link rel="stylesheet" href="path_to_css/light_mode.css">
+<!-- XQ Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/xq-light.min.css">
+<!-- Base16 Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/base16-light.min.css">
+<!-- Paraiso Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/paraiso-light.min.css">
+<!-- MDN Like -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mdn-like.min.css">
+<!-- Tomorrow Night Bright -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/tomorrow-night-bright.min.css">
+<!-- Hopscotch -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/hopscotch.min.css">
+<!-- Lucario -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/lucario.min.css">
+<!-- Solarized -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/solarized.min.css">
+<!-- 3024 Day -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/3024-day.min.css">
+<!-- Material -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/material.min.css">
-<!-- Cobalt Theme CSS -->
+<!-- Nord -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/nord.min.css">
+<!-- Oceanic Next -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/oceanic-next.min.css">
+<!-- Panda Syntax -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/panda-syntax.min.css">
+<!-- Paraiso Dark -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/paraiso-dark.min.css">
+<!-- Seti -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/seti.min.css">
+<!-- Cobalt -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/cobalt.min.css">
-<!-- Eclipse Theme CSS -->
+<!-- Eclipse -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/eclipse.min.css">
+<!-- MBO -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mbo.min.css">
+<!-- Monokai -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
 
 <script>
     var editor;
 
     function changeTheme(theme) {
         editor.setOption("theme", theme);
-        // Update the button text to display the current theme
         document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
-        // Update the hidden input field to store the selected theme
         document.getElementById('selectedThemeInput').value = theme;
     }
 
     function changeSyntax(mode) {
         editor.setOption("mode", mode);
-        // Update the button text to display the current syntax
         document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-        // Update the hidden input field to store the selected syntax
         document.getElementById('selectedSyntaxInput').value = mode;
     }
 
     document.addEventListener("DOMContentLoaded", function () {
         editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
             lineNumbers: true,
-            mode: "auto", // Default mode
-            theme: "default", // Default theme
-            autoCloseBrackets: true, // Optional, enables bracket matching
-            matchBrackets: true // Optional, enables bracket matching
+            mode: "autodetect", // Change mode to "autodetect" for auto-detection
+            theme: "default",
+            autoCloseBrackets: true,
+            matchBrackets: true
         });
         editor.setSize(null, "100%");
 
-        // Get the initial theme value from the model
         var initialTheme = "{{ project.selected_theme }}";
-        // Get the initial syntax value from the model
         var initialSyntax = "{{ project.selected_syntax }}";
 
-        // Update the theme if it's not the default theme
         if (initialTheme !== "default") {
             changeTheme(initialTheme);
         }
-        // Update the syntax if it's not the default syntax
         if (initialSyntax !== "auto") {
             changeSyntax(initialSyntax);
         }
     });
 
-    // Toggle sidebar
     document.getElementById("sidebarCollapse").addEventListener("click", function () {
         document.getElementById("sidebar").classList.toggle("active");
     });
 
-    // Add event listeners to toggle folder icons
     document.querySelectorAll('.collapse').forEach(function(collapse) {
         collapse.addEventListener('show.bs.collapse', function() {
             this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
@@ -398,6 +436,4 @@
         });
     });
 </script>
-
-
 </html>

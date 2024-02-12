@@ -1,8 +1,7 @@
 
-1) check for sql injection (looks possible)
+1) add method to move file and folder locations
 
-2) add method to move files and folder locations
+2) add download project method
 
-3) test for bugs (found one for saving names - contents not saved correctly)
 
-4) project tree not working correctly (saved files all go to root dir)
+
