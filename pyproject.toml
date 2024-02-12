@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "django-ide-app"
+version = "0.1.0"
+description = ""
+authors = ["Daniel0Marsh <danielmarsh1000@protonmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
