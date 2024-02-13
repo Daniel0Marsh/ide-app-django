@@ -42,10 +42,20 @@
     <button type="button" class="btn btn-dark mx-auto mb-4">
         <i class="bi bi-download fs-2 text-light"></i>
     </button>
+
+    <button class="btn btn-dark mx-auto mb-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
+            aria-controls="offcanvasBottom">
+        <i class="bi bi-terminal fs-2 text-light"></i>
+    </button>
+
+    <button type="button" class="btn btn-dark mx-auto mb-4">
+        <i class="bi bi-github fs-2 text-light"></i>
+    </button>
 </div>
 
 <!-- project tree -->
-<form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="sidebar active shadow-end border-end border-dark" id="sidebar">
+<form method="post" enctype="multipart/form-data" action="{% url 'project' %}"
+      class="sidebar active shadow-end border-end border-dark" id="sidebar">
     {% csrf_token %}
     <input type="hidden" name="project_id" value="{{project.id}}">
     <ul>
@@ -100,15 +110,15 @@
                 {% endif %}
                 {% endfor %}
                 {% for file in project.files.all %}
-                    {% if not file.directory_set.exists %}
-                        {% if not file.subdirectories.exists %}
-                            <li>
-                                <button class="btn btn-sm file-item" name="open_file" value="{{ file.id }}" type="submit">
-                                    <i class="bi bi-arrow-return-right"></i> {{ file.file_name }}
-                                </button>
-                            </li>
-                        {% endif %}
-                    {% endif %}
+                {% if not file.directory_set.exists %}
+                {% if not file.subdirectories.exists %}
+                <li>
+                    <button class="btn btn-sm file-item" name="open_file" value="{{ file.id }}" type="submit">
+                        <i class="bi bi-arrow-return-right"></i> {{ file.file_name }}
+                    </button>
+                </li>
+                {% endif %}
+                {% endif %}
                 {% endfor %}
 
             </ul>
@@ -172,7 +182,8 @@
                         <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night
+                            Bright</a></li>
                     </ul>
                 </div>
             </div>
@@ -317,6 +328,20 @@
     </div>
 </div>
 
+<!-- terminal -->
+<div class="offcanvas offcanvas-bottom bg-black overflow-hidden" tabindex="-1" id="offcanvasBottom"
+     aria-labelledby="offcanvasBottomLabel">
+    <div class="offcanvas-body">
+        <div class="card terminal border">
+            <div id="terminal" class="p-1 text-light"></div>
+            <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
+                {% csrf_token %}
+                <div class="prompt">User$</div>
+                <input name="terminalInput" class="terminal-input bg-black border-0 text-light">
+            </form>
+        </div>
+    </div>
+</div>
 
 
 <!-- Bootstrap Bundle with Popper -->
@@ -354,7 +379,8 @@
 <!-- MDN Like -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mdn-like.min.css">
 <!-- Tomorrow Night Bright -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/tomorrow-night-bright.min.css">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/tomorrow-night-bright.min.css">
 <!-- Hopscotch -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/hopscotch.min.css">
 <!-- Lucario -->
@@ -435,5 +461,44 @@
             this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
         });
     });
+
+
+
+    // ajax used to send and receive the terminal prompts and responses
+
+    function sendPrompt() {
+    var promptValue = document.querySelector('.terminal-input').value;
+
+    var formData = new FormData();
+    formData.append('prompt', promptValue);
+
+    var terminalDiv = document.getElementById('terminal');
+    terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + promptValue + '</div>'; // Append input text
+
+    if (promptValue.toLowerCase() === 'clear') {
+        terminalDiv.innerHTML = ''; // Clear the terminal
+        // Clear the input field after sending the prompt
+        document.querySelector('.terminal-input').value = '';
+        return; // Exit the function
+    }
+
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Do something with the response
+        // Append the response to the terminal UI
+        terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + data.response + '</div>';
+        // Clear the input field after sending the prompt
+        document.querySelector('.terminal-input').value = '';
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 </script>
 </html>

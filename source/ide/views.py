@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.http import Http404
+from django.http import JsonResponse
+import subprocess
 
 class IdeView(TemplateView):
     """
@@ -54,13 +56,32 @@ class IdeView(TemplateView):
             'rename_file': self.save_file,
             'create_dir': self.create_folder,
             'create_file': self.create_file,
-            'open_file': self.open_file
+            'open_file': self.open_file,
+            'prompt': self.prompt
         }
 
         action = next((key for key in post_handlers if key in request.POST), None)
 
         if action:
             return post_handlers[action](request)
+
+
+    def prompt(self, request):
+        """
+        handles termainl post.
+
+        :param request: HttpRequest object representing the request made to the server.
+        :return: HttpResponse object containing the rendered template with the context.
+        """
+        user_id = '1234'
+        prompt = request.POST.get('prompt')
+        try:
+            # Start a Docker container for the user's terminal session
+            command = f"docker run --name {user_id}_container -v /path/to/project:/project -w /project -it your_docker_image /bin/bash"
+            subprocess.run(command, shell=True, check=True)
+            return JsonResponse({'response': f'Sandboxed terminal session started for user {user_id}'})
+        except Exception as e:
+            return JsonResponse({'response': str(e)}, status=500)
 
     def open_file(self, request):
         """

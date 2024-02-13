@@ -3,5 +3,11 @@
 
 2) add download project method
 
+3) make all post request use ajax for async
+
+4) change all model files to real files
+
+5) finish terminal
+
 
 

@@ -87,3 +87,33 @@ body {
 .sidebar.active + .ide-card {
     margin-left: 300px;
 }
+
+
+
+.terminal {
+    background-color: black;
+    overflow: auto;
+    font-size: 20px;
+    height: 100%;
+    font-family: monospace;
+    overflow: auto;
+}
+
+.prompt {
+    color: green;
+    padding: 5px;
+}
+
+.terminal-input {
+    font-size: 20px;
+    border: none;
+    outline: none;
+    background-color: black;
+    color: white;
+    caret-color: green;
+    resize: vertical;
+    flex-grow: 1;
+}
+
+
+
