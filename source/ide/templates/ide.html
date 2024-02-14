@@ -333,7 +333,7 @@
      aria-labelledby="offcanvasBottomLabel">
     <div class="offcanvas-body">
         <div class="card terminal border">
-            <div id="terminal" class="p-1 text-light"></div>
+            <div id="terminal" class="p-1 text-light">{{response}}</div>
             <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
                 {% csrf_token %}
                 <div class="prompt">User$</div>

@@ -10,6 +10,7 @@ import subprocess
 from django.conf import settings
 
 project_path = settings.BASE_DIR
+user_id = '1234'
 
 class IdeView(TemplateView):
     """
@@ -26,6 +27,23 @@ class IdeView(TemplateView):
     """
 
     template_name = 'ide.html'
+    user_id = '1234'  # User ID for identifying the Docker container
+    project_path = '/path/to/project'  # Replace with actual project path
+
+    def start_container(self):
+        """
+        Starts a Docker container for the user's terminal session.
+
+        :return: None
+        """
+        try:
+            command = f"sudo docker run -d --name {self.user_id}_container -v {self.project_path}:/project -w /project terminal_session /bin/bash"
+            subprocess.run(command, shell=True, check=True)
+            return True, "Docker container started successfully."
+        except subprocess.CalledProcessError as e:
+            error_message = e.stderr.decode('utf-8') if e.stderr else "Error starting Docker container: No error message available"
+            return False, f"Error starting Docker container: {error_message}"
+
 
     def get(self, request):
         """
@@ -34,13 +52,19 @@ class IdeView(TemplateView):
         Retrieves the latest project and its last edited file,
         then renders the Integrated Development Environment (IDE) template with the context.
 
+        Additionally, starts the Docker container for the user's terminal session if not already started.
+
         :param request: HttpRequest object representing the request made to the server.
         :return: HttpResponse object containing the rendered template with the context.
         """
+        container_running = subprocess.run(f"sudo docker inspect -f '{{{{.State.Running}}}}' {self.user_id}_container", shell=True, capture_output=True, text=True).stdout.strip()
+        if container_running != "true":
+            success, message = self.start_container()
+            message = message if not success else success
+
         project = Project.objects.first()
         last_edited_file = File.objects.filter(project=project).order_by('-pk').first()
-
-        context = {'project': project,'file': last_edited_file}
+        context = {'project': project, 'file': last_edited_file,'response': message}
 
         return render(request, self.template_name, context)
 
@@ -70,60 +94,36 @@ class IdeView(TemplateView):
 
     def prompt(self, request):
         """
-        handles terminal post.
+        Handles terminal post.
 
         :param request: HttpRequest object representing the request made to the server.
-        :return: HttpResponse object containing the rendered template with the context.
+        :return: JsonResponse object containing the response.
         """
-        user_id = '1234'
-
         prompt = request.POST.get('prompt')
         try:
-            # Check if a container with the same name is already running
-            check_command = f"sudo docker ps -q -f name={user_id}_container"
-            existing_container = subprocess.run(check_command, shell=True, capture_output=True, text=True)
+            # Execute command in the Docker container for the user's terminal session
+            command = f"sudo docker exec -i {self.user_id}_container /bin/bash"
+            process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            if existing_container.stdout:
-                # Container is already running, interact with it directly
-                command = f"sudo docker exec {user_id}_container bash -c '{prompt}'"
-                process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # Pass the prompt to the subprocess and get response
+            process.stdin.write(prompt.encode())
+            process.stdin.close()  # Close the input stream to signal end of input
 
-                # Read response from the subprocess
-                response = process.stdout.read().decode()  # Read output
-                error = process.stderr.read().decode()  # Read error
+            # Read response from the subprocess
+            response = process.stdout.read().decode('utf-8', 'ignore')  # Read output
+            error = process.stderr.read().decode('utf-8', 'ignore')  # Read error
 
-                # Wait for the subprocess to finish
-                process.wait()
+            # Wait for the subprocess to finish
+            process.wait()
 
-                # Return the response or error
-                if process.returncode == 0:
-                    return JsonResponse({'response': response})
-                else:
-                    return JsonResponse({'response': error}, status=500)
+            # Return the response or error
+            if process.returncode == 0:
+                return JsonResponse({'response': response})
             else:
-                # Start a new Docker container for the user's terminal session
-                command = f"sudo docker run --name {user_id}_container -v {project_path}:/project -w /project terminal_session /bin/bash"
-                process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
-
-                # Pass the prompt to the subprocess and get response
-                process.stdin.write(prompt.encode())
-                process.stdin.close()  # Close the input stream to signal end of input
-
-                # Read response from the subprocess
-                response = process.stdout.read().decode()  # Read output
-                error = process.stderr.read().decode()  # Read error
-
-                # Wait for the subprocess to finish
-                process.wait()
-
-                # Return the response or error
-                if process.returncode == 0:
-                    return JsonResponse({'response': response})
-                else:
-                    return JsonResponse({'response': error}, status=500)
+                return JsonResponse({'response': error}, status=500)
         except Exception as e:
             return JsonResponse({'response': str(e)}, status=500)
+
 
     def open_file(self, request):
         """
