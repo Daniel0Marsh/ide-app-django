@@ -7,6 +7,9 @@ from django.urls import reverse
 from django.http import Http404
 from django.http import JsonResponse
 import subprocess
+from django.conf import settings
+
+project_path = settings.BASE_DIR
 
 class IdeView(TemplateView):
     """
@@ -65,21 +68,60 @@ class IdeView(TemplateView):
         if action:
             return post_handlers[action](request)
 
-
     def prompt(self, request):
         """
-        handles termainl post.
+        handles terminal post.
 
         :param request: HttpRequest object representing the request made to the server.
         :return: HttpResponse object containing the rendered template with the context.
         """
         user_id = '1234'
+
         prompt = request.POST.get('prompt')
         try:
-            # Start a Docker container for the user's terminal session
-            command = f"docker run --name {user_id}_container -v /path/to/project:/project -w /project -it your_docker_image /bin/bash"
-            subprocess.run(command, shell=True, check=True)
-            return JsonResponse({'response': f'Sandboxed terminal session started for user {user_id}'})
+            # Check if a container with the same name is already running
+            check_command = f"sudo docker ps -q -f name={user_id}_container"
+            existing_container = subprocess.run(check_command, shell=True, capture_output=True, text=True)
+
+            if existing_container.stdout:
+                # Container is already running, interact with it directly
+                command = f"sudo docker exec {user_id}_container bash -c '{prompt}'"
+                process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                # Read response from the subprocess
+                response = process.stdout.read().decode()  # Read output
+                error = process.stderr.read().decode()  # Read error
+
+                # Wait for the subprocess to finish
+                process.wait()
+
+                # Return the response or error
+                if process.returncode == 0:
+                    return JsonResponse({'response': response})
+                else:
+                    return JsonResponse({'response': error}, status=500)
+            else:
+                # Start a new Docker container for the user's terminal session
+                command = f"sudo docker run --name {user_id}_container -v {project_path}:/project -w /project terminal_session /bin/bash"
+                process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+
+                # Pass the prompt to the subprocess and get response
+                process.stdin.write(prompt.encode())
+                process.stdin.close()  # Close the input stream to signal end of input
+
+                # Read response from the subprocess
+                response = process.stdout.read().decode()  # Read output
+                error = process.stderr.read().decode()  # Read error
+
+                # Wait for the subprocess to finish
+                process.wait()
+
+                # Return the response or error
+                if process.returncode == 0:
+                    return JsonResponse({'response': response})
+                else:
+                    return JsonResponse({'response': error}, status=500)
         except Exception as e:
             return JsonResponse({'response': str(e)}, status=500)
 

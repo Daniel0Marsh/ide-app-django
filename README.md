@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ## Usage
 
 1. Ensure your Django project is set up.
-2. Add 'graphy' to the INSTALLED_APPS list in your Django project settings.
+2. Add 'ide' to the INSTALLED_APPS list in your Django project settings.
 3. Include the URLs from the IDE app in your project's urls.py.
 4. Run migrations to create necessary database tables:
 
@@ -38,13 +38,28 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-5. Start your Django development server:
+5. Build the Docker Image:
+```bash
+sudo docker build -t terminal_session .
+```
+
+6. Add User to Docker Group:
+```bash
+sudo usermod -aG docker your_username
+```
+
+6. Start docker: 
+```bash
+sudo docker run --name terminal_container -p 8080:8080 terminal_session
+```
+
+7. Start your Django development server:
 
 ```bash
 python manage.py runserver
 ```
 
-6. Navigate to the IDE app's URL in your browser to access the IDE.
+8. Navigate to the IDE app's URL in your browser to access the IDE.
    `http:127.0.0.1:8000`
 
 ### Functionality
