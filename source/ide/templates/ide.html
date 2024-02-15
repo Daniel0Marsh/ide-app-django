@@ -114,6 +114,7 @@
     {% csrf_token %}
     <input type="hidden" id="selectedThemeInput" name="selected_theme" value="default">
     <input type="hidden" id="selectedSyntaxInput" name="selected_syntax" value="auto">
+    <input type="hidden" name="file_name" value="{{file_name}}"
 
     <div class="card-header">
         <div class="hstack gap-3 align-middle">
@@ -129,7 +130,7 @@
                 </button>
             </div>
             <div class="p-2">
-                <button class="btn file-item" name="delete" type="submit">
+                <button class="btn file-item" name="delete" value="{{file_name}}" type="submit">
                     <i class="bi bi-trash"></i> Delete
                 </button>
             </div>
@@ -212,7 +213,6 @@
                 <input type="hidden" name="project_id" value="{{ project.id }}">
                 <input type="hidden" name="item_id" value="">
                 <input type="hidden" name="contents" value="">
-
                 <button type="submit" name="rename_file" class="btn btn-primary">Save changes</button>
             </form>
         </div>
@@ -232,12 +232,29 @@
                 <input type="text" name="item_name" placeholder="Directory Name"
                        class="form-control bg-dark text-light border-secondary mb-4">
                 <input type="hidden" name="project_id" value="{{project.id}}">
-
-                <button type="submit" name="create_file" class="btn btn-primary">Create File</button>
-                <button type="submit" name="create_dir" class="btn btn-warning">Create Directory</button>
-            </form>
-        </div>
-    </div>
+                <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        Root Directory
+                    </button>
+                      <ul class="dropdown-menu" aria-labelledby="dirpath">
+                    {% for node in project_tree %}
+                    {% if node.type == 'directory' %}
+                        <li><a class="dropdown-item" href="#" value="{{node.name}}">{{node.name}}</a></li>
+                      {% for child in node.children %}
+                      {% if child.type == 'directory' %}
+                        <li><a class="dropdown-item" href="#" value="{{node.name}}">{{node.name}}</a></li>
+                      {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                    {% endfor %}
+                  </ul>
+                  <button type="submit" name="create_file" class="btn btn-primary">Create File</button>
+                  <button type="submit" name="create_dir" class="btn btn-warning">Create Directory</button>
+              </form>
+          </div>
+      </div>
+  </div>
 </div>
 
 
@@ -250,11 +267,39 @@
             </div>
             <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="modal-body">
                 {% csrf_token %}
-
+                <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        File or Directory
+                    </button>
+                <ul class="dropdown-menu" aria-labelledby="dirpath">
+                    {% for node in project_tree %}
+                        {% if node.type == 'directory' %}
+                            <li class="dropdown">
+                                <a class="dropdown-item dropdown-toggle" href="#" id="dropdownMenu{{ forloop.counter }}" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ node.name }}</a>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ forloop.counter }}">
+                                    {% for child in node.children %}
+                                        {% if child.type == 'directory' %}
+                                            <li><a class="dropdown-item" href="#" value="{{ child.name }}">{{ child.name }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% for grandchild in node.children %}
+                                        {% if grandchild.type == 'file' %}
+                                            <li><a class="dropdown-item" href="#" value="{{ grandchild.name }}">{{ grandchild.name }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% elif node.type == 'file' %}
+                            <li><a class="dropdown-item" href="#" value="{{ node.name }}">{{ node.name }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
                 <button type="submit" name="delete" class="btn btn-primary">Delete</button>
             </form>
         </div>
     </div>
+</div>
 </div>
 
 <!-- terminal -->
@@ -338,6 +383,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mbo.min.css">
 <!-- Monokai -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
+
 
 <script>
     var editor;

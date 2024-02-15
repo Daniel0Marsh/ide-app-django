@@ -124,10 +124,30 @@ class IdeView(TemplateView):
 
     @staticmethod
     def create_file(request):
+        project = Project.objects.first()
+        project_path = project.project_path
+        file_name = request.POST.get('file_path')
+        file_name = request.POST.get('file_name')
+        file_path = os.path.join(project_path, file_name)
+
         return HttpResponseRedirect(reverse('project'))
 
     @staticmethod
     def delete(request):
+        project = Project.objects.first()
+        project_path = project.project_path
+        file_name = request.POST.get('file_name')
+        file_path = os.path.join(project_path, file_name)
+
+        # Check if the file exists
+        if os.path.exists(file_path):
+            # Delete the file
+            os.remove(file_path)
+            return HttpResponse("File deleted successfully", status=200)
+        else:
+            # Handle case where file doesn't exist
+            return HttpResponse("File not found", status=404)
+
         return HttpResponseRedirect(reverse('project'))
 
 

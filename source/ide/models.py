@@ -1,5 +1,10 @@
 from django.db import models
+from django.conf import settings
+import os
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+default_project_path = file_path = os.path.join(BASE_DIR, "projects")
 
 class Project(models.Model):
     """
@@ -41,7 +46,7 @@ class Project(models.Model):
     ]
 
     project_name = models.CharField(max_length=100)
-    project_path = models.CharField(max_length=100, default="/home/user/dev/codeblock_projects/django-ide-app/source/projects")
+    project_path = models.CharField(max_length=100, default=default_project_path)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
 
