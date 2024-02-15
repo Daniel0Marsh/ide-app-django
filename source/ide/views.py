@@ -10,8 +10,6 @@ import os
 class IdeView(TemplateView):
     template_name = 'ide.html'
 
-    import os
-
     def get_project_tree(self, project_path):
         project_tree = []
         root_dir = os.path.basename(project_path)
@@ -26,19 +24,23 @@ class IdeView(TemplateView):
             }
             for file in files:
                 file_path = os.path.join(root, file)
-                relative_file_path = os.path.join(relative_path, file)
                 node['children'].append({
                     'name': file,
                     'type': 'file',
-                    'path': relative_file_path
+                    'path': file_path
                 })
             project_tree.append(node)
         return project_tree
 
     def get(self, request):
-        project = Project.objects.first()
-        project_path = project.project_path
-        context = {'project': project, 'project_tree': self.get_project_tree(project_path)}
+        all_projects = Project.objects.all()
+        current_project = Project.objects.order_by('-modified_at').first()
+        project_path = current_project.project_path
+        context = {
+            'all_projects': all_projects,
+            'current_project': current_project,
+            'project_tree': self.get_project_tree(project_path)
+        }
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -46,19 +48,18 @@ class IdeView(TemplateView):
             'delete': self.delete,
             'save_file': self.save_file,
             'rename_file': self.save_file,
-            'create_dir': self.create_folder,
-            'create_file': self.create_file,
             'open_file': self.open_file,
-            'prompt': self.prompt
+            'prompt': self.prompt,
+            'open_project': self.open_project
         }
         action = next((key for key in action_map if key in request.POST), None)
         if action:
             return action_map[action](request)
 
     def prompt(self, request):
-        project = Project.objects.first()
-        project_name = project.project_name
-        project_path = project.project_path
+        current_project = Project.objects.first()
+        project_name = current_project.project_name
+        project_path = current_project.project_path
         file_path = os.path.join(project_path, project_name)
         prompt = request.POST.get('prompt')
 
@@ -96,10 +97,11 @@ class IdeView(TemplateView):
             return JsonResponse({'response': str(e)}, status=500)
 
     def open_file(self, request):
-        project = Project.objects.first()
-        project_path = project.project_path
+        all_projects = Project.objects.all()
+        current_project = Project.objects.first()
+        project_path = current_project.project_path
         file_name = request.POST.get('open_file')
-        file_path = os.path.join(project_path, file_name)
+        file_path = request.POST.get('file_path')
 
         # Check if the file exists
         if os.path.exists(file_path):
@@ -108,8 +110,10 @@ class IdeView(TemplateView):
                 file_content = f.read()
 
             context = {
-                'project': project,
+                'all_projects': all_projects,
+                'current_project': current_project,
                 'file_name': file_name,
+                'file_path': file_path,
                 'file_content': file_content,
                 'project_tree': self.get_project_tree(project_path)
             }
@@ -119,66 +123,76 @@ class IdeView(TemplateView):
             return HttpResponse("File not found", status=404)
 
     @staticmethod
-    def create_folder(request):
-        return HttpResponseRedirect(reverse('project'))
-
-    @staticmethod
-    def create_file(request):
-        project = Project.objects.first()
-        project_path = project.project_path
-        file_name = request.POST.get('file_path')
-        file_name = request.POST.get('file_name')
-        file_path = os.path.join(project_path, file_name)
-
-        return HttpResponseRedirect(reverse('project'))
-
-    @staticmethod
     def delete(request):
-        project = Project.objects.first()
-        project_path = project.project_path
-        file_name = request.POST.get('file_name')
-        file_path = os.path.join(project_path, file_name)
+        project_id = request.POST.get('project_id')
+        current_project = Project.objects.get(id=project_id)
+
+        project_path = current_project.project_path
+        file_path = request.POST.get('file_path')
 
         # Check if the file exists
         if os.path.exists(file_path):
             # Delete the file
             os.remove(file_path)
-            return HttpResponse("File deleted successfully", status=200)
+            return HttpResponseRedirect(reverse('project'))
         else:
             # Handle case where file doesn't exist
-            return HttpResponse("File not found", status=404)
+            return HttpResponseRedirect(reverse('project'))
 
         return HttpResponseRedirect(reverse('project'))
 
-
     def save_file(self, request):
-        project = Project.objects.first()
-        project_path = project.project_path
-        file_name = request.POST.get('save_file')
+        project_id = request.POST.get('project_id')
         selected_theme = request.POST.get('selected_theme')
         selected_syntax = request.POST.get('selected_syntax')
+
+        file_name = request.POST.get('file_name')
         file_content = request.POST.get('file_contents')
-        file_path = os.path.join(project_path, file_name)
+        file_path = request.POST.get('file_path')
+        new_file_name = request.POST.get('new_file_name')
+
+        current_project = Project.objects.get(id=project_id)
+        project_path = current_project.project_path
+        all_projects = Project.objects.all()
 
         # Check if the file exists
-        if os.path.exists(file_path):
-            # Write the file content
-            with open(file_path, 'w') as f:
-                f.write(file_content)
+        if not os.path.exists(file_path):
+            if new_file_name:
+                file_name = new_file_name
+            else:
+                file_name = "new_file.txt"
 
+        if selected_syntax and selected_theme:
             # Update selected_theme and selected_syntax in the model
-            project.selected_theme = selected_theme
-            project.selected_syntax = selected_syntax
-            project.save()
+            current_project.selected_theme = selected_theme
+            current_project.selected_syntax = selected_syntax
+            current_project.save()
+
+        with open(os.path.join(project_path, file_name), 'w') as f:
+            f.write(file_content)
+
+        context = {
+            'all_projects': all_projects,
+            'current_project': current_project,
+            'file_name': file_name,
+            'file_path': file_path,
+            'file_content': file_content,
+            'project_tree': self.get_project_tree(project_path)
+        }
+        return render(request, self.template_name, context)
 
 
-            context = {
-                'project': project,
-                'file_name': file_name,
-                'file_content': file_content,
-                'project_tree': self.get_project_tree(project_path)
-            }
-            return render(request, self.template_name, context)
-        else:
-            # Handle case where file doesn't exist
-            return HttpResponse("File not found", status=404)
+
+    def open_project(self, request):
+        project_id = request.POST.get('project_id')
+        all_projects = Project.objects.all()
+
+        current_project = Project.objects.get(id=project_id)
+        project_path = current_project.project_path
+
+        context = {
+            'all_projects': all_projects,
+            'current_project': current_project,
+            'project_tree': self.get_project_tree(project_path)
+        }
+        return render(request, self.template_name, context)

@@ -1,10 +1,13 @@
 from django.db import models
-from django.conf import settings
 import os
 from pathlib import Path
 
+from django.db.models import TextField
+from django.utils import timezone
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-default_project_path = file_path = os.path.join(BASE_DIR, "projects")
+default_project_path = file_path = os.path.join(BASE_DIR, "UserProjects")
 
 class Project(models.Model):
     """
@@ -47,8 +50,10 @@ class Project(models.Model):
 
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100, default=default_project_path)
+    project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
+    modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.project_name

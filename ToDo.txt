@@ -1,13 +1,11 @@
 
-1) add method to move file and folder locations
+1) add download project method
 
-2) add download project method
+2) make all post request use ajax for async
 
-3) make all post request use ajax for async
+3) fix rename save() methode
 
-4) change all model files to real files
-
-5) finish terminal
+4) add settings panel and helper/how to use.
 
 
 
