@@ -42,19 +42,18 @@ python manage.py migrate
 ```bash
 sudo docker build -t terminal_session .
 ```
-
-6. Add User to Docker Group:
+- You can remove the docker image as follows: 
 ```bash
-sudo usermod -aG docker your_username
+docker rmi -f terminal_session
 ```
 
-6. Start docker: 
+6. Add User to Docker Group and set permissions:
 ```bash
-sudo docker run --name terminal_container -p 8080:8080 terminal_session
+sudo usermod -aG docker your_username
+sudo chmod 666 /var/run/docker.sock
 ```
 
 7. Start your Django development server:
-
 ```bash
 python manage.py runserver
 ```

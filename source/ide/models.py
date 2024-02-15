@@ -41,46 +41,9 @@ class Project(models.Model):
     ]
 
     project_name = models.CharField(max_length=100)
+    project_path = models.CharField(max_length=100, default="/home/user/dev/codeblock_projects/django-ide-app/source/projects")
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
-    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')\
+    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
 
     def __str__(self):
         return self.project_name
-
-
-class File(models.Model):
-    """
-    Model representing a file within a project.
-
-    Attributes:
-        project (Project): The project to which the file belongs.
-        file_name (str): The name of the file.
-        contents (str): The contents of the file.
-    """
-
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files')
-    contents = models.TextField(blank=True, null=True)
-    file_name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.file_name
-
-
-class Directory(models.Model):
-    """
-    Model representing a directory within a project.
-
-    Attributes:
-        project (Project): The project to which the directory belongs.
-        directory_name (str): The name of the directory.
-        files (QuerySet): A queryset of files contained within the directory.
-        parent_directory (Directory): The parent directory of the current directory.
-    """
-
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='directories')
-    directory_name = models.CharField(max_length=255)
-    files = models.ManyToManyField('File')
-    parent_directory = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subdirectories')
-
-    def __str__(self):
-        return self.directory_name

@@ -17,7 +17,7 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-center mx-auto folder-btn">
             <button class="btn btn-lg folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
-                <i class="bi bi-pencil"></i> {{project.project_name}}/{{file.file_name}}
+                <i class="bi bi-pencil"></i> {{project.project_name}}/{{file_name}}
             </button>
         </div>
     </div>
@@ -53,76 +53,58 @@
     </button>
 </div>
 
-<!-- project tree -->
+<!-- project tree --><!-- project tree -->
 <form method="post" enctype="multipart/form-data" action="{% url 'project' %}"
       class="sidebar active shadow-end border-end border-dark" id="sidebar">
     {% csrf_token %}
-    <input type="hidden" name="project_id" value="{{project.id}}">
     <ul>
         <!-- Project -->
+        {% for node in project_tree %}
+        {% if node.type == 'directory' %}
         <li>
-            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse" data-bs-target="#project"
-                    aria-expanded="true">
-                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{project.project_name}}
+            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
+                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
             </button>
-            <ul class="collapse show" id="project">
-                {% for directory in project.directories.all %}
-                {% if not directory.parent_directory %}
+            <ul class="collapse show" id="{{node.name|slugify}}">
+                {% for child in node.children %}
+                {% if child.type == 'directory' %}
                 <li>
                     <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#{{ directory.directory_name|slugify }}" aria-expanded="false">
-                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i>
-                        {{directory.directory_name}}
+                            data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
+                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
                     </button>
-                    <ul class="collapse" id="{{directory.directory_name|slugify}}">
-                        <!-- Render Subdirectories -->
-                        {% for subdirectory in directory.subdirectories.all %}
+                    <ul class="collapse show" id="{{ child.name|slugify }}">
+                        {% for grandchild in child.children %}
+                        {% if grandchild.type == 'file' %}
                         <li>
-                            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#{{subdirectory.directory_name|slugify}}"
-                                    aria-expanded="false">
-                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i>
-                                {{subdirectory.directory_name}}
-                            </button>
-                            <ul class="collapse" id="{{subdirectory.directory_name|slugify}}">
-                                <!-- Render Files -->
-                                {% for file in subdirectory.files.all %}
-                                <li>
-                                    <button class="btn btn-sm file-item" name="open_file" value="{{file.id}}"
-                                            type="submit">
-                                        <i class="bi bi-arrow-return-right"></i> {{file.file_name}}
-                                    </button>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </li>
-                        {% endfor %}
-                        <!-- Render Files for Directory -->
-                        {% for file in directory.files.all %}
-                        <li>
-                            <button class="btn btn-sm file-item" name="open_file" value="{{file.id}}" type="submit">
-                                <i class="bi bi-arrow-return-right"></i> {{file.file_name}}
+                            <button class="btn btn-sm file-item" name="open_file" value="{{grandchild.path}}"
+                                    type="submit">
+                                <i class="bi bi-arrow-return-right"></i> {{grandchild.name}}
                             </button>
                         </li>
+                        {% endif %}
                         {% endfor %}
                     </ul>
                 </li>
-                {% endif %}
-                {% endfor %}
-                {% for file in project.files.all %}
-                {% if not file.directory_set.exists %}
-                {% if not file.subdirectories.exists %}
+                {% elif child.type == 'file' %}
                 <li>
-                    <button class="btn btn-sm file-item" name="open_file" value="{{ file.id }}" type="submit">
-                        <i class="bi bi-arrow-return-right"></i> {{ file.file_name }}
+                    <button class="btn btn-sm file-item" name="open_file" value="{{child.path}}" type="submit">
+                        <i class="bi bi-arrow-return-right"></i> {{child.name}}
                     </button>
                 </li>
                 {% endif %}
-                {% endif %}
                 {% endfor %}
-
             </ul>
         </li>
+        {% elif node.type == 'file' %}
+        <li>
+            <button class="btn btn-sm file-item" name="open_file" value="{{node.path}}" type="submit">
+                <i class="bi bi-arrow-return-right"></i> {{node.name}}
+            </button>
+        </li>
+        {% endif %}
+        {% endfor %}
     </ul>
 </form>
 
@@ -130,10 +112,6 @@
 <!--- This is the main CodeMirror IDE section including the nave buttons--->
 <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="card ide-card border-0">
     {% csrf_token %}
-    <input type="hidden" name="project_id" value="{{ project.id }}">
-    <input type="hidden" name="item_id" value="{{file.id}}">
-    <input type="hidden" name="file_name" value="{{file.file_name}}">
-
     <input type="hidden" id="selectedThemeInput" name="selected_theme" value="default">
     <input type="hidden" id="selectedSyntaxInput" name="selected_syntax" value="auto">
 
@@ -141,12 +119,12 @@
         <div class="hstack gap-3 align-middle">
             <div class="p-2">
                 <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
-                    <i class="bi bi-pencil"></i> {{file.file_name}}
+                    <i class="bi bi-pencil"></i> {{file_name}}
                 </button>
             </div>
             <div class="vr"></div>
             <div class="p-2">
-                <button class="btn file-item" name="save_file" type="submit">
+                <button class="btn file-item" name="save_file" value="{{file_name}}" type="submit">
                     <i class="bi bi-save"></i> Save
                 </button>
             </div>
@@ -215,7 +193,7 @@
             </div>
         </div>
     </div>
-    <textarea name='contents' id="myTextarea" style="display: none;">{{ file.contents|escape }}</textarea>
+    <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
 </form>
 </body>
 
@@ -229,31 +207,12 @@
             </div>
             <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="modal-body">
                 {% csrf_token %}
-                <input type="text" name="file_name" value="{{file.file_name}}"
+                <input type="text" name="file_name" value=""
                        class="form-control bg-dark text-light border-secondary mb-4">
                 <input type="hidden" name="project_id" value="{{ project.id }}">
-                <input type="hidden" name="item_id" value="{{file.id}}">
-                <input type="hidden" name="contents" value="{{file.contents|safe}}">
-                <select name="item_id" class="form-control bg-dark text-light border-secondary mb-4">
-                    <option value="">/{{project.project_name}}</option>
-                    {% for directory in project.directories.all %}
-                    <option value="{{ directory.id }}">/{{project.project_name}}/{{directory.directory_name}}
-                    </option>
-                    {% endfor %}
-                    {% for subdirectory in directory.subdirectories.all %}
-                    <option value="{{ subdirectory.id }}">
-                        {{project.project_name}}/{{directory.directory_name}}/{{subdirectory.directory_name}}
-                    </option>
-                    {% endfor %}
-                    {% for file in project.files.all %}
-                    <option value="{{ file.id }}">/{{project.project_name}}/{{ file.file_name}}</option>
-                    {% endfor %}
-                    {% for file in subdirectory.files.all %}
-                    <option value="{{ file.id }}">
-                        {{project.project_name}}/{{directory.directory_name}}/{{file.file_name}}
-                    </option>
-                    {% endfor %}
-                </select>
+                <input type="hidden" name="item_id" value="">
+                <input type="hidden" name="contents" value="">
+
                 <button type="submit" name="rename_file" class="btn btn-primary">Save changes</button>
             </form>
         </div>
@@ -273,17 +232,7 @@
                 <input type="text" name="item_name" placeholder="Directory Name"
                        class="form-control bg-dark text-light border-secondary mb-4">
                 <input type="hidden" name="project_id" value="{{project.id}}">
-                <select name="parent_dir_id" class="form-control bg-dark text-light border-secondary mb-4">
-                    <option value="">/{{project.project_name}}</option>
-                    {% for directory in project.directories.all %}
-                    <option value="{{directory.id}}">/{{project.project_name}}/{{directory.directory_name}}</option>
-                    {% endfor %}
-                    {% for subdirectory in directory.subdirectories.all %}
-                    <option value="{{subdirectory.id}}">
-                        {{project.project_name}}/{{directory.directory_name}}/{{subdirectory.directory_name}}
-                    </option>
-                    {% endfor %}
-                </select>
+
                 <button type="submit" name="create_file" class="btn btn-primary">Create File</button>
                 <button type="submit" name="create_dir" class="btn btn-warning">Create Directory</button>
             </form>
@@ -301,27 +250,7 @@
             </div>
             <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="modal-body">
                 {% csrf_token %}
-                <input type="hidden" name="project_id" value="{{ project.id }}">
-                <select name="item_id" class="form-control bg-dark text-light border-secondary mb-4">
-                    <option value="">/{{project.project_name}}</option>
-                    {% for directory in project.directories.all %}
-                    <option value="{{ directory.id }}">/{{project.project_name}}/{{directory.directory_name}}
-                    </option>
-                    {% endfor %}
-                    {% for subdirectory in directory.subdirectories.all %}
-                    <option value="{{ subdirectory.id }}">
-                        {{project.project_name}}/{{directory.directory_name}}/{{subdirectory.directory_name}}
-                    </option>
-                    {% endfor %}
-                    {% for file in project.files.all %}
-                    <option value="{{ file.id }}">/{{project.project_name}}/{{ file.file_name}}</option>
-                    {% endfor %}
-                    {% for file in subdirectory.files.all %}
-                    <option value="{{ file.id }}">
-                        {{project.project_name}}/{{directory.directory_name}}/{{file.file_name}}
-                    </option>
-                    {% endfor %}
-                </select>
+
                 <button type="submit" name="delete" class="btn btn-primary">Delete</button>
             </form>
         </div>
@@ -336,8 +265,8 @@
             <div id="terminal" class="p-1 text-light">{{response}}</div>
             <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
                 {% csrf_token %}
-                <div class="prompt">User$</div>
-                <input name="terminalInput" class="terminal-input bg-black border-0 text-light">
+                <div class="prompt p-1">User$</div>
+                <input name="terminalInput" class=" terminal-input bg-black border-0 text-light">
             </form>
         </div>
     </div>

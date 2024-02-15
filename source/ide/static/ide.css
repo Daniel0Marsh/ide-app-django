@@ -97,11 +97,12 @@ body {
     height: 100%;
     font-family: monospace;
     overflow: auto;
+    padding: 5px
 }
 
 .prompt {
     color: green;
-    padding: 5px;
+    padding: 0;
 }
 
 .terminal-input {
