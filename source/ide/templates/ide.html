@@ -30,30 +30,40 @@
         <i class="bi bi-tree fs-2 text-light"></i>
     </button>
 
-    <button type="button" class="btn btn-dark mx-auto mb-4" data-bs-toggle="modal" data-bs-target="#createDirModal">
+    <button type="button" class="btn btn-dark mx-auto mb-4" data-bs-toggle="modal"
+            data-bs-target="#openingProjectModal">
         <i class="bi bi-folder2-open fs-2 text-light"></i>
     </button>
 
-    <button type="button" class="btn btn-dark mx-auto mb-4">
-        <i class="bi bi-download fs-2 text-light"></i>
-    </button>
+    <form method="post" action="{% url 'project' %}">
+        {% csrf_token %}
+        <input type="hidden" name="project_id" value="{{current_project.id}}">
+        <button type="submit" class="btn btn-dark mx-auto mb-4" name="download_project">
+            <i class="bi bi-download fs-2 text-light"></i>
+        </button>
+    </form>
 
     <button class="btn btn-dark mx-auto mb-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
-            aria-controls="offcanvasBottom">
-        <i class="bi bi-terminal fs-2 text-light"></i>
+        aria-controls="offcanvasBottom">
+    <i class="bi bi-terminal fs-2 text-light"></i>
     </button>
 
-    <button type="button" class="btn btn-dark mx-auto mb-4">
+    <button type="button" class="btn btn-dark mx-auto mb-4" data-bs-toggle="modal"
+            data-bs-target="#GitModal">
         <i class="bi bi-github fs-2 text-light"></i>
+    </button>
+
+    <button type="button" class="btn btn-dark mx-auto mb-4" data-bs-toggle="modal"
+            data-bs-target="#helpModal">
+        <i class="bi bi-info-circle fs-2 text-light"></i>
     </button>
 </div>
 
-<!-- project tree --><!-- project tree -->
+<!-- project tree -->
 <form method="post" enctype="multipart/form-data" action="{% url 'project' %}"
       class="sidebar active shadow-end border-end border-dark" id="sidebar">
     {% csrf_token %}
     <ul>
-        <!-- Project -->
         {% for node in project_tree %}
         {% if node.type == 'directory' %}
         <li>
@@ -160,8 +170,7 @@
                         <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
                         <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night
-                            Bright</a></li>
+                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
                     </ul>
                 </div>
             </div>
@@ -197,9 +206,24 @@
 </form>
 </body>
 
+<!-- terminal -->
+<div class="offcanvas offcanvas-bottom bg-black overflow-hidden" tabindex="-1" id="offcanvasBottom"
+     aria-labelledby="offcanvasBottomLabel">
+    <div class="offcanvas-body">
+        <div class="card terminal border">
+            <div id="terminal" class="p-1 text-light">{{response}}</div>
+            <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
+                {% csrf_token %}
+                <div class="prompt p-1">User$</div>
+                <input name="terminalInput" class=" terminal-input bg-black border-0 text-light">
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal for renaming file-->
 <div class="modal fade modal-dark" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
@@ -218,17 +242,20 @@
 </div>
 
 <!-- Modal for opening a project -->
-<div class="modal fade modal-dark" id="createDirModal" aria-labelledby="createDirModalLabel" aria-hidden="true">
+<div class="modal fade modal-dark" id="openingProjectModal" data-bs-backdrop="static" data-bs-keyboard="false"
+     aria-labelledby="openingProjectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
-                <h5 class="modal-title" id="createDirModalLabel">Access an existing project.</h5>
+                <h5 class="modal-title" id="openingProjectModalLabel">Access an existing project.</h5>
             </div>
             <div class="modal-body overflow-auto">
                 <ul class="list-group">
+                    {% if all_projects %}
                     {% for project in all_projects %}
                     <li class="list-group-item bg-dark text-light" onclick="submitForm('{{ project.id }}')">
-                        <form id="projectForm_{{ project.id }}" method="post" enctype="multipart/form-data" action="{% url 'project' %}">
+                        <form id="projectForm_{{ project.id }}" method="post" enctype="multipart/form-data"
+                              action="{% url 'project' %}">
                             {% csrf_token %}
                             <input type="hidden" name="project_id" value="{{ project.id }}">
                             <div class="hstack">
@@ -243,27 +270,86 @@
                         </form>
                     </li>
                     {% endfor %}
+                    {% else %}
+                    <li class="list-group-item bg-dark text-light">
+                        No projects found. Create a new project.
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="modal-footer">
+                {% if current_project != "none" %}
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#CreateProjectModal">Create A New Project
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                {% else %}
                 <h4>Or... </h4>
-                <button type="button" class="btn btn-primary">Create A New Project</button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#CreateProjectModal">Create A New Project
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- terminal -->
-<div class="offcanvas offcanvas-bottom bg-black overflow-hidden" tabindex="-1" id="offcanvasBottom"
-     aria-labelledby="offcanvasBottomLabel">
-    <div class="offcanvas-body">
-        <div class="card terminal border">
-            <div id="terminal" class="p-1 text-light">{{response}}</div>
-            <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
+<!-- Modal for creating new projects-->
+<div class="modal fade modal-dark" id="CreateProjectModal" data-bs-backdrop="static" data-bs-keyboard="false"
+     tabindex="-1" aria-labelledby="CreateProjectModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="CreateProjectModalLabel">Create New Project</h1>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'project' %}" class="modal-body">
                 {% csrf_token %}
-                <div class="prompt p-1">User$</div>
-                <input name="terminalInput" class=" terminal-input bg-black border-0 text-light">
+                <div class="mb-4">
+                    <label for="project_name" class="form-label">Project Name:</label>
+                    <input type="text" id="project_name" name="project_name" placeholder="Enter project name"
+                           class="form-control bg-dark text-light border-secondary">
+                </div>
+                <div class="mb-4">
+                    <label for="project_description" class="form-label">Project Description:</label>
+                    <textarea id="project_description" name="project_description"
+                              placeholder="Enter project description"
+                              class="form-control bg-dark text-light border-secondary"></textarea>
+                </div>
+                <button type="submit" name="create_project" class="btn btn-primary">Create Project</button>
+                <button type="button" name="create_project" class="btn btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#openingProjectModal">Cancel
+                </button>
             </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal for showing info text-->
+<div class="modal fade modal-dark" id="helpModal"
+     tabindex="-1" aria-labelledby="helpModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content overflow-auto p-2 bg-dark text-light">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="helpModalLabel">Worth a read...</h1>
+            </div>
+            {{current_project.git|safe}}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for showing helper for git -->
+<div class="modal fade modal-dark" id="GitModal"
+     tabindex="-1" aria-labelledby="helpModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content overflow-auto p-2 bg-dark text-light">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="GitModalLabel">How to set up GitHub...</h1>
+            </div>
+            {{current_project.git|safe}}
         </div>
     </div>
 </div>
@@ -332,96 +418,102 @@
 <!-- Monokai -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
 
-
 <script>
-    var editor;
-
-    function changeTheme(theme) {
-        editor.setOption("theme", theme);
-        document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
-        document.getElementById('selectedThemeInput').value = theme;
-    }
-
-    function changeSyntax(mode) {
-        editor.setOption("mode", mode);
-        document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-        document.getElementById('selectedSyntaxInput').value = mode;
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
-            lineNumbers: true,
-            mode: "autodetect", // Change mode to "autodetect" for auto-detection
-            theme: "default",
-            autoCloseBrackets: true,
-            matchBrackets: true
-        });
-        editor.setSize(null, "100%");
-
-        var initialTheme = "{{ current_project.selected_theme }}";
-        var initialSyntax = "{{ current_project.selected_syntax }}";
-
-        if (initialTheme !== "default") {
-            changeTheme(initialTheme);
-        }
-        if (initialSyntax !== "auto") {
-            changeSyntax(initialSyntax);
-        }
-    });
-
-    document.getElementById("sidebarCollapse").addEventListener("click", function () {
-        document.getElementById("sidebar").classList.toggle("active");
-    });
-
-    document.querySelectorAll('.collapse').forEach(function(collapse) {
-        collapse.addEventListener('show.bs.collapse', function() {
-            this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
-            this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
-        });
-
-        collapse.addEventListener('hide.bs.collapse', function() {
-            this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
-            this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
-        });
-    });
-
-
-
-    // ajax used to send and receive the terminal prompts and responses
-
-    function sendPrompt() {
-    var promptValue = document.querySelector('.terminal-input').value;
-
-    var formData = new FormData();
-    formData.append('prompt', promptValue);
-
-    var terminalDiv = document.getElementById('terminal');
-    terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + promptValue + '</div>'; // Append input text
-
-    if (promptValue.toLowerCase() === 'clear') {
-        terminalDiv.innerHTML = ''; // Clear the terminal
-        // Clear the input field after sending the prompt
-        document.querySelector('.terminal-input').value = '';
-        return; // Exit the function
-    }
-
-    fetch('', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data); // Do something with the response
-        // Append the response to the terminal UI
-        terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + data.response + '</div>';
-        // Clear the input field after sending the prompt
-        document.querySelector('.terminal-input').value = '';
-    })
-    .catch(error => console.error('Error:', error));
+var editor;
+function changeTheme(theme) {
+    editor.setOption("theme", theme);
+    document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+    document.getElementById('selectedThemeInput').value = theme;
 }
 
+function changeSyntax(mode) {
+    editor.setOption("mode", mode);
+    document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+    document.getElementById('selectedSyntaxInput').value = mode;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
+        lineNumbers: true,
+        mode: "autodetect",
+        theme: "default",
+        autoCloseBrackets: true,
+        matchBrackets: true
+    });
+    editor.setSize(null, "100%");
+
+    var initialTheme = "{{ current_project.selected_theme }}";
+    var initialSyntax = "{{ current_project.selected_syntax }}";
+
+    if (initialTheme !== "default") {
+        changeTheme(initialTheme);
+    }
+    if (initialSyntax !== "auto") {
+        changeSyntax(initialSyntax);
+    }
+});
+
+document.getElementById("sidebarCollapse").addEventListener("click", function () {
+    document.getElementById("sidebar").classList.toggle("active");
+});
+
+document.querySelectorAll('.collapse').forEach(function(collapse) {
+    collapse.addEventListener('show.bs.collapse', function() {
+        this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
+        this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
+    });
+
+    collapse.addEventListener('hide.bs.collapse', function() {
+        this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
+        this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
+    });
+});
+
+
+
+// ajax used to send and receive the terminal prompts and responses
+function sendPrompt() {
+var promptValue = document.querySelector('.terminal-input').value;
+
+var formData = new FormData();
+formData.append('prompt', promptValue);
+
+var terminalDiv = document.getElementById('terminal');
+terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + promptValue + '</div>'; // Append input text
+
+if (promptValue.toLowerCase() === 'clear') {
+    terminalDiv.innerHTML = ''; // Clear the terminal
+    // Clear the input field after sending the prompt
+    document.querySelector('.terminal-input').value = '';
+    return; // Exit the function
+}
+
+fetch('', {
+    method: 'POST',
+    body: formData,
+    headers: {
+        'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+    }
+})
+.then(response => response.json())
+.then(data => {
+    console.log(data); // Do something with the response
+    // Append the response to the terminal UI
+    terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + data.response + '</div>';
+    // Clear the input field after sending the prompt
+    document.querySelector('.terminal-input').value = '';
+})
+.catch(error => console.error('Error:', error));
+}
+
+// open the change project model if current_project === 'none'
+window.onload = function() {
+var current_project = "{{ current_project }}";
+
+if (current_project === "none") {
+  var myModal = new bootstrap.Modal(document.getElementById('openingProjectModal'));
+  myModal.show();
+}
+};
 </script>
 </html>

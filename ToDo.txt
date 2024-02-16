@@ -1,11 +1,4 @@
 
-1) add download project method
-
-2) make all post request use ajax for async
-
-3) fix rename save() methode
-
-4) add settings panel and helper/how to use.
-
-
-
+1) make all post request use ajax for async
+2) allow auto creation of the docker image terminal_session
+3) update working tree after each terminal input
