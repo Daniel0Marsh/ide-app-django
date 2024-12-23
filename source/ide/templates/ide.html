@@ -462,7 +462,12 @@ document.querySelectorAll('.collapse').forEach(function(collapse) {
 
 // ajax used to send and receive the terminal prompts and responses
 function sendPrompt() {
-var promptValue = document.querySelector('.terminal-input').value;
+    const promptValue = document.querySelector('.terminal-input').value.trim();
+    if (!promptValue) return;
+
+    // Add the command to history and reset index
+    commandHistory.push(promptValue);
+    historyIndex = commandHistory.length;
 
 var formData = new FormData();
 formData.append('prompt', promptValue);
@@ -498,15 +503,24 @@ fetch('', {
 .catch(error => console.error('Error:', error));
 }
 
-// open the change project model if current_project === 'none'
-window.onload = function() {
-var current_project = "{{ current_project }}";
 
-if (current_project === "none") {
-  var myModal = new bootstrap.Modal(document.getElementById('openingProjectModal'));
-  myModal.show();
-}
-};
+let commandHistory = [];
+let historyIndex = -1;
+
+document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') {
+        // Navigate up the history
+        if (historyIndex > 0) historyIndex--;
+        e.target.value = commandHistory[historyIndex] || '';
+        e.preventDefault(); // Prevent the default cursor movement
+    } else if (e.key === 'ArrowDown') {
+        // Navigate down the history
+        if (historyIndex < commandHistory.length - 1) historyIndex++;
+        e.target.value = commandHistory[historyIndex] || '';
+        e.preventDefault();
+    }
+});
+
 
 function toggleOffcanvasHeight() {
     const offcanvasElement = document.getElementById('offcanvasBottom');

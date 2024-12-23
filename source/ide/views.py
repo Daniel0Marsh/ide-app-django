@@ -386,6 +386,10 @@ class DashboardView(TemplateView):
         return redirect('ide', project_id=current_project.id)
 
 
+import docker
+import os
+import uuid
+
 class ProjectContainerManager:
     """
     Manage Docker containers for each project.
@@ -413,7 +417,10 @@ class ProjectContainerManager:
         return self.client.containers.run(
             image='terminal_session',
             name=self.container_name,
-            volumes={self.project_path: {'bind': f'/{self.project_name}', 'mode': 'rw'}},
+            volumes={
+                self.project_path: {'bind': f'/{self.project_name}', 'mode': 'rw'},
+                '/host/path/.bash_history': {'bind': '/root/.bash_history', 'mode': 'rw'}
+            },
             working_dir=f'/{self.project_name}',
             stdin_open=True,
             tty=True,
@@ -435,6 +442,34 @@ class ProjectContainerManager:
             container = self.create_container()
         return container
 
+    def attach_container(self):
+        """
+        Attach to the container for real-time terminal interaction.
+        """
+        container = self.start_container()
+        return container.attach(stdin=True, stdout=True, stderr=True, stream=True, logs=True)
+
+    def execute_command(self, command):
+        """
+        Execute a given command in the container.
+        """
+        container = self.start_container()
+        try:
+            response = container.exec_run(
+                cmd=['/bin/bash', '-c', command],
+                stdout=True,
+                stderr=True,
+                stdin=True,
+                tty=True
+            )
+            output = response.output.decode().strip()
+            return {
+                'formatted_output': output,
+                'exit_code': response.exit_code
+            }
+        except Exception as e:
+            raise RuntimeError(f"Error executing command: {str(e)}")
+
     def stop_container(self):
         """
         Stop the Docker container if it's running.
@@ -450,33 +485,3 @@ class ProjectContainerManager:
         container = self.get_container()
         if container:
             container.remove(force=True)
-
-
-    def execute_command(self, command):
-        """
-        Execute a given command in the container and format the output.
-        """
-        container = self.start_container()
-        try:
-            response = container.exec_run(
-                cmd=['/bin/bash', '-c', command],
-                stdout=True,
-                stderr=True,
-                stdin=True,
-                tty=True
-            )
-
-            # Process and format the output
-            output = response.output.decode().strip()
-            output = output.replace(' ', '&nbsp;')  # Preserve spaces
-            formatted_output = f'<pre>{output}</pre>'  # Preserve formatting
-
-            # Return the formatted output and exit code
-            return {
-                'formatted_output': formatted_output,
-                'exit_code': response.exit_code
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"Error executing command: {str(e)}")
-
