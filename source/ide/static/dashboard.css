@@ -1,0 +1,70 @@
+
+:root {
+    --bg-dark: #1e1e2f;
+    --bg-darker: #151521;
+    --text-light: #e4e4e7;
+    --text-accent: #00c8ff;
+    --btn-primary: #4caf50;
+    --btn-secondary: #6c63ff;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: var(--bg-darker);
+}
+
+.navbar-brand {
+    color: var(--text-accent);
+    font-weight: bold;
+}
+
+.navbar-brand:hover {
+    color: var(--btn-primary);
+}
+
+.btn-primary {
+    background-color: var(--btn-primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #3b8e3b;
+}
+
+.btn-secondary {
+    background-color: var(--btn-secondary);
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: #554ae0;
+}
+
+.card {
+    background-color: var(--bg-darker);
+    border: none;
+}
+
+.card-title {
+    color: var(--text-accent);
+}
+
+footer {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+    padding: 10px 0;
+    text-align: center;
+    margin-top: auto;
+}
+
+.modal-content {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}

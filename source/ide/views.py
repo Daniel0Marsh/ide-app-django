@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView
 from .models import Project
 from django.http import HttpResponseRedirect, JsonResponse, Http404
@@ -9,268 +9,474 @@ import os
 from django.http import FileResponse
 import shutil
 
+
+
+def get_project_tree(project_path):
+    project_tree = []
+    root_dir = os.path.basename(project_path)
+    for root, dirs, files in os.walk(project_path):
+        relative_path = os.path.relpath(root, project_path)
+        if relative_path == '.':
+            relative_path = ''
+        node = {
+            'name': root_dir if relative_path == '' else os.path.join(root_dir, relative_path),
+            'type': 'directory',
+            'children': []
+        }
+        for file in files:
+            file_path = os.path.join(root, file)
+            node['children'].append({
+                'name': file,
+                'type': 'file',
+                'path': file_path
+            })
+        project_tree.append(node)
+    return project_tree
+
+
 class IdeView(TemplateView):
     template_name = 'ide.html'
 
-    def get_project_tree(self, project_path):
-        project_tree = []
-        root_dir = os.path.basename(project_path)
-        for root, dirs, files in os.walk(project_path):
-            relative_path = os.path.relpath(root, project_path)
-            if relative_path == '.':
-                relative_path = ''
-            node = {
-                'name': root_dir if relative_path == '' else os.path.join(root_dir, relative_path),
-                'type': 'directory',
-                'children': []
-            }
-            for file in files:
-                file_path = os.path.join(root, file)
-                node['children'].append({
-                    'name': file,
-                    'type': 'file',
-                    'path': file_path
-                })
-            project_tree.append(node)
-        return project_tree
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests for the project view.
+        """
+        project_id = kwargs.get('project_id')
 
-    def get(self, request):
-        all_projects = Project.objects.all()
-        current_project = Project.objects.order_by('-modified_at').first()
-        if current_project:
-            context = {
-                'all_projects': all_projects,
-                'current_project': current_project,
-                'project_tree': self.get_project_tree(current_project.project_path)
-            }
+        if project_id:
+            try:
+                current_project = Project.objects.get(id=project_id)
+            except Project.DoesNotExist:
+                return redirect('dashboard')  # Redirect if the project does not exist
         else:
-            context = {
-                'all_projects': all_projects,
-                'current_project': "none",
-            }
+            current_project = Project.objects.order_by('-modified_at').first()
+
+        all_projects = Project.objects.all()
+        project_tree = get_project_tree(current_project.project_path)
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'project_tree': project_tree})
+
+        context = {
+            'all_projects': all_projects,
+            'current_project': current_project,
+            'project_tree': project_tree,
+        }
+
         return render(request, self.template_name, context)
 
-    def post(self, request):
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for various project actions.
+        """
+        project_id = kwargs.get('project_id')
+
+        if not project_id:
+            return HttpResponse("Project not found", status=404)
+
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+
         action_map = {
             'delete': self.delete,
             'save_file': self.save_file,
             'rename_file': self.save_file,
             'open_file': self.open_file,
             'prompt': self.prompt,
-            'open_project': self.open_project,
-            'create_project': self.create_project,
-            'download_project': self. download_project
+            'download_project': self.download_project,
         }
+
         action = next((key for key in action_map if key in request.POST), None)
         if action:
-            return action_map[action](request)
+            return action_map[action](request, project)
 
-    def prompt(self, request):
-        current_project = Project.objects.first()
-        project_name = current_project.project_name
-        project_path = current_project.project_path
-        file_path = os.path.join(project_path, project_name)
+        return HttpResponse("Invalid action", status=400)
+
+
+    def prompt(self, request, project):
+        """
+        Execute a command in the project's Docker container.
+        """
         prompt = request.POST.get('prompt')
+        if not prompt:
+            return JsonResponse({'response': ''}, status=400)
+
+        manager = ProjectContainerManager(project)
 
         try:
-            client = docker.from_env()
-            container_name = f"{project_name}_container"
+            # Execute the command using the method in ProjectContainerManager
+            response_output = manager.execute_command(prompt)
 
-            try:
-                existing_container = client.containers.get(container_name)
-            except docker.errors.NotFound:
-                existing_container = None
+            # Return the response
+            if response_output['exit_code'] != 0:
+                return JsonResponse({'response': response_output['formatted_output']}, status=500)
 
-            if not existing_container:
-                existing_container = client.containers.run(
-                    image='terminal_session',
-                    name=container_name,
-                    volumes={project_path: {'bind': '/projects', 'mode': 'rw'}},
-                    working_dir='/projects',
-                    stdin_open=True,
-                    tty=True,
-                    command='/bin/bash',
-                    detach=True
-                )
-
-            response = existing_container.exec_run(
-                cmd=['/bin/bash', '-c', prompt],
-                stdout=True,
-                stderr=True
-            )
-
-            response_output = response.output.decode().strip()  # Strip whitespace from response
-
-            if response_output:  # Check if response is not empty
-                return JsonResponse({'response': response_output},
-                                    status=response.exit_code if 100 <= response.exit_code <= 599 else 500)
-            else:
-                return JsonResponse({'response': 'No output from terminal.'}, status=200)
+            return JsonResponse({'response': response_output['formatted_output']}, status=200)
 
         except Exception as e:
             return JsonResponse({'response': str(e)}, status=500)
 
-    def open_file(self, request):
-        all_projects = Project.objects.all()
-        current_project = Project.objects.first()
-        project_path = current_project.project_path
-        file_name = request.POST.get('open_file')
-        file_path = request.POST.get('file_path')
 
-        # Check if the file exists
-        if os.path.exists(file_path):
-            # Read the file content
-            with open(file_path, 'r+') as f:
-                file_content = f.read()
+    def open_file(self, request, project):
+        """
+        Open a file within the specified project and return its content.
+        """
+        file_path = request.POST.get('open_file')
 
-            context = {
-                'all_projects': all_projects,
-                'current_project': current_project,
-                'file_name': file_name,
-                'file_path': file_path,
-                'file_content': file_content,
-                'project_tree': self.get_project_tree(project_path)
-            }
-            return render(request, self.template_name, context)
-        else:
-            # Handle case where file doesn't exist
+        if not file_path:
+            return HttpResponse("File path not provided", status=400)
+
+        if not os.path.exists(file_path):
             return HttpResponse("File not found", status=404)
 
-    @staticmethod
-    def delete(request):
-        project_id = request.POST.get('project_id')
-        current_project = Project.objects.get(id=project_id)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                file_content = file.read()
+        except Exception as e:
+            return HttpResponse(f"Error reading file: {e}", status=500)
 
-        project_path = current_project.project_path
+        context = {
+            'current_project': project,
+            'file_name': os.path.basename(file_path),
+            'file_path': file_path,
+            'file_content': file_content,
+            'project_tree': get_project_tree(project.project_path),
+        }
+
+        return render(request, self.template_name, context)
+
+
+    @staticmethod
+    def delete(request, project):
+        """
+        Delete a specified file from the project.
+        """
+        project_path = project.project_path
         file_path = request.POST.get('file_path')
 
-        # Check if the file exists
-        if os.path.exists(file_path):
-            # Delete the file
-            os.remove(file_path)
-            return HttpResponseRedirect(reverse('project'))
-        else:
-            # Handle case where file doesn't exist
-            return HttpResponseRedirect(reverse('project'))
+        if not file_path:
+            # Redirect if no file path is provided
+            return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
 
-        return HttpResponseRedirect(reverse('project'))
+        if not os.path.exists(file_path):
+            # Redirect if the file does not exist
+            return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
 
-    def save_file(self, request):
-        project_id = request.POST.get('project_id')
+        try:
+            os.remove(file_path)  # Attempt to delete the file
+        except OSError as e:
+            # Log the error for debugging purposes (if logging is set up)
+            print(f"Error deleting file {file_path}: {e}")
+
+        # Redirect back to the IDE page regardless of success or failure
+        return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
+
+
+    def save_file(self, request, project):
+        """
+        Save, rename, or create a new file in the project and update project settings.
+        """
         selected_theme = request.POST.get('selected_theme')
         selected_syntax = request.POST.get('selected_syntax')
 
         file_name = request.POST.get('file_name')
-        file_content = request.POST.get('file_contents')
+        file_content = request.POST.get('file_contents', '')
         file_path = request.POST.get('file_path')
         new_file_name = request.POST.get('new_file_name')
 
-        current_project = Project.objects.get(id=project_id)
-        project_path = current_project.project_path
+        # Fetch the current project
+        project_path = project.project_path
         all_projects = Project.objects.all()
 
-        if new_file_name and file_path:
-            # change file name here
-            directory, old_file_name = os.path.split(file_path)
-            path = os.path.join(directory, new_file_name)
-            file_name = new_file_name
-
-        elif new_file_name and not file_path:
-            # create new file with new_file_name
-            path = os.path.join(project_path, new_file_name)
-            file_name = new_file_name
-
-        elif file_name and file_path:
-            # save file
-            path = os.path.join(file_path)
-
-        elif file_name and not file_path:
-            # create new file with file_name
-            path = os.path.join(project_path, file_name)
-
+        if new_file_name:
+            if file_path:
+                # Rename an existing file
+                directory = os.path.dirname(file_path)
+                new_path = os.path.join(directory, new_file_name)
+                os.rename(file_path, new_path)
+                file_name = new_file_name
+                file_path = new_path
+            else:
+                # Create a new file with the provided new file name
+                new_path = os.path.join(project_path, new_file_name)
+                file_name = new_file_name
+                file_path = new_path
+        elif file_path:
+            # Save to an existing file
+            new_path = file_path
+        elif file_name:
+            # Create a new file with the provided file name
+            new_path = os.path.join(project_path, file_name)
         else:
-            # careate new file with "New_file.txt" as name
-            path = os.path.join(project_path, "New_file.txt")
-            file_name = "New_file.txt"
+            # Create a new file with a default name
+            new_path = os.path.join(project_path, "new_file.txt")
+            file_name = "new_file.txt"
 
-        with open(path, 'w') as f:
-            f.write(file_content)
+        # Write content to the file
+        try:
+            with open(new_path, 'w', encoding='utf-8') as f:
+                f.write(file_content)
+        except Exception as e:
+            return HttpResponse(f"Error saving file: {e}", status=500)
 
-        if selected_theme and selected_theme:
-            # Update selected_theme and selected_syntax in the model
-            current_project.selected_theme = selected_theme
-            current_project.selected_syntax = selected_syntax
-            current_project.save()
+        # Save theme and syntax settings
+        if selected_theme and selected_syntax:
+            project.selected_theme = selected_theme
+            project.selected_syntax = selected_syntax
+            project.save()
 
         context = {
             'all_projects': all_projects,
-            'current_project': current_project,
+            'current_project': project,
             'file_name': file_name,
-            'file_path': path,
+            'file_path': new_path,
             'file_content': file_content,
-            'project_tree': self.get_project_tree(project_path)
+            'project_tree': get_project_tree(project_path),
         }
+
+        # Render the IDE view with the updated file information
         return render(request, self.template_name, context)
 
-    def open_project(self, request):
-        project_id = request.POST.get('project_id')
-        all_projects = Project.objects.all()
 
-        current_project = Project.objects.get(id=project_id)
-        project_path = current_project.project_path
+    def download_project(self, request, project):
+        """
+        Create and return a zip file of the project's directory for download.
+        """
+        project_path = project.project_path
 
-        context = {
-            'all_projects': all_projects,
-            'current_project': current_project,
-            'project_tree': self.get_project_tree(project_path)
-        }
-        return render(request, self.template_name, context)
-
-    def create_project(self, request):
-        all_projects = Project.objects.all()
-        project_name = request.POST.get('project_name')
-        project_description = request.POST.get('project_description')
-
-        # Define the path where projects will be stored
-        default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
-
-        # Create the project directory if it doesn't exist
-        project_path = os.path.join(default_project_path, project_name)
-        os.makedirs(project_path, exist_ok=True)
-
-        # Create and save the project instance
-        current_project = Project(
-            project_name=project_name,
-            project_description=project_description,
-            project_path=project_path
-        )
-        current_project.save()
-
-        # Prepare the context for rendering
-        project_path = current_project.project_path
-        context = {
-            'all_projects': all_projects,
-            'current_project': current_project,
-            'project_tree': self.get_project_tree(project_path)
-        }
-        return render(request, self.template_name, context)
-
-    def download_project(self, request):
-        project_id = request.POST.get('project_id')
-        current_project = Project.objects.get(id=project_id)
-        project_path = current_project.project_path
-
-        # Extract the directory name from the path
+        # Extract the project directory name
         directory_name = os.path.basename(project_path)
 
-        # Create a zip file of the directory
-        zip_file_path = os.path.join("/tmp", f"{directory_name}.zip")  # Save the zip file temporarily
-        shutil.make_archive(zip_file_path[:-4], 'zip', project_path)
+        # Temporary path for the zip file
+        zip_file_path = os.path.join("/tmp", f"{directory_name}.zip")
 
-        # Create a FileResponse with the zip file
-        response = FileResponse(open(zip_file_path, 'rb'), as_attachment=True)
-        response['Content-Disposition'] = f'attachment; filename="{directory_name}.zip"'
+        try:
+            # Create the zip archive
+            shutil.make_archive(zip_file_path[:-4], 'zip', project_path)
 
-        # Remove the temporary zip file
-        os.remove(zip_file_path)
+            # Serve the zip file as a downloadable response
+            with open(zip_file_path, 'rb') as zip_file:
+                response = FileResponse(zip_file, as_attachment=True)
+                response['Content-Disposition'] = f'attachment; filename="{directory_name}.zip"'
+        except Exception as e:
+            return HttpResponse(f"Error creating zip file: {e}", status=500)
+        finally:
+            # Remove the temporary zip file
+            if os.path.exists(zip_file_path):
+                os.remove(zip_file_path)
+
         return response
+
+
+class DashboardView(TemplateView):
+    template_name = "dashboard.html"
+
+    def get(self, request):
+        """
+        Render the dashboard with a list of all projects.
+        """
+        all_projects = Project.objects.all()
+        context = {'all_projects': all_projects}
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        """
+        Handle actions such as opening, deleting, or creating a project.
+        """
+        action_map = {
+            'open_project': self.open_project,
+            'delete_project': self.delete_project,
+            'create_project': self.create_project,
+        }
+        action = next((key for key in action_map if key in request.POST), None)
+        if action:
+            return action_map[action](request)
+        return HttpResponse("Invalid action", status=400)
+
+    def open_project(self, request):
+        """
+        Open a project by redirecting to the IDE view.
+        """
+        project_id = request.POST.get('project_id')
+        if not project_id:
+            return HttpResponse("Project ID not provided", status=400)
+
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+
+        return redirect('ide', project_id=project.id)
+
+
+    def delete_project(self, request):
+        """
+        Delete a project, its associated files, and its Docker container.
+        """
+        project_id = request.POST.get('project_id')
+        if not project_id:
+            return HttpResponse("Project ID not provided", status=400)
+
+        try:
+            # Fetch the project from the database
+            project = Project.objects.get(id=project_id)
+
+            # Delete the Docker container associated with the project
+            container_manager = ProjectContainerManager(project)
+            container_manager.delete_container()  # Delete the container if it exists
+
+            # Delete the project directory
+            shutil.rmtree(project.project_path)  # Remove the project's directory
+
+            # Delete the project from the database
+            project.delete()
+
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+        except Exception as e:
+            return HttpResponse(f"Error deleting project: {e}", status=500)
+
+        # After deletion, determine the current project and render the updated dashboard
+        all_projects = Project.objects.all()
+        current_project = Project.objects.order_by('-modified_at').first()
+
+        context = {
+            'all_projects': all_projects,
+            'current_project': current_project or "none",
+        }
+
+        # If there's a current project, fetch and add the project tree
+        if current_project:
+            context['project_tree'] = get_project_tree(current_project.project_path)
+
+        return render(request, self.template_name, context)
+
+
+    def create_project(self, request):
+        """
+        Create a new project and redirect to the IDE view.
+        """
+        project_name = request.POST.get('project_name')
+        project_description = request.POST.get('project_description')
+        if not project_name:
+            return HttpResponse("Project name is required", status=400)
+
+        # Define the base directory for projects
+        default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
+        project_path = os.path.join(default_project_path, project_name)
+
+        try:
+            # Create the project directory
+            os.makedirs(project_path, exist_ok=True)
+
+            # Save the project to the database
+            current_project = Project(
+                project_name=project_name,
+                project_description=project_description,
+                project_path=project_path
+            )
+            current_project.save()
+        except Exception as e:
+            return HttpResponse(f"Error creating project: {e}", status=500)
+
+        # Redirect to the IDE view for the new project
+        return redirect('ide', project_id=current_project.id)
+
+
+class ProjectContainerManager:
+    """
+    Manage Docker containers for each project.
+    """
+    def __init__(self, project):
+        self.project = project
+        self.project_name = os.path.basename(project.project_path)
+        self.container_name = f"{self.project_name}_container"
+        self.project_path = project.project_path
+        self.client = docker.from_env()
+
+    def get_container(self):
+        """
+        Retrieve the Docker container for the project.
+        """
+        try:
+            return self.client.containers.get(self.container_name)
+        except docker.errors.NotFound:
+            return None
+
+    def create_container(self):
+        """
+        Create a new Docker container for the project.
+        """
+        return self.client.containers.run(
+            image='terminal_session',
+            name=self.container_name,
+            volumes={self.project_path: {'bind': f'/{self.project_name}', 'mode': 'rw'}},
+            working_dir=f'/{self.project_name}',
+            stdin_open=True,
+            tty=True,
+            command='/bin/bash -l',
+            detach=True,
+            user=f"{os.getuid()}:{os.getgid()}",
+            security_opt=["no-new-privileges"],
+            read_only=False,
+        )
+
+    def start_container(self):
+        """
+        Start the Docker container if it exists but is not running.
+        """
+        container = self.get_container()
+        if container and container.status != "running":
+            container.start()
+        elif not container:
+            container = self.create_container()
+        return container
+
+    def stop_container(self):
+        """
+        Stop the Docker container if it's running.
+        """
+        container = self.get_container()
+        if container and container.status == "running":
+            container.stop()
+
+    def delete_container(self):
+        """
+        Delete the Docker container if it exists.
+        """
+        container = self.get_container()
+        if container:
+            container.remove(force=True)
+
+
+    def execute_command(self, command):
+        """
+        Execute a given command in the container and format the output.
+        """
+        container = self.start_container()
+        try:
+            response = container.exec_run(
+                cmd=['/bin/bash', '-c', command],
+                stdout=True,
+                stderr=True,
+                stdin=True,
+                tty=True
+            )
+
+            # Process and format the output
+            output = response.output.decode().strip()
+            output = output.replace(' ', '&nbsp;')  # Preserve spaces
+            formatted_output = f'<pre>{output}</pre>'  # Preserve formatting
+
+            # Return the formatted output and exit code
+            return {
+                'formatted_output': formatted_output,
+                'exit_code': response.exit_code
+            }
+
+        except Exception as e:
+            raise RuntimeError(f"Error executing command: {str(e)}")
+

@@ -1,4 +1,3 @@
-
 var editor;
 
 function changeTheme(theme) {
@@ -51,7 +50,6 @@ document.querySelectorAll('.collapse').forEach(function(collapse) {
 });
 
 
-
 // ajax used to send and receive the terminal prompts and responses
 function sendPrompt() {
 var promptValue = document.querySelector('.terminal-input').value;
@@ -60,7 +58,10 @@ var formData = new FormData();
 formData.append('prompt', promptValue);
 
 var terminalDiv = document.getElementById('terminal');
-terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + promptValue + '</div>'; // Append input text
+var project_name = "{{ current_project.project_name }}";
+terminalDiv.innerHTML += '<div><span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/' + project_name + '</span>$ ' + promptValue + '</div>';
+
+
 
 if (promptValue.toLowerCase() === 'clear') {
     terminalDiv.innerHTML = ''; // Clear the terminal
@@ -80,7 +81,7 @@ fetch('', {
 .then(data => {
     console.log(data); // Do something with the response
     // Append the response to the terminal UI
-    terminalDiv.innerHTML += '<div><span class="prompt">User$</span> ' + data.response + '</div>';
+    terminalDiv.innerHTML += '<div><span class="prompt"></span> ' + data.response + '</div>';
     // Clear the input field after sending the prompt
     document.querySelector('.terminal-input').value = '';
 })
@@ -97,6 +98,107 @@ if (current_project === "none") {
 }
 };
 
+function toggleOffcanvasHeight() {
+    const offcanvasElement = document.getElementById('offcanvasBottom');
+    if (offcanvasElement.classList.contains('h-50')) {
+        offcanvasElement.classList.remove('h-50');
+        offcanvasElement.classList.add('h-100');
+    } else {
+        offcanvasElement.classList.remove('h-100');
+        offcanvasElement.classList.add('h-50');
+    }
+}
 
 
+    // Store the collapse state in an object
+    let collapseState = {};
 
+    // Function to update the project tree
+    function updateProjectTree() {
+        // Before updating the tree, store the current state of collapse elements
+        document.querySelectorAll('.collapse').forEach(collapseElement => {
+            const id = collapseElement.id;
+            collapseState[id] = collapseElement.classList.contains('show');
+        });
+
+        // Save the scroll position of the sidebar to avoid shifting
+        const sidebar = document.querySelector('#sidebar');
+        const scrollPosition = sidebar.scrollTop;
+
+        fetch(window.location.href, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.project_tree) {
+                const treeContainer = document.querySelector('#sidebar ul');
+                treeContainer.innerHTML = ''; // Clear the existing tree
+
+                // Generate new tree HTML
+                const treeHTML = generateTreeHTML(data.project_tree);
+                treeContainer.innerHTML = treeHTML;
+
+                // Reapply the saved collapse state
+                document.querySelectorAll('.collapse').forEach(collapseElement => {
+                    const id = collapseElement.id;
+                    if (collapseState[id]) {
+                        // If the state was 'expanded', reapply the 'show' class
+                        collapseElement.classList.add('show');
+                    } else {
+                        // Otherwise, collapse it
+                        collapseElement.classList.remove('show');
+                    }
+                });
+
+                // Reinitialize collapse buttons
+                document.querySelectorAll('.btn.folder-btn').forEach(button => {
+                    const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
+                    if (targetCollapse && targetCollapse.classList.contains('show')) {
+                        button.setAttribute('aria-expanded', 'true');
+                    } else {
+                        button.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                // Reapply the scroll position to prevent visual movement
+                sidebar.scrollTop = scrollPosition;
+            }
+        })
+        .catch(error => console.error('Error fetching project tree:', error));
+    }
+
+    // Function to generate tree HTML from the project tree structure
+    function generateTreeHTML(nodes) {
+        let html = '';
+        nodes.forEach(node => {
+            if (node.type === 'directory') {
+                html += `<li>
+                            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#${slugify(node.name)}" aria-expanded="false">
+                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
+                            </button>
+                            <ul class="collapse" id="${slugify(node.name)}">
+                                ${generateTreeHTML(node.children)}  <!-- Recursive call -->
+                            </ul>
+                          </li>`;
+            } else if (node.type === 'file') {
+                html += `<li>
+                            <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
+                                <i class="bi bi-file-earmark-code"></i> ${node.name}
+                            </button>
+                          </li>`;
+            }
+        });
+        return html;
+    }
+
+    // Function to safely create slugs for the element IDs
+    function slugify(text) {
+        return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    }
+
+    // Update the project tree every 5 seconds
+    setInterval(updateProjectTree, 3000);

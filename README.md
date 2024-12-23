@@ -44,21 +44,15 @@ sudo docker build -t terminal_session .
 ```
 - You can remove the docker image as follows: 
 ```bash
-docker rmi -f terminal_session
+sudo docker rmi -f terminal_session
 ```
 
-6. Add User to Docker Group and set permissions:
-```bash
-sudo usermod -aG docker your_username
-sudo chmod 666 /var/run/docker.sock
-```
-
-7. Start your Django development server:
+6. Start your Django development server:
 ```bash
 python manage.py runserver
 ```
 
-8. Navigate to the IDE app's URL in your browser to access the IDE.
+7. Navigate to the IDE app's URL in your browser to access the IDE.
    `http:127.0.0.1:8000`
 
 ### Functionality
