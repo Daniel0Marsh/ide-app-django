@@ -1,8 +1,8 @@
+from django.contrib.auth.models import User
 from django.db import models
-import os
 from django.db.models import TextField
 from django.conf import settings
-
+import os
 
 default_project_path = file_path = os.path.join(settings.BASE_DIR, "UserProjects")
 
@@ -46,13 +46,14 @@ class Project(models.Model):
         ('typescript', 'TypeScript'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100, default=default_project_path)
     project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
     modified_at = models.DateTimeField(auto_now=True)
-
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.project_name

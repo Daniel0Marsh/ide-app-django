@@ -460,7 +460,7 @@ document.querySelectorAll('.collapse').forEach(function(collapse) {
 });
 
 
-// ajax used to send and receive the terminal prompts and responses
+// AJAX used to send and receive the terminal prompts and responses
 function sendPrompt() {
     const promptValue = document.querySelector('.terminal-input').value.trim();
     if (!promptValue) return;
@@ -469,50 +469,72 @@ function sendPrompt() {
     commandHistory.push(promptValue);
     historyIndex = commandHistory.length;
 
-var formData = new FormData();
-formData.append('prompt', promptValue);
+    const formData = new FormData();
+    formData.append('prompt', promptValue);
 
-var terminalDiv = document.getElementById('terminal');
-var project_name = "{{ current_project.project_name }}";
-terminalDiv.innerHTML += '<div><span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/' + project_name + '</span>$ ' + promptValue + '</div>';
+    const terminalDiv = document.getElementById('terminal');
+    const projectName = "{{ current_project.project_name }}";
 
+    // Append the user's command in terminal-like format
+    terminalDiv.innerHTML += `<div>
+        <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/${projectName}</span>$ ${promptValue}
+    </div>`;
 
-
-if (promptValue.toLowerCase() === 'clear') {
-    terminalDiv.innerHTML = ''; // Clear the terminal
-    // Clear the input field after sending the prompt
-    document.querySelector('.terminal-input').value = '';
-    return; // Exit the function
-}
-
-fetch('', {
-    method: 'POST',
-    body: formData,
-    headers: {
-        'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+    if (promptValue.toLowerCase() === 'clear') {
+        terminalDiv.innerHTML = ''; // Clear the terminal
+        document.querySelector('.terminal-input').value = ''; // Clear the input field
+        return; // Exit the function
     }
-})
-.then(response => response.json())
-.then(data => {
-    console.log(data); // Do something with the response
-    // Append the response to the terminal UI
-    terminalDiv.innerHTML += '<div><span class="prompt"></span> ' + data.response + '</div>';
-    // Clear the input field after sending the prompt
-    document.querySelector('.terminal-input').value = '';
-})
-.catch(error => console.error('Error:', error));
-}
 
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Log response to console for debugging
+
+        if (data.input_prompt) {
+            // If the backend has sent an 'input_prompt', display it for user input
+            const inputDiv = document.createElement('div');
+            inputDiv.innerHTML = `<span class="output">${data.input_prompt}</span>`;
+            terminalDiv.appendChild(inputDiv);
+
+            // Focus on the input field to allow the user to respond
+            document.querySelector('.terminal-input').focus();
+        } else {
+            // Format response with new lines for better terminal output style
+            const formattedResponse = data.response
+                .split('\n') // Split response by newlines
+                .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
+                .join('');
+
+            // Append the formatted response to the terminal UI
+            terminalDiv.innerHTML += formattedResponse;
+
+            // Scroll to the bottom of the terminal
+            terminalDiv.scrollTop = terminalDiv.scrollHeight;
+
+            // Clear the input field after processing
+            document.querySelector('.terminal-input').value = '';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
 let commandHistory = [];
 let historyIndex = -1;
 
+// Handle command history navigation
 document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp') {
         // Navigate up the history
         if (historyIndex > 0) historyIndex--;
         e.target.value = commandHistory[historyIndex] || '';
-        e.preventDefault(); // Prevent the default cursor movement
+        e.preventDefault(); // Prevent default cursor movement
     } else if (e.key === 'ArrowDown') {
         // Navigate down the history
         if (historyIndex < commandHistory.length - 1) historyIndex++;

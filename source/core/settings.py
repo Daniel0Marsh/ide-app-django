@@ -13,7 +13,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -22,7 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ide'
+    'user',
+    'ide',
 ]
 
 MIDDLEWARE = [
@@ -64,6 +64,9 @@ DATABASES = {
     }
 }
 
+# redirect for login/logout
+LOGIN_REDIRECT_URL = 'dashboard/'
+LOGOUT_REDIRECT_URL = 'login/'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

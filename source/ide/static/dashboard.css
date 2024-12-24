@@ -68,3 +68,46 @@ footer {
     background-color: var(--bg-darker);
     color: var(--text-light);
 }
+
+
+.activity-calendar {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr); /* 52 weeks + 1 for labels */
+    grid-auto-rows: 1fr;
+    gap: 2px;
+}
+
+.day {
+    width: 20px;
+    height: 20px;
+    background-color: var(--bg-darker);
+    border-radius: 2px;
+    transition: background-color 0.3s ease;
+}
+
+.day[data-count="0"] {
+    background-color: var(--bg-darker); /* No activity */
+}
+
+.day[data-count="1"] {
+    background-color: var(--btn-secondary); /* Low activity, light accent */
+}
+
+.day[data-count="2"] {
+    background-color: rgba(0, 200, 255, 0.5); /* Medium activity */
+}
+
+.day[data-count="3"] {
+    background-color: rgba(0, 200, 255, 0.7); /* High activity */
+}
+
+.day[data-count="4"] {
+    background-color: var(--btn-primary); /* Very high activity, primary button color */
+}
+
+.day:hover {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+
