@@ -1,9 +1,9 @@
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
+from .models import CustomUser  # Import your custom user model
 
 
 class LoginView(View):
@@ -40,16 +40,20 @@ class RegisterView(View):
         username = request.POST.get('username')
         password = request.POST.get('password')
 
-        if User.objects.filter(username=username).exists():
+        # Check for existing username or email
+        if CustomUser.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken')
             return redirect('register')
 
-        if User.objects.filter(email=email).exists():
+        if CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered')
             return redirect('register')
 
-        User.objects.create_user(username=username, email=email, password=password)
+        # Create user using CustomUser
+        CustomUser.objects.create_user(username=username, email=email, password=password)
+        messages.success(request, 'Registration successful! Please log in.')
         return redirect(reverse_lazy('login'))
+
 
 
 class LogoutView(View):

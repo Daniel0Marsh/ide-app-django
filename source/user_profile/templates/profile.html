@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user_profile.username }}'s Profile</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'profile.css' %}">
+    <script src="{% static 'profile.js' %}"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-none d-md-block col-md-3" id="sidebar">
+
+        <div class="card profile-info shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+            <div class="card-body">
+                <!-- Profile Image as Edit Button -->
+                <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                </button>
+                <h5>{{ user_profile.username }}</h5>
+                <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
+
+                <!-- Followers and Following section -->
+                <!-- Trigger buttons in the sidebar -->
+                <div class="follow-info mt-2 d-flex justify-content-between">
+                    <p>
+                        <strong>Followers:</strong>
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#followersModal">
+                            {{ user_profile.followers.count }}
+                        </button>
+                    </p>
+                    <p>
+                        <strong>Following:</strong>
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#followingModal">
+                            {{ user_profile.following.count }}
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% if is_own_profile %}
+            <!-- Show bio card for the logged-in user (with edit button) -->
+            <div class="card user-bio p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                <div class="card-body">
+                    {% if user_profile.bio %}
+                        <p>{{ user_profile.bio }}</p>
+                    {% endif %}
+                    <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#editBioModal">
+                        Edit Bio
+                    </button>
+                </div>
+            </div>
+        {% elif user_profile.bio %}
+            <!-- Show bio card for others' profiles only if the bio exists -->
+            <div class="card user-bio p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                <div class="card-body">
+                    <p>{{ user_profile.bio }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+
+
+        <div class="card projects shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+            <div class="card-body">
+                <h5>All Projects</h5>
+                {% for project in user_projects %}
+                <div class="card p-1 mb-1 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
+                    <h5 class="card-title">{{ project.project_name }}</h5>
+                    <p class="card-text text-light">{{ project.project_description }}</p>
+                    <div class="d-flex">
+                        <form method="post" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="project_id" value="{{ project.id }}">
+                            <button class="btn btn-secondary btn-sm" name="open_project">Open</button>
+                        </form>
+                        <form method="post" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="project_id" value="{{ project.id }}">
+                            <button class="btn btn-danger btn-sm mx-1" name="delete_project">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-light">No projects available. Start by creating a new project!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end m-2">
+        <button class="btn btn-primary me-2" id="sidebarToggle" aria-label="Toggle Sidebar">
+            <i class="bi bi-list fs-5 text-light"></i>
+        </button>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-danger me-5" type="submit">Logout
+                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+            </button>
+        </form>
+    </div>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Activity Section -->
+        <div class="mb-5">
+            <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                <h3 class=" mb-2 text-light">Activity Calendar</h3>
+                <!-- Legend -->
+                <div class="activity-legend mb-2 d-flex align-items-center">
+                    <span class="text-light me-2">Low</span>
+                    <div class="legend-bar" style="flex: 1; height: 10px; background: linear-gradient(to right, var(--bg-darker), var(--btn-secondary), rgba(0, 200, 255, 0.5), rgba(0, 200, 255, 0.7), var(--btn-primary)); border-radius: 5px;"></div>
+                    <span class="text-light ms-2">High</span>
+                </div>
+                <div class="activity-calendar">
+                    {% for day in activity_days %}
+                        <div class="day" title="{{ day.date }}: {{ day.count }} activities"
+                             data-count="{{ day.count }}">
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Projects -->
+        <div class="mb-5">
+            <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                <h2 class="mb-3 text-light">Recent Projects</h2>
+                <div class="row g-4">
+                    {% for project in user_projects|slice:":3" %}
+                    <div class="col-md-4">
+                        <div class="card p-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
+                            <h5 class="card-title">{{ project.project_name }}</h5>
+                            <p class="card-text text-light">{{ project.project_description }}</p>
+                            <div class="d-flex">
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                                    <button class="btn btn-secondary btn-sm" name="open_project">Open</button>
+                                </form>
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                                    <button class="btn btn-danger btn-sm mx-1" name="delete_project">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-light">No projects available. Start by creating a new project!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- New project -->
+        <div class="row">
+            <div class="col-md-3 mb-5">
+                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <h4 class="text-light">Python Project</h4>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <h4 class="text-light">Java Project</h4>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <h4 class="text-light">JavaScript Project</h4>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <h4 class="text-light">C++ Project</h4>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Project Modal -->
+    <div class="modal fade" id="CreateProjectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="CreateProjectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-light">
+                    <h5 class="modal-title" id="CreateProjectModalLabel">Create New Project</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="modal-body text-light">
+                        <div class="mb-3">
+                            <label for="project_name" class="form-label">Project Name</label>
+                            <input type="text" id="project_name" name="project_name" class="form-control bg-dark text-light border-secondary" placeholder="Enter project name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="project_description" class="form-label">Project Description</label>
+                            <textarea id="project_description" name="project_description" class="form-control bg-dark text-light border-secondary" placeholder="Enter project description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="create_project" class="btn btn-primary">Create</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal for Editing Profile -->
+    <div class="modal fade" id="editProfileModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-light">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-light">
+                    <form method="POST" enctype="multipart/form-data" action="">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="profile_picture" class="form-label">Profile Picture</label>
+                            <input type="file" class="form-control bg-dark text-light" id="profile_picture" name="profile_picture">
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control bg-dark text-light" id="username" name="username" value="{{ user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control bg-dark text-light" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <button type="submit" name="edit_profile" class="btn btn-primary">Save changes</button>
+                    </form>
+                    <hr>
+                    <!-- Button to open Change Password modal -->
+                    <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Changing Password -->
+    <div class="modal fade" id="changePasswordModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-light">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-light">
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_new_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                        </div>
+                        <button type="submit" name="change_password" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Followers Modal -->
+    <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="followersModalLabel">Followers</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        {% for follower in user_profile.followers.all %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ follower.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                                    <span>{{ follower.username }}</span>
+                                </div>
+                                <div>
+                                    <a href="{% url 'public_profile' follower.username %}" class="btn btn-sm btn-primary me-2">View Profile</a>
+                                    <a href="" class="btn btn-sm btn-secondary">Chat</a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">No followers yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Following Modal -->
+    <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="followingModalLabel">Following</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        {% for following in user_profile.following.all %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ following.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                                    <span>{{ following.username }}</span>
+                                </div>
+                                <div>
+                                    <a href="{% url 'public_profile' following.username %}" class="btn btn-sm btn-primary me-2">View Profile</a>
+                                    <a href="" class="btn btn-sm btn-secondary">Chat</a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">Not following anyone yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing the bio -->
+    <div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBioModalLabel">Edit Bio</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Bio edit form -->
+            <form method="POST" action="">
+              {% csrf_token %}
+              <div class="mb-3">
+                <textarea class="form-control bg-dark text-light" id="bio" name="bio" rows="4">{{ user_profile.bio }}</textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Save changes</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

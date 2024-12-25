@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import TextField
 from django.conf import settings
@@ -46,7 +45,7 @@ class Project(models.Model):
         ('typescript', 'TypeScript'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100, default=default_project_path)
     project_description = TextField(blank=True, null=True)

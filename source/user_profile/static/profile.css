@@ -11,22 +11,6 @@
 body {
     background-color: var(--bg-dark);
     color: var(--text-light);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.navbar {
-    background-color: var(--bg-darker);
-}
-
-.navbar-brand {
-    color: var(--text-accent);
-    font-weight: bold;
-}
-
-.navbar-brand:hover {
-    color: var(--btn-primary);
 }
 
 .btn-primary {
@@ -54,14 +38,6 @@ body {
 
 .card-title {
     color: var(--text-accent);
-}
-
-footer {
-    background-color: var(--bg-darker);
-    color: var(--text-light);
-    padding: 10px 0;
-    text-align: center;
-    margin-top: auto;
 }
 
 .modal-content {
@@ -110,4 +86,85 @@ footer {
     cursor: pointer;
 }
 
+.main-content {
+    margin-right: 40px;
+    margin-left: 390px;
+}
 
+/* Sidebar Styles */
+.sidebar {
+    width: 350px;
+    background-color: var(--bg-darker);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    color: var(--text-light);
+    transition: transform 0.3s ease; /* Transition for sidebar when toggled on small screens */
+}
+
+/* Hide sidebar on small screens */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%); /* Initially hide sidebar off-screen */
+    }
+    .sidebar.show {
+        transform: translateX(0); /* Show sidebar when toggled */
+    }
+    .main-content {
+        margin-left: 20px; /* Adjust margin when sidebar is hidden on small screens */
+    }
+}
+
+/* Style for the profile section */
+.profile-info {
+    text-align: center;
+    color: var(--bg-light);
+    margin: 20px;
+}
+
+.profile-info .profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info h5 {
+    font-size: 1.2rem;
+    margin: 10px 0;
+}
+
+.profile-info p {
+    font-size: 0.9rem;
+    margin: 5px 0;
+}
+
+/* Style for the followers and following section */
+.follow-info {
+    font-size: 0.9rem;
+    color: var(--text-accent);
+    display: flex;
+    justify-content: space-between;
+}
+
+.follow-info p {
+    margin: 0 10px;
+}
+
+.user-bio {
+    text-align: center;
+    color: var(--bg-light);
+    margin: 20px;
+}
+
+.user-bio p {
+    font-size: 0.9rem;
+    margin: 0 10px;
+}
+
+.projects {
+    text-align: center;
+    color: var(--bg-light);
+    margin: 20px;
+}

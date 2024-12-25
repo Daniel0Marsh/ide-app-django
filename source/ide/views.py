@@ -4,14 +4,17 @@ from .models import Project
 from django.http import HttpResponseRedirect, JsonResponse, Http404, HttpResponse
 from django.urls import reverse
 from django.conf import settings
-import docker
-import os
 from django.http import FileResponse
-import shutil
 from django.contrib.auth.mixins import LoginRequiredMixin
 from datetime import datetime, timedelta
 from django.utils.timezone import now
-
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth import update_session_auth_hash
+from django.shortcuts import redirect
+from django.contrib import messages
+import docker
+import os
+import shutil
 
 
 def get_project_tree(project_path):
@@ -274,162 +277,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
                 os.remove(zip_file_path)
 
         return response
-
-class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = "dashboard.html"
-    login_url = 'login'  # Redirect to the login page if not authenticated
-
-
-    def get(self, request):
-        """
-        Render the dashboard with a list of the user's projects and activities.
-        """
-        # Get projects related to the currently logged-in user
-        user_projects = Project.objects.filter(user=request.user)
-        recent_activities, days = self.user_activity(user_projects)
-
-        context = {
-            'user_projects': user_projects,
-            'recent_activities': recent_activities,
-            'activity_days': days
-        }
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        """
-        Handle actions such as opening, deleting, or creating a project.
-        """
-        action_map = {
-            'open_project': self.open_project,
-            'delete_project': self.delete_project,
-            'create_project': self.create_project,
-        }
-        action = next((key for key in action_map if key in request.POST), None)
-        if action:
-            return action_map[action](request)
-        return HttpResponse("Invalid action", status=400)
-
-
-    def user_activity(self, user_projects):
-        """
-        Retrieve the 5 most recent activities and the activity data for the past year
-        based on the modified_at field of user projects.
-        """
-        # Get the 5 most recent activities based on the modified_at field
-        recent_activities = user_projects.order_by('-modified_at')[:5]
-
-        # Generate activity data for the past year
-        start_date = now() - timedelta(days=365)
-        end_date = now()
-        activities = user_projects.filter(modified_at__range=(start_date, end_date))
-
-        # Create a dictionary to count activities per day
-        activity_data = {}
-        for activity in activities:
-            day = activity.modified_at.date()
-            activity_data[day] = activity_data.get(day, 0) + 1
-
-        # Generate a list of activity data for each day in the past year
-        days = [
-            {'date': current_date, 'count': activity_data.get(current_date.date(), 0)}
-            for current_date in (start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1))
-        ]
-
-        return recent_activities, days
-
-
-    def open_project(self, request):
-        """
-        Open a project by redirecting to the IDE view.
-        """
-        project_id = request.POST.get('project_id')
-        if not project_id:
-            return HttpResponse("Project ID not provided", status=400)
-
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            return HttpResponse("Project not found", status=404)
-
-        return redirect('ide', project_id=project.id)
-
-
-    def delete_project(self, request):
-        """
-        Delete a project, its associated files, and its Docker container.
-        """
-        project_id = request.POST.get('project_id')
-        if not project_id:
-            return HttpResponse("Project ID not provided", status=400)
-
-        try:
-            # Fetch the project from the database
-            project = Project.objects.get(id=project_id)
-
-            # Delete the Docker container associated with the project
-            container_manager = ProjectContainerManager(project)
-            container_manager.delete_container()  # Delete the container if it exists
-
-            # Delete the project directory
-            shutil.rmtree(project.project_path)  # Remove the project's directory
-
-            # Delete the project from the database
-            project.delete()
-
-        except Project.DoesNotExist:
-            return HttpResponse("Project not found", status=404)
-        except Exception as e:
-            return HttpResponse(f"Error deleting project: {e}", status=500)
-
-        # After deletion, determine the current project and render the updated dashboard
-        user_projects = Project.objects.all()
-        current_project = Project.objects.order_by('-modified_at').first()
-        recent_activities, days = self.user_activity(user_projects)
-
-        context = {
-            'user_projects': user_projects,
-            'recent_activities': recent_activities,
-            'activity_days': days
-        }
-
-        # If there's a current project, fetch and add the project tree
-        if current_project:
-            context['project_tree'] = get_project_tree(current_project.project_path)
-
-        return render(request, self.template_name, context)
-
-
-    def create_project(self, request):
-        """
-        Create a new project and redirect to the IDE view.
-        """
-        project_name = request.POST.get('project_name')
-        project_description = request.POST.get('project_description')
-
-        if not project_name:
-            return HttpResponse("Project name is required", status=400)
-
-        # Define the base directory for projects
-        default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
-        project_path = os.path.join(default_project_path, project_name)
-
-        try:
-            # Create the project directory
-            os.makedirs(project_path, exist_ok=True)
-
-            # Save the project to the database with the user as the owner
-            current_project = Project(
-                project_name=project_name,
-                project_description=project_description,
-                project_path=project_path,
-                user=request.user  # Associate the project with the logged-in user
-            )
-            current_project.save()
-        except Exception as e:
-            return HttpResponse(f"Error creating project: {e}", status=500)
-
-        # Redirect to the IDE view for the new project
-        return redirect('ide', project_id=current_project.id)
 
 
 class ProjectContainerManager:
