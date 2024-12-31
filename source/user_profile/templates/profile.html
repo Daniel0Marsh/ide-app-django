@@ -21,15 +21,30 @@
 
         <div class="card profile-info shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
             <div class="card-body">
-                <!-- Profile Image as Edit Button -->
+
+            <!-- Profile Image as Edit Button -->
+            {% if is_own_profile %}
                 <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
                     <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
                 </button>
-                <h5>{{ user_profile.username }}</h5>
-                <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
+            {% else %}
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="target_user" value="{{ user_profile.username }}">
+                    <button type="submit" name="follow_unfollow" class="btn text-light p-0">
+                        {% if is_following %}
+                            <i class="bi bi-dash-square"></i> <!-- Unfollow Icon -->
+                        {% else %}
+                            <i class="bi bi-plus-square"></i> <!-- Follow Icon -->
+                        {% endif %}
+                        <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                    </button>
+                </form>
+            {% endif %}
 
-                <!-- Followers and Following section -->
-                <!-- Trigger buttons in the sidebar -->
+            <h5>{{ user_profile.username }}</h5>
+            <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
+
                 <div class="follow-info mt-2 d-flex justify-content-between">
                     <p>
                         <strong>Followers:</strong>
@@ -49,7 +64,7 @@
 
         {% if is_own_profile %}
             <!-- Show bio card for the logged-in user (with edit button) -->
-            <div class="card user-bio p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+            <div class="card user-bio shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
                 <div class="card-body">
                     {% if user_profile.bio %}
                         <p>{{ user_profile.bio }}</p>
@@ -271,15 +286,15 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="current_password" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            <input type="password" class="form-control bg-dark text-light" id="current_password" name="current_password" required>
                         </div>
                         <div class="mb-3">
                             <label for="new_password" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            <input type="password" class="form-control bg-dark text-light" id="new_password" name="new_password" required>
                         </div>
                         <div class="mb-3">
                             <label for="confirm_new_password" class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                            <input type="password" class="form-control bg-dark text-light" id="confirm_new_password" name="confirm_new_password" required>
                         </div>
                         <button type="submit" name="change_password" class="btn btn-primary">Update Password</button>
                     </form>
@@ -366,7 +381,7 @@
               <div class="mb-3">
                 <textarea class="form-control bg-dark text-light" id="bio" name="bio" rows="4">{{ user_profile.bio }}</textarea>
               </div>
-              <button type="submit" class="btn btn-primary">Save changes</button>
+              <button type="submit" name="edit_bio" class="btn btn-primary">Save changes</button>
             </form>
           </div>
         </div>

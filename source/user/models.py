@@ -12,7 +12,8 @@ class CustomUser(AbstractUser):
         related_name='followers',
         blank=True
     )
-    bio = models.TextField(null=True, blank=True)  # New bio field
+    bio = models.TextField(null=True, blank=True)
+    activity_log = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return self.username
