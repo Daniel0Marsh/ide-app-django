@@ -18,6 +18,59 @@ import os
 import shutil
 
 
+def add_activity_to_log(user, project_name, action):
+    """
+    Add a new activity entry to the user's activity log.
+    """
+
+    new_activity = {
+        'project_name': project_name,
+        'date_time': now().strftime('%Y-%m-%d %H:%M:%S'),
+        'action': action,
+    }
+
+    # Append the new activity to the activity log
+    if isinstance(user.activity_log, list):
+        user.activity_log.append(new_activity)
+    else:
+        user.activity_log = [new_activity]
+
+    # Save the updated activity log
+    user.save()
+
+
+def user_activity(user_projects, user_profile):
+    """
+    Retrieve the 5 most recent activities and the activity data for the past year
+    based on the activity_log field of the user.
+    """
+
+    # Get the 5 most recent projects
+    recent_projects = user_projects.order_by('-modified_at')[:5]
+
+    # Get all the activities
+    recent_activity = user_profile.activity_log
+
+    # Generate activity data for the past year
+    start_date = now() - timedelta(days=365)
+    end_date = now()
+
+    # Create a dictionary to count activities per day
+    activity_data = {}
+    for entry in user_profile.activity_log:
+        entry_date = now().strptime(entry['date_time'], '%Y-%m-%d %H:%M:%S').date()
+        if start_date.date() <= entry_date <= end_date.date():
+            activity_data[entry_date] = activity_data.get(entry_date, 0) + 1
+
+    # Generate a list of activity data for each day in the past year
+    activity_days = [
+        {'date': current_date, 'count': activity_data.get(current_date.date(), 0)}
+        for current_date in (start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1))
+    ]
+
+    return recent_projects, activity_days, recent_activity
+
+
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "profile.html"
     login_url = 'login'  # Redirect to the login page if not authenticated
@@ -38,15 +91,16 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             user_profile = request.user
             user_projects = Project.objects.filter(user=request.user)
 
-        recent_activities, days = self.user_activity(user_projects)
+        recent_projects, activity_days, recent_activity = user_activity(user_projects, user_profile)
         is_following = request.user.is_authenticated and request.user.is_following(user_profile)
 
         context = {
-            'user_profile': user_profile,  # Pass the user profile to the template
+            'user_profile': user_profile,
             'user_projects': user_projects,
-            'recent_activities': recent_activities,
-            'activity_days': days,
-            'is_own_profile': user_profile == request.user,  # Check if it's the current user's profile,
+            'recent_activities': recent_projects,
+            'activity_days': activity_days,
+            'recent_activity': recent_activity,
+            'is_own_profile': user_profile == request.user,
             'is_following': is_following,
         }
         return self.render_to_response(context)
@@ -69,34 +123,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             return action_map[action](request)
         return HttpResponse("Invalid action", status=400)
 
-    def user_activity(self, user_projects):
-        """
-        Retrieve the 5 most recent activities and the activity data for the past year
-        based on the modified_at field of user projects.
-        """
-        # Get the 5 most recent activities based on the modified_at field
-        recent_activities = user_projects.order_by('-modified_at')[:5]
-
-        # Generate activity data for the past year
-        start_date = now() - timedelta(days=365)
-        end_date = now()
-        activities = user_projects.filter(modified_at__range=(start_date, end_date))
-
-        # Create a dictionary to count activities per day
-        activity_data = {}
-        for activity in activities:
-            day = activity.modified_at.date()
-            activity_data[day] = activity_data.get(day, 0) + 1
-
-        # Generate a list of activity data for each day in the past year
-        days = [
-            {'date': current_date, 'count': activity_data.get(current_date.date(), 0)}
-            for current_date in (start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1))
-        ]
-
-        return recent_activities, days
-
-    def open_project(self, request):
+    @staticmethod
+    def open_project(request):
         """
         Open a project by redirecting to the IDE view.
         """
@@ -111,7 +139,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
         return redirect('ide', project_id=project.id)
 
-    def delete_project(self, request):
+    @staticmethod
+    def delete_project(request):
         """
         Delete a project, its associated files, and its Docker container.
         """
@@ -130,6 +159,12 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             # Delete the project directory
             shutil.rmtree(project.project_path)  # Remove the project's directory
 
+            # add deletion of the project to the users activity log
+            user = request.user
+            project_name = project.project_name
+            action = 'Deleted Project'
+            add_activity_to_log(user, project_name, action)
+
             # Delete the project from the database
             project.delete()
 
@@ -138,24 +173,10 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             return HttpResponse(f"Error deleting project: {e}", status=500)
 
-        # After deletion, determine the current project and render the updated dashboard
-        user_projects = Project.objects.all()
-        current_project = Project.objects.order_by('-modified_at').first()
-        recent_activities, days = self.user_activity(user_projects)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-        context = {
-            'user_projects': user_projects,
-            'recent_activities': recent_activities,
-            'activity_days': days
-        }
-
-        # If there's a current project, fetch and add the project tree
-        if current_project:
-            context['project_tree'] = get_project_tree(current_project.project_path)
-
-        return render(request, self.template_name, context)
-
-    def create_project(self, request):
+    @staticmethod
+    def create_project(request):
         """
         Create a new project and redirect to the IDE view.
         """
@@ -184,10 +205,16 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             return HttpResponse(f"Error creating project: {e}", status=500)
 
+        user = request.user
+        project_name = current_project.project_name
+        action = 'Created Project'
+        add_activity_to_log(user, project_name, action)
+
         # Redirect to the IDE view for the new project
         return redirect('ide', project_id=current_project.id)
 
-    def edit_profile(self, request):
+    @staticmethod
+    def edit_profile(request):
         """
         Handle the profile update logic (including picture, username, and email).
         """
@@ -213,7 +240,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # Redirect back to the profile or wherever needed
         return redirect('personal_profile')
 
-    def edit_bio(self, request):
+    @staticmethod
+    def edit_bio(request):
         """
         Handle updating user profile bio.
         """
@@ -231,7 +259,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # Redirect back to the profile or wherever needed
         return redirect('personal_profile')
 
-    def update_password(self, request):
+    @staticmethod
+    def update_password(request):
         """
         Handle the password update logic.
         """
@@ -262,7 +291,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         messages.success(request, "Your password has been updated successfully.")
         return redirect('personal_profile')
 
-    def follow_unfollow(self, request):
+    @staticmethod
+    def follow_unfollow(request):
         """
         Handle follow/unfollow action.
         """

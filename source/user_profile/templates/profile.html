@@ -83,8 +83,6 @@
             </div>
         {% endif %}
 
-
-
         <div class="card projects shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
             <div class="card-body">
                 <h5>All Projects</h5>
@@ -128,30 +126,13 @@
     <!-- Main Content -->
     <main class="main-content">
 
-        <!-- Activity Section -->
-        <div class="mb-5">
-            <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                <h3 class=" mb-2 text-light">Activity Calendar</h3>
-                <!-- Legend -->
-                <div class="activity-legend mb-2 d-flex align-items-center">
-                    <span class="text-light me-2">Low</span>
-                    <div class="legend-bar" style="flex: 1; height: 10px; background: linear-gradient(to right, var(--bg-darker), var(--btn-secondary), rgba(0, 200, 255, 0.5), rgba(0, 200, 255, 0.7), var(--btn-primary)); border-radius: 5px;"></div>
-                    <span class="text-light ms-2">High</span>
-                </div>
-                <div class="activity-calendar">
-                    {% for day in activity_days %}
-                        <div class="day" title="{{ day.date }}: {{ day.count }} activities"
-                             data-count="{{ day.count }}">
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
         <!-- Recent Projects -->
-        <div class="mb-5">
+        <div class="mb-4">
             <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                <h2 class="mb-3 text-light">Recent Projects</h2>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="text-light">Recent Projects</h2>
+                    <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                </div>
                 <div class="row g-4">
                     {% for project in user_projects|slice:":3" %}
                     <div class="col-md-4">
@@ -179,30 +160,36 @@
             </div>
         </div>
 
-        <!-- New project -->
-        <div class="row">
-            <div class="col-md-3 mb-5">
-                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <h4 class="text-light">Python Project</h4>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+        <!-- Activity Section -->
+        <div class="mb-5">
+            <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
+                <h3 class="mb-2 text-light">Activity Calendar</h3>
+                <!-- Legend -->
+                <div class="activity-legend mb-2 d-flex align-items-center">
+                    <span class="text-light me-2">Low</span>
+                    <div class="legend-bar" style="flex: 1; height: 10px; background: linear-gradient(to right, var(--bg-darker), var(--btn-secondary), rgba(0, 200, 255, 0.5), rgba(0, 200, 255, 0.7), var(--btn-primary)); border-radius: 5px;"></div>
+                    <span class="text-light ms-2">High</span>
                 </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <h4 class="text-light">Java Project</h4>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                <div class="activity-calendar">
+                    {% for day in activity_days %}
+                        <div class="day" title="{{ day.date }}: {{ day.count }} activities"
+                             data-count="{{ day.count }}" data-day="{{ day.date }}">
+                        </div>
+                    {% endfor %}
                 </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <h4 class="text-light">JavaScript Project</h4>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
-                </div>
-            </div>
-            <div class="col-md-3 mb-4">
-                <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <h4 class="text-light">C++ Project</h4>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+
+                <!-- Recent Activity Details Section -->
+                <div class="card p-4 mt-4 shadow-lg border-0">
+                    <h3 class="mb-2 text-light">Recent Activity</h3>
+                    <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto; padding-right: 10px;">
+                        {% for activity in recent_activity %}
+                            <div class="activity-item mb-1 p-1 rounded">
+                                <h5 class="text-light"> Project: {{ activity.project_name }}</h5>
+                                <p class="text-light">Date: {{ activity.date_time }}</p>
+                                <p class="text-light">Type: {{ activity.action }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -302,9 +289,6 @@
             </div>
         </div>
     </div>
-
-
-
 
     <!-- Followers Modal -->
     <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">

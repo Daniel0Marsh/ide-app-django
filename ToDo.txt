@@ -1,21 +1,6 @@
 
 1) better activity calendar using activity log
-2)
-3)
-
-
-{
-    'project_name': 'Project Alpha',
-    'date_time': '2024-12-21 14:35:20',
-    'action': 'created',
-},
-{
-    'project_name': 'Project Alpha',
-    'date_time': '2024-12-21 14:35:21',
-    'action': 'edited',
-},
-{
-    'project_name': 'Project Alpha',
-    'date_time': '2024-12-21 14:35:22',
-    'action': 'deleted',
-},
+2) forgot password emailing system
+3) messaging system
+4) user collaborate on projects feature
+5) strange login issue
