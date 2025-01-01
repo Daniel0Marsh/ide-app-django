@@ -24,7 +24,8 @@
 
             <!-- Profile Image as Edit Button -->
             {% if is_own_profile %}
-                <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                <button type="button" class="btn btn-link text-light p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="bi bi-pencil-square"></i>
                     <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
                 </button>
             {% else %}
@@ -88,14 +89,11 @@
                 <h5>All Projects</h5>
                 {% for project in user_projects %}
                 <div class="card p-1 mb-1 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                    <h5 class="card-title">{{ project.project_name }}</h5>
+                    <a href="{% url 'ide' project.id %}" class="card-title">
+                        {{ user_profile.username }}/{{ project.project_name }}
+                    </a>
                     <p class="card-text text-light">{{ project.project_description }}</p>
                     <div class="d-flex">
-                        <form method="post" action="">
-                            {% csrf_token %}
-                            <input type="hidden" name="project_id" value="{{ project.id }}">
-                            <button class="btn btn-secondary btn-sm" name="open_project">Open</button>
-                        </form>
                         <form method="post" action="">
                             {% csrf_token %}
                             <input type="hidden" name="project_id" value="{{ project.id }}">
@@ -137,19 +135,11 @@
                     {% for project in user_projects|slice:":3" %}
                     <div class="col-md-4">
                         <div class="card p-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                            <h5 class="card-title">{{ project.project_name }}</h5>
+                           <a href="{% url 'ide' project.id %}" class="card-title">
+                            {{ user_profile.username }}/{{ project.project_name }}
+                            </a>
                             <p class="card-text text-light">{{ project.project_description }}</p>
                             <div class="d-flex">
-                                <form method="post" action="">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="project_id" value="{{ project.id }}">
-                                    <button class="btn btn-secondary btn-sm" name="open_project">Open</button>
-                                </form>
-                                <form method="post" action="">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="project_id" value="{{ project.id }}">
-                                    <button class="btn btn-danger btn-sm mx-1" name="delete_project">Delete</button>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -183,7 +173,7 @@
                     <h3 class="mb-2 text-light">Recent Activity</h3>
                     <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto; padding-right: 10px;">
                         {% for activity in recent_activity %}
-                            <div class="activity-item mb-1 p-1 rounded">
+                            <div class="activity-item p-1 rounded">
                                 <h5 class="text-light"> Project: {{ activity.project_name }}</h5>
                                 <p class="text-light">Date: {{ activity.date_time }}</p>
                                 <p class="text-light">Type: {{ activity.action }}</p>

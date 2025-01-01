@@ -3,4 +3,6 @@
 2) forgot password emailing system
 3) messaging system
 4) user collaborate on projects feature
-5) strange login issue
+5) better looking recent activity area
+6) when user opens a project it needs to open a project page not the ide
+

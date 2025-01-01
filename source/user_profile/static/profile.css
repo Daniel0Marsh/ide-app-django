@@ -38,6 +38,13 @@ body {
 
 .card-title {
     color: var(--text-accent);
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.card-title:hover {
+    text-decoration: underline;
 }
 
 .modal-content {

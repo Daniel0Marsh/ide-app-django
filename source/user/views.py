@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from .models import CustomUser  # Import your custom user model
+from .models import CustomUser
 
 
 class LoginView(View):
@@ -22,7 +22,7 @@ class LoginView(View):
         if user:
             login(request, user)
             messages.success(request, 'Login successful!')
-            return redirect(reverse_lazy('dashboard'))
+            return redirect(reverse_lazy('personal_profile'))
         else:
             messages.error(request, 'Invalid username or password')
             return redirect('login')
@@ -53,7 +53,6 @@ class RegisterView(View):
         CustomUser.objects.create_user(username=username, email=email, password=password)
         messages.success(request, 'Registration successful! Please log in.')
         return redirect(reverse_lazy('login'))
-
 
 
 class LogoutView(View):
