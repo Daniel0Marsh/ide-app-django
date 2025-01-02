@@ -89,20 +89,13 @@
                 <h5>All Projects</h5>
                 {% for project in user_projects %}
                 <div class="card p-1 mb-1 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                    <a href="{% url 'ide' project.id %}" class="card-title">
+                    <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title">
                         {{ user_profile.username }}/{{ project.project_name }}
                     </a>
                     <p class="card-text text-light">{{ project.project_description }}</p>
-                    <div class="d-flex">
-                        <form method="post" action="">
-                            {% csrf_token %}
-                            <input type="hidden" name="project_id" value="{{ project.id }}">
-                            <button class="btn btn-danger btn-sm mx-1" name="delete_project">Delete</button>
-                        </form>
-                    </div>
                 </div>
                 {% empty %}
-                <p class="text-light">No projects available. Start by creating a new project!</p>
+                <p class="text-light">No projects available.</p>
                 {% endfor %}
             </div>
         </div>
@@ -129,13 +122,15 @@
             <div class="card p-4 shadow-lg border-0" style="background-color: rgba(255, 255, 255, 0.1);">
                 <div class="d-flex justify-content-between align-items-center">
                     <h2 class="text-light">Recent Projects</h2>
-                    <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                    {% if is_own_profile %}
+                        <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#CreateProjectModal">Create New Project</button>
+                    {% endif %}
                 </div>
                 <div class="row g-4">
                     {% for project in user_projects|slice:":3" %}
                     <div class="col-md-4">
                         <div class="card p-3 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                           <a href="{% url 'ide' project.id %}" class="card-title">
+                           <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title">
                             {{ user_profile.username }}/{{ project.project_name }}
                             </a>
                             <p class="card-text text-light">{{ project.project_description }}</p>
@@ -144,7 +139,7 @@
                         </div>
                     </div>
                     {% empty %}
-                    <p class="text-light">No projects available. Start by creating a new project!</p>
+                    <p class="text-light">No projects available.</p>
                     {% endfor %}
                 </div>
             </div>

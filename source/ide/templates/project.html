@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user_profile.username }}'s Profile</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'project.css' %}">
+    <script src="{% static 'project.js' %}"></script>
+</head>
+<body>
+
+
+<!-- Main Content -->
+<main class="main-content container py-5">
+
+    <!-- Project Settings -->
+    <div class="mb-4">
+        <div class="card shadow border-0">
+            <div class="text-light m-4">
+                <h3 class="card-title mb-4">
+                    <a href="{% url 'public_profile' current_project.user.username %}" class="card-title">
+                        {{ current_project.user.username }}
+                    </a>
+                    /
+                    <a href="{% url 'project' username=current_project.user.username project_id=current_project.id %}" class="card-title">
+                        {{ current_project.project_name }}
+                    </a>
+                </h3>
+                <div class="d-flex flex-wrap justify-content-start">
+                    <!-- Primary actions first -->
+                    <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}" class="btn btn-primary mx-1 mb-2">
+                        Open IDE
+                    </a>
+
+                    <form method="post" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}" class="ms-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="project_id" value="{{current_project.id}}">
+                        <button type="submit" class="btn btn-secondary mx-1 mb-2" name="download_project">Download Project</button>
+                    </form>
+
+                    <!-- Settings dropdown -->
+                     {% if request.user == current_project.user %}
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle mx-1 mb-2" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-gear-fill"></i>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+                                <li>
+                                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addCollaboratorModal">
+                                        Add Collaborator
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#renameProjectModal">
+                                        Edit Project Details
+                                    </button>
+                                </li>
+                                <li>
+                                    <form method="post" action="" class="ms-1">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item" name="delete_project">Delete Project</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Collaborators Section -->
+        <div class="mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header text-light">
+                    Collaborators
+                </div>
+                <div class="card-body text-light">
+                    <ul class="list-group list-group-flush">
+                        <!-- Add owner to the list -->
+                        <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                            <img src="{{ current_project.user.profile_picture.url }}" alt="Profile" class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
+                            <div class="d-flex justify-content-between w-100">
+                                <a href="{% url 'public_profile' current_project.user.username %}" class="card-title text-decoration-none text-light fs-5">
+                                    {{ current_project.user.username }}
+                                </a>
+                                <span class="text-light ms-2">(Owner)</span>
+                            </div>
+                        </li>
+                        {% for collaborator in current_project.collaborators.all %}
+
+                            <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                                <img src="{{ collaborator.profile_picture.url }}" alt="Profile" class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
+                                <div class="d-flex justify-content-between w-100">
+                                    <a href="{% url 'public_profile' collaborator.username %}" class="card-title text-decoration-none text-light fs-5">
+                                        {{ collaborator.username }}
+                                    </a>
+                                    {% if request.user == current_project.user %}
+                                        <form method="post" class="m-0">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="collaborator_id" value="{{ collaborator.id }}">
+                                            <button type="submit" name="remove_collaborator" class="btn btn-danger btn-sm">Remove</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </li>
+
+                        {% empty %}
+                            <li class="list-group-item bg-transparent text-light">No collaborators added yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    <!-- Project Description -->
+    <div class="mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header text-light">
+                Project Description
+            </div>
+            <div class="card-body text-light">
+                <p class="mb-0">{{ current_project.project_description }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project README.md -->
+    <div class="mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header text-light">
+                README.md
+            </div>
+            <div class="card-body text-light">
+                <p class="mb-0">{{ readme_content|safe }}</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Add Collaborator Modal -->
+<div class="modal fade" id="addCollaboratorModal" tabindex="-1" aria-labelledby="addCollaboratorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCollaboratorModalLabel">Add Collaborator</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCollaboratorForm" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control bg-dark text-light" id="username" name="username" required>
+                    </div>
+                    <button type="submit" name="add_collaborator" class="btn btn-primary">Add Collaborator</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- edit project Modal -->
+<div class="modal fade" id="renameProjectModal" tabindex="-1" aria-labelledby="renameProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameProjectModalLabel">Edit Project Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Project Name Field -->
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Project Name</label>
+                        <input type="text" class="form-control bg-dark text-light" id="projectName" name="name" value="{{ current_project.project_name }}">
+                    </div>
+
+                    <!-- Project Description Field -->
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Project Description</label>
+                        <textarea class="form-control bg-dark text-light" id="projectDescription" name="description" rows="3">{{ current_project.project_description }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" name="edit_project_details" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

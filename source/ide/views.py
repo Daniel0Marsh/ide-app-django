@@ -6,15 +6,17 @@ from django.urls import reverse
 from django.conf import settings
 from django.http import FileResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from datetime import datetime, timedelta
-from django.utils.timezone import now
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth import update_session_auth_hash
+from datetime import datetime, timedelta
+from django.utils.timezone import now
 from django.shortcuts import redirect
 from django.contrib import messages
 import docker
 import os
 import shutil
+import markdown
 
 
 def get_project_tree(project_path):
@@ -40,9 +42,9 @@ def get_project_tree(project_path):
     return project_tree
 
 
-class IdeView(LoginRequiredMixin, TemplateView):
-    template_name = 'ide.html'
-    login_url = 'login'  # Redirect to the login page if not authenticated
+class ProjectView(LoginRequiredMixin, TemplateView):
+    template_name = 'project.html'
+    login_url = 'login'
 
     def get(self, request, *args, **kwargs):
         """
@@ -54,9 +56,190 @@ class IdeView(LoginRequiredMixin, TemplateView):
             try:
                 current_project = Project.objects.get(id=project_id)
             except Project.DoesNotExist:
-                return redirect('dashboard')  # Redirect if the project does not exist
+                return redirect('personal_profile')  # Redirect if the project does not exist
         else:
             current_project = Project.objects.order_by('-modified_at').first()
+
+        project_tree = get_project_tree(current_project.project_path)
+
+        # Read the README.md file content
+        readme_content = "<p>No README file available.</p>"
+        readme_path = os.path.join(current_project.project_path, "README.md")
+        if os.path.exists(readme_path):
+            with open(readme_path, "r", encoding="utf-8") as readme_file:
+                readme_content = markdown.markdown(readme_file.read())
+
+        # Pass the README content to the context
+        context = {
+            'current_project': current_project,
+            'project_tree': project_tree,
+            'readme_content': readme_content,
+        }
+
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for various project actions.
+        """
+        project_id = kwargs.get('project_id')
+
+        if not project_id:
+            return HttpResponse("Project not found", status=404)
+
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+
+        action_map = {
+            'add_collaborator': self.add_collaborator,
+            'edit_project_details': self.edit_project_details,
+            'delete': self.delete_project,
+            'remove_collaborator': self.remove_collaborator,
+        }
+
+        action = next((key for key in action_map if key in request.POST), None)
+        if action:
+            return action_map[action](request, project)  # Pass project to the action method
+
+        return HttpResponse("Invalid action", status=400)
+
+    @staticmethod
+    def add_collaborator(request, project):
+        collaborator_username = request.POST.get('username')
+
+        try:
+            # Query the user model directly
+            User = get_user_model()
+            collaborator = User.objects.get(username=collaborator_username)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=400)
+
+        # Add collaborator
+        project.collaborators.add(collaborator)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def remove_collaborator(request, project):
+        collaborator_id = request.POST.get('collaborator_id')
+
+        try:
+            # Query the user model directly
+            User = get_user_model()
+            collaborator = User.objects.get(id=collaborator_id)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=400)
+
+        # Remove collaborator
+        if collaborator in project.collaborators.all():
+            project.collaborators.remove(collaborator)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+        else:
+            return JsonResponse({'error': 'User is not a collaborator'}, status=400)
+
+    @staticmethod
+    def edit_project_details(request, project):
+        """
+        Handle the updating of both project name and project description logic,
+        and rename the project directory if the name is changed.
+        """
+        new_name = request.POST.get('name')
+        new_description = request.POST.get('description')
+
+        if not new_name or not new_description:
+            return HttpResponseBadRequest("Name and description cannot be empty")
+
+        try:
+            # Check if the project name has changed
+            if project.project_name != new_name:
+                # Rename the project directory
+                old_project_path = project.project_path
+                new_project_path = os.path.join(settings.BASE_DIR, "UserProjects", new_name)
+
+                # Rename the directory
+                os.rename(old_project_path, new_project_path)
+
+                # Update the project path in the database
+                project.project_path = new_project_path
+
+            # Update the project name and description in the database
+            project.project_name = new_name
+            project.project_description = new_description
+            project.save()
+
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        except Project.DoesNotExist:
+            return HttpResponseBadRequest("Project not found")
+        except Exception as e:
+            return HttpResponseBadRequest(f"Error updating project: {e}")
+
+
+    @staticmethod
+    def delete_project(request, project):
+        """
+        Delete a project, its associated files, and its Docker container.
+        """
+
+        try:
+            # Delete the Docker container associated with the project
+            container_manager = ProjectContainerManager(project)
+            container_manager.delete_container()  # Delete the container if it exists
+
+            # Delete the project directory
+            shutil.rmtree(project.project_path)  # Remove the project's directory
+
+            # add deletion of the project to the users activity log
+            user = request.user
+            project_name = project.project_name
+            action = 'Deleted Project'
+            add_activity_to_log(user, project_name, action)
+
+            # Delete the project from the database
+            project.delete()
+
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+        except Exception as e:
+            return HttpResponse(f"Error deleting project: {e}", status=500)
+
+        return redirect('personal_profile')
+
+
+class IdeView(LoginRequiredMixin, TemplateView):
+    template_name = 'ide.html'
+    login_url = 'login'  # Redirect to the login page if not authenticated
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests for the IDE view.
+        """
+        project_id = kwargs.get('project_id')
+
+        if project_id:
+            try:
+                current_project = Project.objects.get(id=project_id)
+            except Project.DoesNotExist:
+                return redirect('personal_profile')  # Redirect if the project does not exist
+        else:
+            current_project = Project.objects.order_by('-modified_at').first()
+
+        if not current_project:
+            return redirect('personal_profile')  # Handle the case where no projects exist
+
+        # Ensure README.md file exists
+        readme_path = os.path.join(current_project.project_path, 'README.md')
+        if not os.path.exists(readme_path):
+            with open(readme_path, 'w', encoding='utf-8') as file:
+                file.write("# Welcome to your project\n\nThis is the README.md file for your project.")
+
+        # Read the README.md file content
+        try:
+            with open(readme_path, 'r', encoding='utf-8') as file:
+                readme_content = file.read()
+        except Exception as e:
+            return HttpResponse(f"Error reading README.md: {e}", status=500)
 
         all_projects = Project.objects.all()
         project_tree = get_project_tree(current_project.project_path)
@@ -68,6 +251,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'all_projects': all_projects,
             'current_project': current_project,
             'project_tree': project_tree,
+            'file_name': 'README.md',
+            'file_path': readme_path,
+            'file_content': readme_content,
         }
 
         return render(request, self.template_name, context)
@@ -166,11 +352,11 @@ class IdeView(LoginRequiredMixin, TemplateView):
 
         if not file_path:
             # Redirect if no file path is provided
-            return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         if not os.path.exists(file_path):
             # Redirect if the file does not exist
-            return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         try:
             os.remove(file_path)  # Attempt to delete the file
@@ -179,7 +365,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             print(f"Error deleting file {file_path}: {e}")
 
         # Redirect back to the IDE page regardless of success or failure
-        return HttpResponseRedirect(reverse('ide', kwargs={'project_id': project.id}))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
     def save_file(self, request, project):

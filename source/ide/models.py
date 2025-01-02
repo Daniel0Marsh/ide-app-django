@@ -53,6 +53,7 @@ class Project(models.Model):
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
     modified_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='collaborating_projects', blank=True)
 
     def __str__(self):
         return self.project_name

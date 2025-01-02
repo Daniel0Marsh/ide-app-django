@@ -12,10 +12,8 @@ from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from ide.models import Project
-from ide.views import ProjectContainerManager, get_project_tree
 from user.models import CustomUser
 import os
-import shutil
 
 
 def add_activity_to_log(user, project_name, action):
@@ -111,7 +109,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         """
         action_map = {
             'open_project': self.open_project,
-            'delete_project': self.delete_project,
             'create_project': self.create_project,
             'edit_profile': self.edit_profile,
             'edit_bio': self.edit_bio,
@@ -140,42 +137,6 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return redirect('ide', project_id=project.id)
 
     @staticmethod
-    def delete_project(request):
-        """
-        Delete a project, its associated files, and its Docker container.
-        """
-        project_id = request.POST.get('project_id')
-        if not project_id:
-            return HttpResponse("Project ID not provided", status=400)
-
-        try:
-            # Fetch the project from the database
-            project = Project.objects.get(id=project_id)
-
-            # Delete the Docker container associated with the project
-            container_manager = ProjectContainerManager(project)
-            container_manager.delete_container()  # Delete the container if it exists
-
-            # Delete the project directory
-            shutil.rmtree(project.project_path)  # Remove the project's directory
-
-            # add deletion of the project to the users activity log
-            user = request.user
-            project_name = project.project_name
-            action = 'Deleted Project'
-            add_activity_to_log(user, project_name, action)
-
-            # Delete the project from the database
-            project.delete()
-
-        except Project.DoesNotExist:
-            return HttpResponse("Project not found", status=404)
-        except Exception as e:
-            return HttpResponse(f"Error deleting project: {e}", status=500)
-
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-    @staticmethod
     def create_project(request):
         """
         Create a new project and redirect to the IDE view.
@@ -193,6 +154,12 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         try:
             # Create the project directory
             os.makedirs(project_path, exist_ok=True)
+
+            # Create a README.md file
+            readme_path = os.path.join(project_path, "README.md")
+            with open(readme_path, "w") as readme_file:
+                readme_content = f"# {project_name}\n\n{project_description or 'No description provided.'}"
+                readme_file.write(readme_content)
 
             # Save the project to the database with the user as the owner
             current_project = Project(

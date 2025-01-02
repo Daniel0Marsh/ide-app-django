@@ -20,26 +20,20 @@
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
 
-    <form method="post" action="{% url 'ide' project_id=current_project.id %}">
-        {% csrf_token %}
-        <input type="hidden" name="project_id" value="{{current_project.id}}">
-        <button type="submit" class="btn btn-dark mx-auto mb-4" name="download_project">
-            <i class="bi bi-download fs-5 text-light"></i>
+    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+        <button class="btn mx-auto btn-dark mb-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
+            aria-controls="offcanvasBottom">
+        <i class="bi bi-terminal fs-5 text-light"></i>
         </button>
-    </form>
+    {% endif %}
 
-    <button class="btn mx-auto btn-dark mb-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
-        aria-controls="offcanvasBottom">
-    <i class="bi bi-terminal fs-5 text-light"></i>
-    </button>
-
-    <a class="btn mx-auto btn-dark mb-4" href="{% url 'personal_profile' %}">
+    <a class="btn mx-auto btn-dark mb-4" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
         <i class="bi bi-house fs-5 text-light"></i>
     </a>
 </div>
 
 <!-- Project Tree Form -->
-<form method="post" enctype="multipart/form-data" action="{% url 'ide' project_id=current_project.id %}"
+<form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
       class="sidebar active shadow-end border-end border-dark" id="sidebar">
     {% csrf_token %}
     <ul>
@@ -105,20 +99,30 @@
     <div class="card-header shadow-end border-end border-dark">
         <div class="hstack gap-3 align-middle">
             <div class="p-1">
-                <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
-                    <i class="bi bi-pencil"></i> {{file_name}}
-                </button>
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                    <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
+                        <i class="bi bi-pencil"></i> {{file_name}}
+                    </button>
+                {% else %}
+                    <p class="btn folder-btn">
+                            <i class="bi bi-pencil"></i> {{file_name}}
+                    </p>
+                {% endif %}
             </div>
             <div class="vr"></div>
             <div class="p-1">
-                <button class="btn file-item" name="save_file" type="submit">
-                    <i class="bi bi-save"></i> Save
-                </button>
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                    <button class="btn file-item" name="save_file" type="submit">
+                        <i class="bi bi-save"></i> Save
+                    </button>
+                {% endif %}
             </div>
             <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
                 <button class="btn file-item" name="delete" type="submit">
                     <i class="bi bi-trash"></i> Delete
                 </button>
+                {% endif %}
             </div>
             <!-- Add dropdown buttons -->
             <div class=" ms-auto">
@@ -177,10 +181,13 @@
                     </ul>
                 </div>
             </div>
-
         </div>
     </div>
-    <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+        <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+    {% else %}
+        <textarea name="file_contents" id="myTextarea" style="display: none;" readonly disabled>{{ file_content }}</textarea>
+    {% endif %}
 </form>
 </body>
 
@@ -226,7 +233,7 @@
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
             </div>
-            <form method="post" enctype="multipart/form-data" action="{% url 'ide' project_id=current_project.id %}" class="modal-body">
+            <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}" class="modal-body">
                 {% csrf_token %}
                 <input type="text" name="new_file_name" value="{{ file_name }}"
                        class="form-control bg-dark text-light border-secondary mb-4">

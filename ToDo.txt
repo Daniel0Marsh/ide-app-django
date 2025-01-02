@@ -1,8 +1,8 @@
 
-1) better activity calendar using activity log
+1) delete project not working
 2) forgot password emailing system
 3) messaging system
-4) user collaborate on projects feature
-5) better looking recent activity area
-6) when user opens a project it needs to open a project page not the ide
+4) add projects users are collaborating on, on their profiles
+5) refactor all code base to follow pep8
+6)
 

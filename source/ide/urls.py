@@ -1,8 +1,8 @@
 # urls.py
 from django.urls import path
-from .views import IdeView
+from .views import ProjectView, IdeView
 
 urlpatterns = [
-    path('ide/<int:project_id>/', IdeView.as_view(), name='ide'),
+    path('project/<str:username>/<int:project_id>/', ProjectView.as_view(), name='project'),
+    path('ide/<str:username>/<int:project_id>/', IdeView.as_view(), name='ide'),
 ]
-
