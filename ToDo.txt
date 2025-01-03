@@ -1,8 +1,8 @@
 
-1) delete project not working
+1) refactor all code base to follow pep8
 2) forgot password emailing system
 3) messaging system
-4) add projects users are collaborating on, on their profiles
-5) refactor all code base to follow pep8
-6) remove the side name on user profile
+4)
+5)
+6)
 

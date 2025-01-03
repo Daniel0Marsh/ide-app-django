@@ -11,6 +11,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.db import models
 from ide.models import Project
 from user.models import CustomUser
 import os
@@ -43,9 +44,6 @@ def user_activity(user_projects, user_profile):
     based on the activity_log field of the user.
     """
 
-    # Get the 5 most recent projects
-    recent_projects = user_projects.order_by('-modified_at')[:5]
-
     # Get all the activities
     recent_activity = user_profile.activity_log
 
@@ -66,7 +64,7 @@ def user_activity(user_projects, user_profile):
         for current_date in (start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1))
     ]
 
-    return recent_projects, activity_days, recent_activity
+    return activity_days, recent_activity
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -84,18 +82,31 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # If a username is provided, load the profile of that user; otherwise, load the current user's profile
         if username:
             user_profile = get_object_or_404(CustomUser, username=username)
-            user_projects = Project.objects.filter(user=user_profile)
+            owned_projects = Project.objects.filter(user=user_profile)
+            collaborating_projects = user_profile.collaborating_projects.all()
         else:
             user_profile = request.user
-            user_projects = Project.objects.filter(user=request.user)
+            owned_projects = Project.objects.filter(user=request.user)
+            collaborating_projects = request.user.collaborating_projects.all()
 
-        recent_projects, activity_days, recent_activity = user_activity(user_projects, user_profile)
+        # Combine owned and collaborated projects
+        user_projects = owned_projects | collaborating_projects
+
+        # Filter projects based on visibility
+        if user_profile != request.user:  # If viewing someone else's profile
+            user_projects = user_projects.filter(
+                models.Q(is_public=True) |
+                models.Q(collaborators=request.user)
+            )
+
+        user_projects = user_projects.distinct().order_by('-modified_at')  # Remove duplicates and sort by modified date
+
+        activity_days, recent_activity = user_activity(user_projects, user_profile)
         is_following = request.user.is_authenticated and request.user.is_following(user_profile)
 
         context = {
             'user_profile': user_profile,
             'user_projects': user_projects,
-            'recent_activities': recent_projects,
             'activity_days': activity_days,
             'recent_activity': recent_activity,
             'is_own_profile': user_profile == request.user,
@@ -178,7 +189,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         add_activity_to_log(user, project_name, action)
 
         # Redirect to the IDE view for the new project
-        return redirect('ide', project_id=current_project.id)
+        return redirect('project', username=user, project_id=current_project.id)
 
     @staticmethod
     def edit_profile(request):

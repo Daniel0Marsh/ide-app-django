@@ -1,4 +1,3 @@
-
 :root {
     --bg-dark: #1e1e2f;
     --bg-darker: #151521;
@@ -6,11 +5,24 @@
     --text-accent: #00c8ff;
     --btn-primary: #4caf50;
     --btn-secondary: #6c63ff;
+    --btn-danger: #e74c3c;
+}
+
+.navbar.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: var(--bg-darker);
+  color: var(--text-accent);
 }
 
 body {
     background-color: var(--bg-dark);
     color: var(--text-light);
+    font-family: 'Arial', sans-serif;
+    padding-top: 56px;
 }
 
 .btn-primary {
@@ -31,9 +43,26 @@ body {
     background-color: #554ae0;
 }
 
+.btn-danger {
+    background-color: var(--btn-danger);
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
 .card {
     background-color: var(--bg-darker);
     border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+    color: var(--text-light);
 }
 
 .card-title {
@@ -52,6 +81,21 @@ body {
     color: var(--text-light);
 }
 
+.main-content {
+    margin: 0 auto;
+    max-width: 1200px;
+    margin-top: 20px
+}
+
+.card-body p {
+    font-size: 1.1rem;
+}
+
+.modal-content {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
 
 .activity-calendar {
     display: grid;
@@ -63,13 +107,13 @@ body {
 .day {
     width: 20px;
     height: 20px;
-    background-color: var(--bg-darker);
     border-radius: 2px;
+    background-color: var(--btn-primary);
     transition: background-color 0.3s ease;
 }
 
 .day[data-count="0"] {
-    background-color: var(--bg-darker); /* No activity */
+    background-color: rgba(255, 255, 255, 0.1) /* No activity */
 }
 
 .day[data-count="1"] {
@@ -93,41 +137,10 @@ body {
     cursor: pointer;
 }
 
-.main-content {
-    margin-right: 40px;
-    margin-left: 390px;
-}
-
-/* Sidebar Styles */
-.sidebar {
-    width: 350px;
-    background-color: var(--bg-darker);
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    color: var(--text-light);
-    transition: transform 0.3s ease; /* Transition for sidebar when toggled on small screens */
-}
-
-/* Hide sidebar on small screens */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%); /* Initially hide sidebar off-screen */
-    }
-    .sidebar.show {
-        transform: translateX(0); /* Show sidebar when toggled */
-    }
-    .main-content {
-        margin-left: 20px; /* Adjust margin when sidebar is hidden on small screens */
-    }
-}
-
 /* Style for the profile section */
 .profile-info {
     text-align: center;
     color: var(--bg-light);
-    margin: 20px;
 }
 
 .profile-info .profile-image {
@@ -162,12 +175,10 @@ body {
 .user-bio {
     text-align: center;
     color: var(--bg-light);
-    margin: 20px;
 }
 
 .user-bio p {
     font-size: 0.9rem;
-    margin: 0 10px;
 }
 
 .projects {

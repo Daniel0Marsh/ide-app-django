@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from django.utils.timezone import now
 from django.shortcuts import redirect
 from django.contrib import messages
+from user_profile.views import add_activity_to_log
 import docker
 import os
 import shutil
@@ -97,6 +98,7 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             'edit_project_details': self.edit_project_details,
             'delete': self.delete_project,
             'remove_collaborator': self.remove_collaborator,
+            'toggle_like': self.toggle_like,
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -105,8 +107,23 @@ class ProjectView(LoginRequiredMixin, TemplateView):
 
         return HttpResponse("Invalid action", status=400)
 
+    def toggle_like(self, request, project):
+        if request.user in project.liked_by.all():
+            project.liked_by.remove(request.user)
+            project.likes -= 1
+        else:
+            project.liked_by.add(request.user)
+            project.likes += 1
+        project.save()
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+
     @staticmethod
     def add_collaborator(request, project):
+        """
+        Handle adding a collaborator to a project.
+        """
+        user = request.user  # Get the user who is adding the collaborator
+        project_name = project.project_name  # Get the project name
         collaborator_username = request.POST.get('username')
 
         try:
@@ -118,10 +135,20 @@ class ProjectView(LoginRequiredMixin, TemplateView):
 
         # Add collaborator
         project.collaborators.add(collaborator)
+
+        # Log the activity
+        action = f"Added {collaborator_username} as a collaborator to the project"
+        add_activity_to_log(user, project_name, action)
+
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     @staticmethod
     def remove_collaborator(request, project):
+        """
+        Handle removing a collaborator from a project.
+        """
+        user = request.user  # Get the user who is removing the collaborator
+        project_name = project.project_name  # Get the project name
         collaborator_id = request.POST.get('collaborator_id')
 
         try:
@@ -134,6 +161,11 @@ class ProjectView(LoginRequiredMixin, TemplateView):
         # Remove collaborator
         if collaborator in project.collaborators.all():
             project.collaborators.remove(collaborator)
+
+            # Log the activity
+            action = f"Removed {collaborator.username} from the collaborators of the project"
+            add_activity_to_log(user, project_name, action)
+
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         else:
             return JsonResponse({'error': 'User is not a collaborator'}, status=400)
@@ -141,16 +173,20 @@ class ProjectView(LoginRequiredMixin, TemplateView):
     @staticmethod
     def edit_project_details(request, project):
         """
-        Handle the updating of both project name and project description logic,
-        and rename the project directory if the name is changed.
+        Handle the updating of both project name, project description, and project visibility.
         """
+        user = request.user  # Get the user who made the changes
+        project_name = project.project_name  # Get the current project name
         new_name = request.POST.get('name')
         new_description = request.POST.get('description')
+        is_public = 'is_public' in request.POST  # Check if the visibility checkbox is ticked (True) or not (False)
 
         if not new_name or not new_description:
             return HttpResponseBadRequest("Name and description cannot be empty")
 
         try:
+            action = ''  # Initialize action string
+
             # Check if the project name has changed
             if project.project_name != new_name:
                 # Rename the project directory
@@ -162,11 +198,16 @@ class ProjectView(LoginRequiredMixin, TemplateView):
 
                 # Update the project path in the database
                 project.project_path = new_project_path
+                action = f"Renamed project from {project_name} to {new_name}"  # Action for renaming
 
-            # Update the project name and description in the database
+            # Update the project name, description, and visibility
             project.project_name = new_name
             project.project_description = new_description
+            project.is_public = is_public  # Update visibility based on checkbox
             project.save()
+
+            # Log the activity for updating project details
+            add_activity_to_log(user, project_name, action if action else f"Updated project details for {new_name}")
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -174,7 +215,6 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             return HttpResponseBadRequest("Project not found")
         except Exception as e:
             return HttpResponseBadRequest(f"Error updating project: {e}")
-
 
     @staticmethod
     def delete_project(request, project):
@@ -341,13 +381,13 @@ class IdeView(LoginRequiredMixin, TemplateView):
 
         return render(request, self.template_name, context)
 
-
     @staticmethod
     def delete(request, project):
         """
         Delete a specified file from the project.
         """
-        project_path = project.project_path
+        user = request.user  # Get the user who initiated the delete action
+        project_name = project.project_name  # Get the project name
         file_path = request.POST.get('file_path')
 
         if not file_path:
@@ -359,19 +399,26 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         try:
-            os.remove(file_path)  # Attempt to delete the file
+            # Attempt to delete the file
+            os.remove(file_path)
+            action = f"Deleted file {os.path.basename(file_path)}"  # Action to log after successful file deletion
         except OSError as e:
             # Log the error for debugging purposes (if logging is set up)
             print(f"Error deleting file {file_path}: {e}")
+            action = f"Failed to delete file {file_path}"  # Log failure if deletion fails
+
+        # Log the activity (whether the deletion was successful or not)
+        add_activity_to_log(user, project_name, action)
 
         # Redirect back to the IDE page regardless of success or failure
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
 
     def save_file(self, request, project):
         """
         Save, rename, or create a new file in the project and update project settings.
         """
+        user = request.user  # Get the user who made the change
+        project_name = project.project_name  # Get the project name
         selected_theme = request.POST.get('selected_theme')
         selected_syntax = request.POST.get('selected_syntax')
 
@@ -384,6 +431,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
         project_path = project.project_path
         all_projects = Project.objects.all()
 
+        action = ''  # Initialize action string
+
         if new_file_name:
             if file_path:
                 # Rename an existing file
@@ -392,21 +441,26 @@ class IdeView(LoginRequiredMixin, TemplateView):
                 os.rename(file_path, new_path)
                 file_name = new_file_name
                 file_path = new_path
+                action = f"Renamed file {file_name} to {new_file_name}"
             else:
                 # Create a new file with the provided new file name
                 new_path = os.path.join(project_path, new_file_name)
                 file_name = new_file_name
                 file_path = new_path
+                action = f"Created a new file {new_file_name}"
         elif file_path:
             # Save to an existing file
             new_path = file_path
+            action = f"Saved changes to file {file_name}"
         elif file_name:
             # Create a new file with the provided file name
             new_path = os.path.join(project_path, file_name)
+            action = f"Created a new file {file_name}"
         else:
             # Create a new file with a default name
             new_path = os.path.join(project_path, "new_file.txt")
             file_name = "new_file.txt"
+            action = "Created a new file new_file.txt"
 
         # Write content to the file
         try:
@@ -414,6 +468,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
                 f.write(file_content)
         except Exception as e:
             return HttpResponse(f"Error saving file: {e}", status=500)
+
+        # Log the activity
+        add_activity_to_log(user, project_name, action)
 
         # Save theme and syntax settings
         if selected_theme and selected_syntax:
@@ -434,11 +491,14 @@ class IdeView(LoginRequiredMixin, TemplateView):
         # Render the IDE view with the updated file information
         return render(request, self.template_name, context)
 
-
     def download_project(self, request, project):
         """
         Create and return a zip file of the project's directory for download.
         """
+        user = request.user  # Get the user who initiated the download
+        project_name = project.project_name  # Get the project name
+        action = f"Downloaded the project {project_name}"  # Action to log
+
         project_path = project.project_path
 
         # Extract the project directory name
@@ -461,6 +521,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             # Remove the temporary zip file
             if os.path.exists(zip_file_path):
                 os.remove(zip_file_path)
+
+        # Log the activity
+        add_activity_to_log(user, project_name, action)
 
         return response
 

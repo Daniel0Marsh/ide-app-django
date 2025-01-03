@@ -1,9 +1,9 @@
 from django.db import models
-from django.db.models import TextField
 from django.conf import settings
+from django.db.models import TextField
 import os
 
-default_project_path = file_path = os.path.join(settings.BASE_DIR, "UserProjects")
+default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
 
 
 class Project(models.Model):
@@ -14,6 +14,8 @@ class Project(models.Model):
         project_name (str): The name of the project.
         selected_theme (str): The selected theme for the project.
         selected_syntax (str): The selected syntax highlighting for the project.
+        is_public (bool): Whether the project is public or private.
+        likes (int): The number of likes the project has received.
     """
 
     # Define choices for themes
@@ -51,6 +53,9 @@ class Project(models.Model):
     project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
+    is_public = models.BooleanField(default=False)
+    likes = models.PositiveIntegerField(default=0)
+    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_projects', blank=True)
     modified_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     collaborators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='collaborating_projects', blank=True)

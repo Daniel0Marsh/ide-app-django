@@ -8,10 +8,21 @@
     --btn-danger: #e74c3c;
 }
 
+.navbar.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: var(--bg-darker);
+  color: var(--text-accent);
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-light);
     font-family: 'Arial', sans-serif;
+    padding-top: 56px;
 }
 
 .btn-primary {
