@@ -162,14 +162,8 @@ body {
 
 /* Style for the followers and following section */
 .follow-info {
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--text-accent);
-    display: flex;
-    justify-content: space-between;
-}
-
-.follow-info p {
-    margin: 0 10px;
 }
 
 .user-bio {

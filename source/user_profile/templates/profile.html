@@ -103,17 +103,16 @@
                         <h5>{{ user_profile.username }}</h5>
                         <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
 
-                        <div class="follow-info mt-2 d-flex justify-content-between">
+                        <div class="follow-info mt-2 d-flex justify-content-center align-items-center">
                             <p>
-                                <strong>Followers:</strong>
-                                <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#followersModal">
-                                    {{ user_profile.followers.count }}
+                                <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followersModal">
+                                    <i class="bi bi-people-fill"></i>
+                                    Followers: {{ user_profile.followers.count }}
                                 </button>
                             </p>
                             <p>
-                                <strong>Following:</strong>
-                                <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#followingModal">
-                                    {{ user_profile.following.count }}
+                                <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followingModal">
+                                    Following: {{ user_profile.following.count }}
                                 </button>
                             </p>
                         </div>
@@ -385,10 +384,10 @@
                         <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
                             <div class="d-flex align-items-center">
                                 <img src="{{ follower.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-                                <span>{{ follower.username }}</span>
+                                <!-- Make the username clickable to the profile -->
+                                <a href="{% url 'public_profile' follower.username %}" class="text-light">{{ follower.username }}</a>
                             </div>
                             <div>
-                                <a href="{% url 'public_profile' follower.username %}" class="btn btn-sm btn-primary me-2">View Profile</a>
                                 <a href="" class="btn btn-sm btn-secondary">Chat</a>
                             </div>
                         </li>
@@ -400,6 +399,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Following Modal -->
 <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
@@ -415,10 +415,10 @@
                         <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
                             <div class="d-flex align-items-center">
                                 <img src="{{ following.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-                                <span>{{ following.username }}</span>
+                                <!-- Make the username clickable to the profile -->
+                                <a href="{% url 'public_profile' following.username %}" class="text-light">{{ following.username }}</a>
                             </div>
                             <div>
-                                <a href="{% url 'public_profile' following.username %}" class="btn btn-sm btn-primary me-2">View Profile</a>
                                 <a href="" class="btn btn-sm btn-secondary">Chat</a>
                             </div>
                         </li>
