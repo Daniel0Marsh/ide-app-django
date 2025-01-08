@@ -1,242 +1,176 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user_profile.username }}'s Profile</title>
+{% extends 'base.html' %}
+{% block title %}{{ user_profile.username }}'s Profile{% endblock %}
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
+{% block extra_head %}
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'profile.css' %}">
     <script src="{% static 'profile.js' %}"></script>
-</head>
-<body>
+{% endblock %}
 
-
-<nav class="navbar fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand text-light" href="{% url 'personal_profile' %}">
-      CodeBlock
-    </a>
-    <div class="dropdown ms-auto">
-      <a
-        href="{% url 'personal_profile' %}"
-        class="d-flex align-items-center dropdown-toggle"
-        id="userDropdown"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
-        <img
-          src="{{ user.profile_picture.url }}"
-          alt="Profile Picture"
-          width="30"
-          height="30"
-          class="rounded-circle"
-        >
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-        <!-- Non-clickable header -->
-        <li>
-          <span class="dropdown-item-text fw-bold">
-                      <img
-          src="{{ user.profile_picture.url }}"
-          alt="Profile Picture"
-          width="30"
-          height="30"
-          class="rounded-circle"
-        >
-            @{{ user_profile.username }}
-          </span>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <!-- Other dropdown items -->
-        <li><a class="dropdown-item" href="{% url 'personal_profile' %}"> My Profile</a></li>
-        <li>
-            <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="dropdown-item">
-                    Logout
-                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                </button>
-            </form>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
-
-
+{% block content %}
     <!-- Main Content -->
-    <main class="main-content">
-
-        <div class="row mb-4">
-            <!-- Profile Card -->
-            <div class="col-md-6">
-                <div class="card profile-info shadow border-0">
-                    <div class="card-body text-center">
-                        <!-- Profile Image as Edit Button -->
-                        {% if is_own_profile %}
-                            <button type="button" class="btn text-light p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                                <i class="bi bi-pencil-square"></i>
-                                <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
-                            </button>
-                        {% else %}
-                            <form method="post" action="">
-                                {% csrf_token %}
-                                <input type="hidden" name="target_user" value="{{ user_profile.username }}">
-                                <button type="submit" name="follow_unfollow" class="btn text-light p-0">
-                                    {% if is_following %}
-                                        <i class="bi bi-dash-square"></i> <!-- Unfollow Icon -->
-                                    {% else %}
-                                        <i class="bi bi-plus-square"></i> <!-- Follow Icon -->
-                                    {% endif %}
-                                    <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
-                                </button>
-                            </form>
-                        {% endif %}
-
-                        <h5>{{ user_profile.username }}</h5>
-                        <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
-
-                        <div class="follow-info mt-2 d-flex justify-content-center align-items-center">
-                            <p>
-                                <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followersModal">
-                                    <i class="bi bi-people-fill"></i>
-                                    Followers: {{ user_profile.followers.count }}
-                                </button>
-                            </p>
-                            <p>
-                                <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followingModal">
-                                    Following: {{ user_profile.following.count }}
-                                </button>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bio Card -->
-            <div class="col-md-6">
-                {% if is_own_profile %}
-                    <!-- Show bio card for the logged-in user (with edit button) -->
-                    <div class="card user-bio shadow border-0">
-                        <div class="card-body">
-                            {% if user_profile.bio %}
-                                <p>{{ user_profile.bio }}</p>
-                            {% endif %}
-                            <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#editBioModal">
-                                Edit Bio
-                            </button>
-                        </div>
-                    </div>
-                {% elif user_profile.bio %}
-                    <!-- Show bio card for others' profiles only if the bio exists -->
-                    <div class="card user-bio p-4 shadow-lg border-0">
-                        <div class="card-body">
-                            <p>{{ user_profile.bio }}</p>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-
-        <!-- Recent Projects -->
-        <div class="mb-4">
-            <div class="card shadow border-0">
-                <div class="card-header text-light d-flex justify-content-between align-items-center">
-                    <h3 class="text-light">Recent Projects</h3>
-                    <!-- View All Projects Button -->
-                    <div>
-                        {% if is_own_profile %}
-                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">
-                            Create New Project
+    <div class="row mb-4">
+        <!-- Profile Card -->
+        <div class="col-md-6">
+            <div class="card profile-info shadow border-0">
+                <div class="card-body text-center">
+                    <!-- Profile Image as Edit Button -->
+                    {% if is_own_profile %}
+                        <button type="button" class="btn text-light p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="bi bi-pencil-square"></i>
+                            <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
                         </button>
-                        {% endif %}
-                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#allProjectsModal">
-                            View All
-                        </button>
-                    </div>
-                </div>
-                <div class="row g-4">
-                    {% for project in user_projects|slice:":3" %}
-                    <div class="col-md-4">
-                        <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
-                            <div class="d-flex flex-wrap justify-content-start">
-                                <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title">
-                                    {{ project.user.username }} / {{ project.project_name }}
-                                </a>
-                                <!-- Public/Private Status -->
-                                <p class="text-light small ms-1">
-                                    {% if project.is_public %}
-                                        <span class="badge bg-primary">Public</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Private</span>
-                                    {% endif %}
-                                </p>
-                            </div>
-                            <p class="card-text text-light">{{ project.project_description }}</p>
-                            <p class="text-light small">
-                                {% if project.user == user_profile %}
-                                    <span class="badge bg-primary">Owned</span>
+                    {% else %}
+                        <form method="post" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="target_user" value="{{ user_profile.username }}">
+                            <button type="submit" name="follow_unfollow" class="btn text-light p-0">
+                                {% if is_following %}
+                                    <i class="bi bi-dash-square"></i> <!-- Unfollow Icon -->
                                 {% else %}
-                                    <span class="badge bg-secondary">Collaboration</span>
+                                    <i class="bi bi-plus-square"></i> <!-- Follow Icon -->
                                 {% endif %}
-                                Last modified: {{ project.modified_at|date:"M d, Y" }}
+                                <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <h5>{{ user_profile.username }}</h5>
+                    <p>Member since: {{ user_profile.date_joined|date:"F j, Y" }}</p>
+
+                    <div class="follow-info mt-2 d-flex justify-content-center align-items-center">
+                        <p>
+                            <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followersModal">
+                                <i class="bi bi-people-fill"></i>
+                                Followers: {{ user_profile.followers.count }}
+                            </button>
+                        </p>
+                        <p>
+                            <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#followingModal">
+                                Following: {{ user_profile.following.count }}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bio Card -->
+        <div class="col-md-6">
+            {% if is_own_profile %}
+                <!-- Show bio card for the logged-in user (with edit button) -->
+                <div class="card user-bio shadow border-0">
+                    <div class="card-body">
+                        {% if user_profile.bio %}
+                            <p>{{ user_profile.bio }}</p>
+                        {% endif %}
+                        <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#editBioModal">
+                            Edit Bio
+                        </button>
+                    </div>
+                </div>
+            {% elif user_profile.bio %}
+                <!-- Show bio card for others' profiles only if the bio exists -->
+                <div class="card user-bio p-4 shadow-lg border-0">
+                    <div class="card-body">
+                        <p>{{ user_profile.bio }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Projects -->
+    <div class="mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header text-light d-flex justify-content-between align-items-center">
+                <h3 class="text-light">Recent Projects</h3>
+                <!-- View All Projects Button -->
+                <div>
+                    {% if is_own_profile %}
+                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">
+                        Create New Project
+                    </button>
+                    {% endif %}
+                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#allProjectsModal">
+                        View All
+                    </button>
+                </div>
+            </div>
+            <div class="row g-4">
+                {% for project in user_projects|slice:":3" %}
+                <div class="col-md-4">
+                    <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
+                        <div class="d-flex flex-wrap justify-content-start">
+                            <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title">
+                                {{ project.user.username }} / {{ project.project_name }}
+                            </a>
+                            <!-- Public/Private Status -->
+                            <p class="text-light small ms-1">
+                                {% if project.is_public %}
+                                    <span class="badge bg-primary">Public</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Private</span>
+                                {% endif %}
                             </p>
                         </div>
+                        <p class="card-text text-light">{{ project.project_description }}</p>
+                        <p class="text-light small">
+                            {% if project.user == user_profile %}
+                                <span class="badge bg-primary">Owned</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Collaboration</span>
+                            {% endif %}
+                            Last modified: {{ project.modified_at|date:"M d, Y" }}
+                        </p>
                     </div>
-                    {% empty %}
-                    <p class="text-light p-3 m-3">No recent projects or collaborations available.</p>
-                    {% endfor %}
                 </div>
+                {% empty %}
+                <p class="text-light p-3 m-3">No recent projects or collaborations available.</p>
+                {% endfor %}
             </div>
         </div>
+    </div>
 
 
-        <!-- Activity Section -->
-        <div class="mb-5">
-            <div class="card shadow border-0">
+    <!-- Activity Section -->
+    <div class="mb-5">
+        <div class="card shadow border-0">
+            <div class="card-header text-light">
+                <h3 class="mb-2 text-light">Activity Calendar</h3>
+            </div>
+            <!-- Legend -->
+            <div class="activity-legend m-4 d-flex align-items-center">
+                <span class="text-light me-2">Low</span>
+                <div class="legend-bar" style="flex: 1; height: 10px; background: linear-gradient(to right, var(--bg-darker), var(--btn-secondary), rgba(0, 200, 255, 0.5), rgba(0, 200, 255, 0.7), var(--btn-primary)); border-radius: 5px;"></div>
+                <span class="text-light ms-2">High</span>
+            </div>
+            <div class="activity-calendar m-4">
+                {% for day in activity_days %}
+                    <div class="day" title="{{ day.date }}: {{ day.count }} activities"
+                         data-count="{{ day.count }}" data-day="{{ day.date }}">
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Recent Activity Details Section -->
+            <div class="card m-4 shadow border-0">
                 <div class="card-header text-light">
-                    <h3 class="mb-2 text-light">Activity Calendar</h3>
+                    Recent Activity
                 </div>
-                <!-- Legend -->
-                <div class="activity-legend m-4 d-flex align-items-center">
-                    <span class="text-light me-2">Low</span>
-                    <div class="legend-bar" style="flex: 1; height: 10px; background: linear-gradient(to right, var(--bg-darker), var(--btn-secondary), rgba(0, 200, 255, 0.5), rgba(0, 200, 255, 0.7), var(--btn-primary)); border-radius: 5px;"></div>
-                    <span class="text-light ms-2">High</span>
-                </div>
-                <div class="activity-calendar m-4">
-                    {% for day in activity_days %}
-                        <div class="day" title="{{ day.date }}: {{ day.count }} activities"
-                             data-count="{{ day.count }}" data-day="{{ day.date }}">
+                <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto; padding-right: 10px;">
+                    {% for activity in recent_activity %}
+                        <div class="activity-item p-3 rounded">
+                            <h5 class="text-light"> Project: {{ activity.project_name }}</h5>
+                            <p class="text-light">Date: {{ activity.date_time }}</p>
+                            <p class="text-light">Type: {{ activity.action }}</p>
                         </div>
                     {% endfor %}
                 </div>
-
-                <!-- Recent Activity Details Section -->
-                <div class="card m-4 shadow border-0">
-                    <div class="card-header text-light">
-                        Recent Activity
-                    </div>
-                    <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto; padding-right: 10px;">
-                        {% for activity in recent_activity %}
-                            <div class="activity-item p-3 rounded">
-                                <h5 class="text-light"> Project: {{ activity.project_name }}</h5>
-                                <p class="text-light">Date: {{ activity.date_time }}</p>
-                                <p class="text-light">Type: {{ activity.action }}</p>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
             </div>
         </div>
-    </main>
+    </div>
+
 
     <!-- Create Project Modal -->
     <div class="modal fade" id="CreateProjectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="CreateProjectModalLabel" aria-hidden="true">
@@ -268,192 +202,191 @@
     </div>
 
 
-<!-- All Projects Modal -->
-<div class="modal fade" id="allProjectsModal" tabindex="-1" aria-labelledby="allProjectsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="allProjectsModalLabel">All Projects</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-4">
-                    {% for project in user_projects %}
-                    <div class="col-md-4">
-                        <div class="card p-3 m-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                            <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title text-decoration-none">
-                                {{ project.user.username }}/{{ project.project_name }}
-                            </a>
-                            <p class="card-text text-light">{{ project.project_description }}</p>
-                            <p class="small text-light">
-                                {% if project.user == user_profile %}
-                                    <span class="badge bg-primary">Owned</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Collaboration</span>
-                                {% endif %}
-                                Last modified: {{ project.modified_at|date:"M d, Y" }}
-                            </p>
+    <!-- All Projects Modal -->
+    <div class="modal fade" id="allProjectsModal" tabindex="-1" aria-labelledby="allProjectsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allProjectsModalLabel">All Projects</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        {% for project in user_projects %}
+                        <div class="col-md-4">
+                            <div class="card p-3 m-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
+                                <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title text-decoration-none">
+                                    {{ project.user.username }}/{{ project.project_name }}
+                                </a>
+                                <p class="card-text text-light">{{ project.project_description }}</p>
+                                <p class="small text-light">
+                                    {% if project.user == user_profile %}
+                                        <span class="badge bg-primary">Owned</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Collaboration</span>
+                                    {% endif %}
+                                    Last modified: {{ project.modified_at|date:"M d, Y" }}
+                                </p>
+                            </div>
                         </div>
+                        {% empty %}
+                        <p class="text-center">No projects available.</p>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p class="text-center">No projects available.</p>
-                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 
-<!-- Modal for Editing Profile -->
-<div class="modal fade" id="editProfileModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header text-light">
-                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-light">
-                <form method="POST" enctype="multipart/form-data" action="">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="profile_picture" class="form-label">Profile Picture</label>
-                        <input type="file" class="form-control bg-dark text-light" id="profile_picture" name="profile_picture">
-                    </div>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control bg-dark text-light" id="username" name="username" value="{{ user.username }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control bg-dark text-light" id="email" name="email" value="{{ user.email }}" required>
-                    </div>
-                    <button type="submit" name="edit_profile" class="btn btn-primary">Save changes</button>
-                </form>
-                <hr>
-                <!-- Button to open Change Password modal -->
-                <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                    Change Password
-                </button>
+    <!-- Modal for Editing Profile -->
+    <div class="modal fade" id="editProfileModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-light">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-light">
+                    <form method="POST" enctype="multipart/form-data" action="">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="profile_picture" class="form-label">Profile Picture</label>
+                            <input type="file" class="form-control bg-dark text-light" id="profile_picture" name="profile_picture">
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control bg-dark text-light" id="username" name="username" value="{{ user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control bg-dark text-light" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <button type="submit" name="edit_profile" class="btn btn-primary">Save changes</button>
+                    </form>
+                    <hr>
+                    <!-- Button to open Change Password modal -->
+                    <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        Change Password
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal for Changing Password -->
-<div class="modal fade" id="changePasswordModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header text-light">
-                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-light">
-                <form method="POST" action="">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="current_password" class="form-label">Current Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="current_password" name="current_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">New Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="new_password" name="new_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm_new_password" class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="confirm_new_password" name="confirm_new_password" required>
-                    </div>
-                    <button type="submit" name="change_password" class="btn btn-primary">Update Password</button>
-                </form>
+    <!-- Modal for Changing Password -->
+    <div class="modal fade" id="changePasswordModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-light">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-light">
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control bg-dark text-light" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control bg-dark text-light" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_new_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control bg-dark text-light" id="confirm_new_password" name="confirm_new_password" required>
+                        </div>
+                        <button type="submit" name="change_password" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Followers Modal -->
-<div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="followersModalLabel">Followers</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul class="list-group">
-                    {% for follower in user_profile.followers.all %}
-                        <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ follower.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-                                <!-- Make the username clickable to the profile -->
-                                <a href="{% url 'public_profile' follower.username %}" class="text-light">{{ follower.username }}</a>
-                            </div>
-                            <div>
-                                <a href="" class="btn btn-sm btn-secondary">Chat</a>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">No followers yet.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Following Modal -->
-<div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="followingModalLabel">Following</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul class="list-group">
-                    {% for following in user_profile.following.all %}
-                        <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ following.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-                                <!-- Make the username clickable to the profile -->
-                                <a href="{% url 'public_profile' following.username %}" class="text-light">{{ following.username }}</a>
-                            </div>
-                            <div>
-                                <a href="" class="btn btn-sm btn-secondary">Chat</a>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">Not following anyone yet.</li>
-                    {% endfor %}
-                </ul>
+    <!-- Followers Modal -->
+    <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="followersModalLabel">Followers</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        {% for follower in user_profile.followers.all %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ follower.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                                    <!-- Make the username clickable to the profile -->
+                                    <a href="{% url 'public_profile' follower.username %}" class="text-light">{{ follower.username }}</a>
+                                </div>
+                                <div>
+                                    <!-- The button now links to the direct chat room -->
+                                    <a href="{% url 'start_private_chat' follower.id %}" class="btn btn-sm btn-secondary">Chat</a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">No followers yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal for editing the bio -->
-<div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editBioModalLabel">Edit Bio</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Bio edit form -->
-        <form method="POST" action="">
-          {% csrf_token %}
-          <div class="mb-3">
-            <textarea class="form-control bg-dark text-light" id="bio" name="bio" rows="4">{{ user_profile.bio }}</textarea>
+
+
+    <!-- Following Modal -->
+    <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="followingModalLabel">Following</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        {% for following in user_profile.following.all %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ following.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                                    <!-- Make the username clickable to the profile -->
+                                    <a href="{% url 'public_profile' following.username %}" class="text-light">{{ following.username }}</a>
+                                </div>
+                                <div>
+                                    <a href="{% url 'start_private_chat' following.id %}" class="btn btn-sm btn-secondary">Chat</a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">Not following anyone yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing the bio -->
+    <div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBioModalLabel">Edit Bio</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <button type="submit" name="edit_bio" class="btn btn-primary">Save changes</button>
-        </form>
+          <div class="modal-body">
+            <!-- Bio edit form -->
+            <form method="POST" action="">
+              {% csrf_token %}
+              <div class="mb-3">
+                <textarea class="form-control bg-dark text-light" id="bio" name="bio" rows="4">{{ user_profile.bio }}</textarea>
+              </div>
+              <button type="submit" name="edit_bio" class="btn btn-primary">Save changes</button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

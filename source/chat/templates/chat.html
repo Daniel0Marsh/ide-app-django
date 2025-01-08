@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %} {{ room_name }} {% endblock %}
+
+{% block extra_head %}
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'chat.css' %}">
+    <script src="{% static 'chat.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="h4">{{ room_name }}</h1>
+            </div>
+            <div class="card-body">
+                <div id="chat-log" class="border p-3 mb-3" style="height: 300px; overflow-y: scroll;">
+                    <!-- Messages will appear here -->
+                </div>
+
+                <div class="input-group">
+                    <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message" aria-label="Message">
+                    <button id="chat-message-submit" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

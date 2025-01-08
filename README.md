@@ -38,7 +38,7 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-5. Build the Docker Image:
+### 5. Build the Docker Image:
 ```bash
 sudo docker build -t terminal_session .
 ```
@@ -47,15 +47,20 @@ sudo docker build -t terminal_session .
 sudo docker rmi -f terminal_session
 ```
 
-6. Start your Django development server:
+### 6. Start your Django development server:
 ```bash
 python manage.py runserver
 ```
 
-7. Navigate to the IDE app's URL in your browser to access the IDE.
+### 7. ASGI Server (WebSocket enabled):
+```bash
+daphne -p 8000 core.asgi:application
+```
+
+### 8. Navigate to the IDE app's URL in your browser to access the IDE.
    `http:127.0.0.1:8000`
 
-### Functionality
+## Functionality
 - Project Management: Create, edit, rename, and organize files and folders within the project tree.
 - Download Project: Download the entire project for offline access or sharing with others.
 - Auto Syntax Highlighting: Automatically highlight syntax for various programming languages for improved readability.

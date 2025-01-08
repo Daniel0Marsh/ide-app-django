@@ -21,10 +21,29 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'chat',
     'user',
     'user_profile',
     'ide',
 ]
+
+
+# ASGI Configuration
+ASGI_APPLICATION = 'core.asgi.application'
+
+# Redis settings for Django Channels
+CHANNEL_LAYERS = {
+    'default': {
+       # 'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        # Use the following instead if you have Redis setup:
+         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+         'CONFIG': {
+             'hosts': [('127.0.0.1', 6379)],
+         },
+    },
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
