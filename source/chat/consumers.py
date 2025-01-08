@@ -1,12 +1,10 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.utils import timezone
-
+from asgiref.sync import sync_to_async  # Import sync_to_async
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        from django.contrib.auth.models import User
-        from django.contrib.auth import get_user_model
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
@@ -27,6 +25,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         user = self.scope["user"]
+
+        # Get the current chat room
+        room = await self.get_chat_room(self.room_name)
+
+        # Save the message to the database
+        await self.save_message(room, user, message)
 
         # Get user profile image URL (or use a default if not set)
         profile_image_url = user.profile_picture.url if user.profile_picture else '/static/default-avatar.png'
@@ -59,4 +63,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,  # Include timestamp
         }))
 
+    @sync_to_async
+    def get_chat_room(self, room_name):
+        from .models import ChatRoom  # Import inside the method to avoid import issues
+        return ChatRoom.objects.get(name=room_name)
 
+    @sync_to_async
+    def save_message(self, room, user, message):
+        from .models import Message  # Import inside the method to avoid import issues
+        msg = Message(
+            room=room,
+            sender=user,
+            content=message,
+            timestamp=timezone.now()
+        )
+        msg.save()

@@ -1,7 +1,7 @@
 
 1) refactor all code base to follow pep8
 2) forgot password emailing system
-3) messaging system to save every message
-4) todos for each project
+3) todos for each project
+4)
 
 

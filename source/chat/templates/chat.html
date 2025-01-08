@@ -11,11 +11,18 @@
 <!-- Main Content -->
 <div class="card">
     <div class="card-header">
-    <div class="d-flex align-items-center">
-        <img src="{{ recipient.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-        <!-- Make the username clickable to the profile -->
-        <a href="{% url 'public_profile' recipient.username %}" class="text-light">{{ recipient.username }}</a>
-    </div>
+        <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center">
+                <img src="{{ recipient.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                <!-- Make the username clickable to the profile -->
+                <a href="{% url 'public_profile' recipient.username %}" class="text-light">{{ recipient.username }}</a>
+            </div>
+
+            <form id="delete-chat-history-form" method="post" class="ms-auto">
+                {% csrf_token %}
+                <button type="submit" name="delete_history" class="btn btn-danger btn-sm ms-2">Delete Chat History</button>
+            </form>
+        </div>
     </div>
     <div class="card-body">
         <div id="chat-log" class="p-3 mb-3" style="height: 500px; overflow-y: scroll;">

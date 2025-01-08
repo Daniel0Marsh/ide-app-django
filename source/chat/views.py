@@ -1,9 +1,10 @@
 # views.py
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
-from .models import ChatRoom, Message
+from .models import ChatRoom
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse, HttpResponseRedirect
 
 
 def get_or_create_private_room(user1, user2):
@@ -28,10 +29,6 @@ class RoomView(TemplateView):
         context = super().get_context_data(**kwargs)
         room_name = self.kwargs['room_name']
         room = get_object_or_404(ChatRoom, name=room_name)
-        context['room_name'] = room_name
-        context['messages'] = room.messages.order_by('timestamp')
-
-        # Get the current logged-in user
         current_user = self.request.user
 
         # Get the other participant(s) in the room (the user who isn't the current logged-in user)
@@ -40,8 +37,44 @@ class RoomView(TemplateView):
 
         # Assume there is only one recipient (in a 1-on-1 chat)
         if other_participants:
-            context['recipient'] = other_participants[0]
+            recipient = other_participants[0]
         else:
-            context['recipient'] = None  # Handle case if there is no other participant
+            recipient = None  # Handle case if there is no other participant
+
+        context = {
+            'room_name': room_name,
+            'messages': room.messages.order_by('timestamp'),
+            'recipient': recipient,
+        }
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle actions such as deleting chat history.
+        """
+        action_map = {
+            'delete_history': self.delete_history,
+        }
+        action = next((key for key in action_map if key in request.POST), None)
+        if action:
+            return action_map[action](request)
+        return HttpResponse("Invalid action", status=400)
+
+    def delete_history(self, request):
+        """
+        Handle deleting chat history logic.
+        """
+        room_name = self.kwargs['room_name']
+        room = get_object_or_404(ChatRoom, name=room_name)
+        current_user = self.request.user
+
+        # Ensure the current user is a participant in the room before allowing deletion
+        if current_user not in room.participants.all():
+            return HttpResponse("You are not authorized to delete chat history", status=403)
+
+        # Delete all messages in the room
+        room.messages.all().delete()
+
+        # Optionally, you could redirect to the room page after deleting the history
+        return HttpResponseRedirect(self.request.path)
