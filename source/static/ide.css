@@ -1,0 +1,176 @@
+:root {
+    --bg-dark: #1e1e2f;
+    --bg-darker: #151521;
+    --text-light: #e4e4e7;
+    --text-accent: #00c8ff;
+    --btn-primary: #4caf50;
+    --btn-primary-hover: #3b8e3b;
+    --btn-secondary: #6c63ff;
+    --btn-secondary-hover: #554ae0;
+    --btn-dark: #151521;
+    --btn-dark-hover: #554ae0;
+    --text-white: #ffffff;
+    --text-dark: #000000;
+    --highlight-yellow: #ffcc00;
+    --link-blue: #4C8BF5;
+    --border-color: #e4e4e7;
+}
+
+.btn-primary {
+    background-color: var(--btn-primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--btn-secondary);
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: var(--btn-secondary-hover);
+}
+
+.btn-dark {
+    background-color: var(--btn-dark);
+    border: none;
+}
+
+.btn-dark:hover {
+    background-color: var(--btn-dark-hover);
+}
+
+body {
+    background-color: var(--bg-dark);
+    margin-top: 0px;
+    overflow: hidden;
+}
+
+.navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-white);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: var(--bg-dark);
+    z-index: 1000;
+}
+
+.side-nav {
+    position: fixed;
+    top: 0px;
+    height: 100vh;
+    width: 50px;
+    z-index: 900;
+    background-color: var(--bg-darker);
+    padding-top: 1rem;
+    color: var(--text-white);
+    text-align: center;
+    margin-top: 5px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0px;
+    left: -300px;
+    height: 100vh;
+    width: 240px;
+    z-index: 800;
+    background-color: var(--bg-dark);
+    padding-top: 1rem;
+    transition: all 0.1s ease;
+    color: var(--text-white);
+    margin-top: 5px;
+}
+
+.sidebar.active {
+    left: 50;
+}
+
+.sidebar ul.components {
+    padding: 20px 0;
+}
+
+.sidebar ul.components li a {
+    padding: 10px 15px;
+    display: block;
+    color: var(--text-white);
+}
+
+.sidebar ul.components li a:hover {
+    background-color: var(--bg-dark);
+    text-decoration: none;
+}
+
+.sidebar ul.components ul.nested li a {
+    padding-left: 30px;
+}
+
+.folder-btn {
+    color: var(--highlight-yellow);
+    font-size: 15px;
+}
+
+.file-item {
+    color: var(--text-white);
+    font-size: 15px;
+}
+
+.ide-card {
+    height: 100vh;
+    transition: all 0.1s ease;
+    color: var(--highlight-yellow);
+    background-color: var(--bg-dark);
+    margin-left: 50px;
+}
+
+.sidebar.active + .ide-card {
+    margin-left: 290px;
+}
+
+.terminal-header {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.terminal {
+    background-color: var(--bg-dark);
+    overflow: auto;
+    font-size: 16px;
+    font-weight: bold;
+    height: 100%;
+    font-family: monospace;
+    color: var(--text-light);
+}
+
+.prompt {
+    padding: 0;
+}
+
+.username {
+    color: var(--text-accent);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.path {
+    color: var(--link-blue);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.terminal-input {
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    outline: none;
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    resize: vertical;
+    flex-grow: 1;
+    -webkit-appearance: none;

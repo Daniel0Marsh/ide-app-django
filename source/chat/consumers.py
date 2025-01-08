@@ -1,8 +1,12 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+import datetime
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        from django.contrib.auth.models import User
+        from django.contrib.auth import get_user_model
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
@@ -22,15 +26,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
+        user = self.scope["user"]
+
+        # Get user profile image URL (or use a default if not set)
+        profile_image_url = user.profile_picture.url if user.profile_picture else '/static/default-avatar.png'
+
+        # Get the current timestamp
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message
+                'message': message,
+                'user': user.username,
+                'profile_image_url': profile_image_url,
+                'timestamp': timestamp,  # Add the timestamp
             }
         )
 
     async def chat_message(self, event):
         message = event['message']
-        await self.send(text_data=json.dumps({'message': message}))
+        user = event['user']
+        profile_image_url = event['profile_image_url']
+        timestamp = event['timestamp']  # Get the timestamp
+
+        # Send message data to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'user': user,
+            'profile_image_url': profile_image_url,
+            'timestamp': timestamp,  # Include timestamp
+        }))

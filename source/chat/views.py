@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 def get_or_create_private_room(user1, user2):
     # Use usernames instead of IDs for room naming
-    room_name = f"{min(user1.username, user2.username)}_{max(user1.username, user2.username)}"
+    room_name = f"{min(user1.username, user2.username)}-{max(user1.username, user2.username)}"
     room, created = ChatRoom.objects.get_or_create(name=room_name)
     if created:
         room.participants.add(user1, user2)
@@ -30,4 +30,12 @@ class RoomView(TemplateView):
         room = get_object_or_404(ChatRoom, name=room_name)
         context['room_name'] = room_name
         context['messages'] = room.messages.order_by('timestamp')
+
+        # Get the other participant (the user who isn't the current logged-in user)
+        participants = room.participants.all()
+        current_user = self.request.user
+        recipient = [user for user in participants if user != current_user][0]
+
+        # Add the recipient's username to the context
+        context['recipient'] = recipient
         return context

@@ -8,24 +8,141 @@
 {% endblock %}
 
 {% block content %}
-    <!-- Main Content -->
-    <div class="container mt-5">
-        <div class="card">
-            <div class="card-header">
-                <h1 class="h4">{{ room_name }}</h1>
-            </div>
-            <div class="card-body">
-                <div id="chat-log" class="border p-3 mb-3" style="height: 300px; overflow-y: scroll;">
-                    <!-- Messages will appear here -->
-                </div>
+<!-- Main Content -->
+<div class="card">
+    <div class="card-header">
+    <div class="d-flex align-items-center">
+        <img src="{{ recipient.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+        <!-- Make the username clickable to the profile -->
+        <a href="{% url 'public_profile' recipient.username %}" class="text-light">{{ recipient.username }}</a>
+    </div>
+    </div>
+    <div class="card-body">
+        <div id="chat-log" class="p-3 mb-3" style="height: 400px; overflow-y: scroll;">
+            <!-- Messages will appear here -->
+        </div>
 
-                <div class="input-group">
-                    <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message" aria-label="Message">
-                    <button id="chat-message-submit" class="btn btn-primary">Send</button>
-                </div>
-            </div>
+        <div class="input-group">
+            <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
+            <button id="chat-message-submit" class="btn btn-secondary">Send</button>
         </div>
     </div>
+</div>
+
+<style>
+/* Chat message styles */
+.message-item {
+    display: flex;
+    align-items: flex-start; /* Align items at the top */
+    margin-bottom: 10px;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column; /* Stack username and message bubble */
+    margin-left: 10px; /* Space between profile image and message content */
+}
+
+.user-name {
+    color: white;
+    border-radius: 20px;
+    margin-bottom: 2px;
+    font-size: 12px;
+}
+
+.timestamp {
+    font-size: 10px;
+    color: #bbb;
+    margin-left: 5px;
+}
+
+.message-bubble {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    width: auto;
+    max-width: 100%; /* Limit maximum width */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-top: 15px;
+}
+
+</style>
+
+<script>
+const roomName = "{{ room_name }}";
+const chatSocket = new WebSocket(
+    `ws://${window.location.host}/ws/chat/${roomName}/`
+);
+
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    const chatLog = document.querySelector('#chat-log');
+
+    // Create message item container
+    const messageItem = document.createElement('div');
+    messageItem.classList.add('message-item');
+
+    // User's profile picture
+    const profileImg = document.createElement('img');
+    profileImg.classList.add('profile-img');
+    profileImg.src = data.profile_image_url;
+
+    // Message content container
+    const messageContent = document.createElement('div');
+    messageContent.classList.add('message-content');
+
+    // User's name bubble
+    const userName = document.createElement('span');
+    userName.classList.add('user-name');
+    userName.textContent = data.user;
+
+    // Timestamp bubble
+    const timestamp = document.createElement('span');
+    timestamp.classList.add('timestamp');
+    timestamp.textContent = data.timestamp;  // Display timestamp
+
+    // Message bubble
+    const messageBubble = document.createElement('div');
+    messageBubble.classList.add('message-bubble');
+    messageBubble.textContent = data.message;
+
+    // Append username and timestamp to message content
+    const usernameContainer = document.createElement('div');
+    usernameContainer.appendChild(userName);
+    usernameContainer.appendChild(timestamp);
+
+    messageContent.appendChild(usernameContainer);
+    messageContent.appendChild(messageBubble);
+
+    // Append profile image and message content to message item
+    messageItem.appendChild(profileImg);
+    messageItem.appendChild(messageContent);
+
+    chatLog.appendChild(messageItem);
+
+    // Auto-scroll to the latest message
+    chatLog.scrollTop = chatLog.scrollHeight;
+};
+
+chatSocket.onclose = function(e) {
+    console.error('Chat socket closed unexpectedly');
+};
+
+document.querySelector('#chat-message-submit').onclick = function(e) {
+    const messageInputDom = document.querySelector('#chat-message-input');
+    const message = messageInputDom.value;
+    chatSocket.send(JSON.stringify({ 'message': message }));
+    messageInputDom.value = ''; // Clear input after sending
+};
+
+</script>
 
 {% endblock %}
 
