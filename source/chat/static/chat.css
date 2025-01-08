@@ -1,22 +1,60 @@
 /* Chat message styles */
 .message-item {
     display: flex;
+    align-items: flex-start;
     margin-bottom: 10px;
-    align-items: center;
 }
 
-.user-name {
-    background-color: #17a2b8;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 20px;
-    margin-right: 10px;
+.message-item.sender {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+.message-item.receiver {
+    flex-direction: row;
+    text-align: left;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px;
+}
+
+.message-item.sender .message-content {
+    margin: 0 10px 0 0;
 }
 
 .message-bubble {
     padding: 10px;
-    background-color: #f8f9fa;
     border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    width: 75%;
+    word-wrap: break-word;
+}
+
+.message-item.sender .message-bubble {
+    background-color: #007bff;
+    color: white;
+}
+
+.message-item.receiver .message-bubble {
+    background-color: #f8f9fa;
+    color: black;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-top: 15px;
+}
+
+.user-name {
+    font-weight: bold;
+    color: white;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    margin-left: 8px;
 }

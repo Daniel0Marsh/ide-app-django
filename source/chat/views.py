@@ -31,11 +31,17 @@ class RoomView(TemplateView):
         context['room_name'] = room_name
         context['messages'] = room.messages.order_by('timestamp')
 
-        # Get the other participant (the user who isn't the current logged-in user)
-        participants = room.participants.all()
+        # Get the current logged-in user
         current_user = self.request.user
-        recipient = [user for user in participants if user != current_user][0]
 
-        # Add the recipient's username to the context
-        context['recipient'] = recipient
+        # Get the other participant(s) in the room (the user who isn't the current logged-in user)
+        participants = room.participants.all()
+        other_participants = [user for user in participants if user != current_user]
+
+        # Assume there is only one recipient (in a 1-on-1 chat)
+        if other_participants:
+            context['recipient'] = other_participants[0]
+        else:
+            context['recipient'] = None  # Handle case if there is no other participant
+
         return context

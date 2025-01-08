@@ -18,10 +18,21 @@
     </div>
     </div>
     <div class="card-body">
-        <div id="chat-log" class="p-3 mb-3" style="height: 400px; overflow-y: scroll;">
+        <div id="chat-log" class="p-3 mb-3" style="height: 500px; overflow-y: scroll;">
             <!-- Messages will appear here -->
+            {% for message in messages %}
+                <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}">
+                    <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
+                    <div class="message-content">
+                        <div class="user-name">
+                            {{ message.sender.username }}
+                            <span class="timestamp">{{ message.timestamp }}</span>
+                        </div>
+                        <div class="message-bubble">{{ message.content }}</div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-
         <div class="input-group">
             <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
             <button id="chat-message-submit" class="btn btn-secondary">Send</button>
@@ -29,54 +40,10 @@
     </div>
 </div>
 
-<style>
-/* Chat message styles */
-.message-item {
-    display: flex;
-    align-items: flex-start; /* Align items at the top */
-    margin-bottom: 10px;
-}
-
-.message-content {
-    display: flex;
-    flex-direction: column; /* Stack username and message bubble */
-    margin-left: 10px; /* Space between profile image and message content */
-}
-
-.user-name {
-    color: white;
-    border-radius: 20px;
-    margin-bottom: 2px;
-    font-size: 12px;
-}
-
-.timestamp {
-    font-size: 10px;
-    color: #bbb;
-    margin-left: 5px;
-}
-
-.message-bubble {
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    width: auto;
-    max-width: 100%; /* Limit maximum width */
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.profile-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-top: 15px;
-}
-
-</style>
-
 <script>
-const roomName = "{{ room_name }}";
+// Pass the logged-in user's username from Django to JavaScript
+const loggedInUsername = "{{ request.user.username|escapejs }}";
+const roomName = "{{ room_name|escapejs }}";
 const chatSocket = new WebSocket(
     `ws://${window.location.host}/ws/chat/${roomName}/`
 );
@@ -88,6 +55,13 @@ chatSocket.onmessage = function(e) {
     // Create message item container
     const messageItem = document.createElement('div');
     messageItem.classList.add('message-item');
+
+    // Add the appropriate CSS class based on sender
+    if (data.sender === loggedInUsername) {
+        messageItem.classList.add('sender');
+    } else {
+        messageItem.classList.add('receiver');
+    }
 
     // User's profile picture
     const profileImg = document.createElement('img');
@@ -101,7 +75,7 @@ chatSocket.onmessage = function(e) {
     // User's name bubble
     const userName = document.createElement('span');
     userName.classList.add('user-name');
-    userName.textContent = data.user;
+    userName.textContent = data.sender;
 
     // Timestamp bubble
     const timestamp = document.createElement('span');
@@ -135,13 +109,29 @@ chatSocket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
 };
 
-document.querySelector('#chat-message-submit').onclick = function(e) {
+// Function to send the message
+function sendMessage() {
     const messageInputDom = document.querySelector('#chat-message-input');
     const message = messageInputDom.value;
-    chatSocket.send(JSON.stringify({ 'message': message }));
+    chatSocket.send(JSON.stringify({
+        'message': message,
+        'sender': loggedInUsername, // Include sender info
+    }));
     messageInputDom.value = ''; // Clear input after sending
+}
+
+// Send message on button click
+document.querySelector('#chat-message-submit').onclick = function(e) {
+    sendMessage();
 };
 
+// Send message on Enter key press
+document.querySelector('#chat-message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { // Check if Enter is pressed (without Shift key for multi-line input)
+        e.preventDefault(); // Prevent the default behavior (line break)
+        sendMessage();
+    }
+});
 </script>
 
 {% endblock %}
