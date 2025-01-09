@@ -12,6 +12,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.db import models
+from django.db.models import Q
 from ide.models import Project
 from user.models import CustomUser
 import os
@@ -288,3 +289,34 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
+
+class SearchView(TemplateView):
+    template_name = "search_results.html"
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests for searching users and projects.
+        """
+        query = request.GET.get('query', '').strip()
+        user_results = []
+        project_results = []
+
+        if query:
+            # Search for users by username or name
+            user_results = CustomUser.objects.filter(
+                Q(username__icontains=query) |
+                Q(email__icontains=query)
+            )
+
+            # Search for projects by name or description
+            project_results = Project.objects.filter(
+                Q(project_name__icontains=query) |
+                Q(project_description__icontains=query)
+            ).filter(is_public=True)  # Only public projects
+
+        context = {
+            'query': query,
+            'user_results': user_results,
+            'project_results': project_results,
+        }
+        return self.render_to_response(context)

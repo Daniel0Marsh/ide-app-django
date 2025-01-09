@@ -8,11 +8,22 @@
     --btn-danger: #e74c3c;
 }
 
+.navbar.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: var(--bg-darker);
+  color: var(--text-accent);
+  padding: 0px;
+  margin: 0px;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-light);
     font-family: 'Arial', sans-serif;
-    overflow: hidden;
 }
 
 .btn-primary {
@@ -168,7 +179,7 @@ body {
 }
 
 .folder-btn {
-    color: var(--highlight-yellow);
+    color: var(--text-white);
     font-size: 15px;
 }
 
@@ -180,7 +191,7 @@ body {
 .ide-card {
     height: 100vh;
     transition: all 0.1s ease;
-    color: var(--highlight-yellow);
+    color: var(--text-white);
     background-color: var(--bg-dark);
     margin-left: 50px;
     padding-top: 56px;

@@ -2,7 +2,7 @@
 1) refactor all code base to follow pep8
 2) forgot password emailing system
 3) update README.md
-4) add search bar to search for users profiles and projects
-5) add a landing page
+4) add a landing page
+5)
 
 

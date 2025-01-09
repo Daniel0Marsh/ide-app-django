@@ -52,6 +52,15 @@ body {
     background-color: #c0392b;
 }
 
+.btn-dark {
+    background-color: var(--btn-dark);
+    border: none;
+}
+
+.btn-dark:hover {
+    background-color: var(--btn-secondary);
+}
+
 .card {
     background-color: var(--bg-darker);
     border: none;

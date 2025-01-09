@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} {{current_project.project_name}}/{{file_name}} {% endblock %}</title>
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -16,204 +16,219 @@
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar fixed-top navbar-expand-lg">
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand text-light" href="{% url 'personal_profile' %}">
+            <!-- Brand -->
+            <a class="navbar-brand" href="{% url 'personal_profile' %}">
                 CodeBlock
             </a>
-            <div class="dropdown ms-auto">
-                <a href="{% url 'personal_profile' %}" class="d-flex align-items-center dropdown-toggle"
-                    id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                        class="rounded-circle">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <!-- Non-clickable header -->
-                    <li>
-                        <span class="dropdown-item-text fw-bold">
-                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                                class="rounded-circle">
-                            @{{ user.username }}
-                        </span>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <!-- Other dropdown items -->
-                    <li><a class="dropdown-item" href="{% url 'personal_profile' %}"> My Profile</a></li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item">
-                                Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+
+            <!-- Navbar toggler for mobile view -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar content -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Spacer to push the search bar to the right -->
+                <div class="ms-auto">
+                    <!-- Search bar -->
+                    <form class="d-flex m-2 me-4" action="{% url 'search' %}" method="get">
+                        <div class="input-group">
+                            <input class="form-control" type="search" name="query" placeholder="Search users or projects" aria-label="Search">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="bi bi-search"></i>
                             </button>
-                        </form>
-                    </li>
-                </ul>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- User dropdown -->
+                <div class="dropdown me-4">
+                    <a href="{% url 'personal_profile' %}" class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <span class="dropdown-item-text fw-bold">
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
+                                @{{ user.username }}
+                            </span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'personal_profile' %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
 
-<!-- project side-nav -->
-<div class="side-nav shadow-end border-end border-dark">
+    <!-- project side-nav -->
+    <div class="side-nav shadow-end border-end border-dark">
 
-    <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip" title="Project">
-        <i class="bi bi-folder2-open fs-5 text-light"></i>
-    </button>
-
-    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-        <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip" title="Tasks">
-            <i class="bi bi-card-checklist fs-5 text-light"></i>
+        <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip" title="Project">
+            <i class="bi bi-folder2-open fs-5 text-light"></i>
         </button>
 
-        <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
-            aria-controls="offcanvasBottom">
-        <i class="bi bi-terminal fs-5 text-light"></i>
-        </button>
-    {% endif %}
-
-    <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal" data-bs-target="#colorChangeModal">
-        <i class="bi bi-paint-bucket fs-5 text-light"></i>
-    </button>
-
-    <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
-        <i class="bi bi-house fs-5 text-light"></i>
-    </a>
-</div>
-
-<!-- Task Sidebar -->
-<div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
-    <h5  class="p-2">Project Tasks</h5>
-    {% if tasks %}
-    <ul class="list-group p-2">
-        {% for task in tasks %}
-            <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <!-- Make task title clickable -->
-                    <a href="#"
-                       class="text-light"
-                       data-bs-toggle="modal"
-                       data-bs-target="#updateTaskModal"
-                       data-task-id="{{ task.id }}"
-                       data-task-title="{{ task.title }}"
-                       data-task-description="{{ task.description }}"
-                       data-task-status="{{ task.status }}">
-                        <strong>{{ task.title }}</strong>
-                    </a>
-                    <span class="badge bg-secondary">{{ task.get_status_display }}</span>
-                </div>
-                <p class="mb-1 text-light">{{ task.description }}</p>
-                <div class="small text-light">
-                    Assigned to: {{ task.assigned_to.username }} <br>
-                    Assigned by: {{ task.assigned_by.username }}
-                </div>
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <div class="text-center">
-        <p class="text-light">No tasks have been assigned to this project yet.</p>
-    </div>
-{% endif %}
-</div>
-
-<!-- Project Tree Form -->
-<form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
-      class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
-    {% csrf_token %}
-    <h5  class="p-2">Project Files</h5>
-    <ul>
-        {% for node in project_tree %}
-        {% if node.type == 'directory' %}
-        <li>
-            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
-                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
+        {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+            <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip" title="Tasks">
+                <i class="bi bi-card-checklist fs-5 text-light"></i>
             </button>
-            <ul class="collapse show" id="{{node.name|slugify}}">
-                {% for child in node.children %}
-                {% if child.type == 'directory' %}
-                <li>
-                    <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
-                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
-                    </button>
-                    <ul class="collapse show" id="{{ child.name|slugify }}">
-                        {% for grandchild in child.children %}
-                        {% if grandchild.type == 'file' %}
-                        <li>
-                            <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{grandchild.path}}">
-                                <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
-                            </button>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% elif child.type == 'file' %}
-                <li>
-                    <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
-                        <i class="bi bi-file-earmark-code"></i> {{child.name}}
-                    </button>
-                </li>
-                {% endif %}
-                {% endfor %}
-            </ul>
-        </li>
-        {% elif node.type == 'file' %}
-        <li>
-            <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
-                <i class="bi bi-file-earmark-code"></i> {{node.name}}
+
+            <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
+                aria-controls="offcanvasBottom">
+            <i class="bi bi-terminal fs-5 text-light"></i>
             </button>
-        </li>
         {% endif %}
-        {% endfor %}
-    </ul>
-</form>
 
-<!--- This is the main CodeMirror IDE section including the nave buttons--->
-<form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
-    {% csrf_token %}
-    <input type="hidden" name="file_path" value="{{file_path}}">
-    <input type="hidden" name="file_name" value="{{file_name}}">
-    <input type="hidden" name="project_id" value="{{current_project.id}}">
+        <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal" data-bs-target="#colorChangeModal">
+            <i class="bi bi-paint-bucket fs-5 text-light"></i>
+        </button>
 
-    <div class="card-header shadow-end border-end border-dark">
-        <div class="hstack gap-3 align-middle">
-            <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                    <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
-                        <i class="bi bi-pencil"></i> {{file_name}}
-                    </button>
-                {% else %}
-                    <p class="btn folder-btn">
-                            <i class="bi bi-pencil"></i> {{file_name}}
-                    </p>
-                {% endif %}
-            </div>
-            <div class="vr"></div>
-            <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                    <button class="btn file-item" name="save_file" type="submit">
-                        <i class="bi bi-save"></i> Save
-                    </button>
-                {% endif %}
-            </div>
-            <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                <button class="btn file-item" name="delete" type="submit">
-                    <i class="bi bi-trash"></i> Delete
-                </button>
-                {% endif %}
-            </div>
-            <!-- Add dropdown buttons -->
-        </div>
+        <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
+            <i class="bi bi-house fs-5 text-light"></i>
+        </a>
     </div>
-    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-        <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+
+    <!-- Task Sidebar -->
+    <div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
+        <h5  class="p-2">Project Tasks</h5>
+        {% if tasks %}
+        <ul class="list-group p-2">
+            {% for task in tasks %}
+                <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <!-- Make task title clickable -->
+                        <a href="#"
+                           class="text-light"
+                           data-bs-toggle="modal"
+                           data-bs-target="#updateTaskModal"
+                           data-task-id="{{ task.id }}"
+                           data-task-title="{{ task.title }}"
+                           data-task-description="{{ task.description }}"
+                           data-task-status="{{ task.status }}">
+                            <strong>{{ task.title }}</strong>
+                        </a>
+                        <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                    </div>
+                    <p class="mb-1 text-light">{{ task.description }}</p>
+                    <div class="small text-light">
+                        Assigned to: {{ task.assigned_to.username }} <br>
+                        Assigned by: {{ task.assigned_by.username }}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
     {% else %}
-        <textarea name="file_contents" id="myTextarea" style="display: none;" readonly disabled>{{ file_content }}</textarea>
+        <div class="text-center">
+            <p class="text-light">No tasks have been assigned to this project yet.</p>
+        </div>
     {% endif %}
-</form>
+    </div>
+
+    <!-- Project Tree Form -->
+    <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+          class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
+        {% csrf_token %}
+        <h5  class="p-2">Project Files</h5>
+        <ul>
+            {% for node in project_tree %}
+            {% if node.type == 'directory' %}
+            <li>
+                <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
+                    <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
+                </button>
+                <ul class="collapse show" id="{{node.name|slugify}}">
+                    {% for child in node.children %}
+                    {% if child.type == 'directory' %}
+                    <li>
+                        <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
+                            <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
+                        </button>
+                        <ul class="collapse show" id="{{ child.name|slugify }}">
+                            {% for grandchild in child.children %}
+                            {% if grandchild.type == 'file' %}
+                            <li>
+                                <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{grandchild.path}}">
+                                    <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
+                                </button>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% elif child.type == 'file' %}
+                    <li>
+                        <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
+                            <i class="bi bi-file-earmark-code"></i> {{child.name}}
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </li>
+            {% elif node.type == 'file' %}
+            <li>
+                <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
+                    <i class="bi bi-file-earmark-code"></i> {{node.name}}
+                </button>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </form>
+
+    <!--- This is the main CodeMirror IDE section including the nave buttons--->
+    <form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
+        {% csrf_token %}
+        <input type="hidden" name="file_path" value="{{file_path}}">
+        <input type="hidden" name="file_name" value="{{file_name}}">
+        <input type="hidden" name="project_id" value="{{current_project.id}}">
+
+        <div class="card-header shadow-end border-end border-dark">
+            <div class="hstack gap-3 align-middle">
+                <div class="p-1">
+                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                        <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
+                            <i class="bi bi-pencil"></i> {{file_name}}
+                        </button>
+                    {% else %}
+                        <p class="btn folder-btn">
+                                <i class="bi bi-pencil"></i> {{file_name}}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="vr"></div>
+                <div class="p-1">
+                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                        <button class="btn file-item" name="save_file" type="submit">
+                            <i class="bi bi-save"></i> Save
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="p-1">
+                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                    <button class="btn file-item" name="delete" type="submit">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                    {% endif %}
+                </div>
+                <!-- Add dropdown buttons -->
+            </div>
+        </div>
+            <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+    </form>
 </body>
 
 <!-- Terminal -->
@@ -448,304 +463,304 @@
 
 
 <script>
-// Store the collapse state in an object
-let collapseState = {};
+    // Store the collapse state in an object
+    let collapseState = {};
 
-// Function to update the project tree
-function updateProjectTree() {
-    // Before updating the tree, store the current state of collapse elements
-    document.querySelectorAll('.collapse').forEach(collapseElement => {
-        const id = collapseElement.id;
-        collapseState[id] = collapseElement.classList.contains('show');
-    });
+    // Function to update the project tree
+    function updateProjectTree() {
+        // Before updating the tree, store the current state of collapse elements
+        document.querySelectorAll('.collapse').forEach(collapseElement => {
+            const id = collapseElement.id;
+            collapseState[id] = collapseElement.classList.contains('show');
+        });
 
-    // Save the scroll position of the filesSidebar to avoid shifting
-    const filesSidebar = document.querySelector('#filesSidebar');
-    const scrollPosition = filesSidebar.scrollTop;
+        // Save the scroll position of the filesSidebar to avoid shifting
+        const filesSidebar = document.querySelector('#filesSidebar');
+        const scrollPosition = filesSidebar.scrollTop;
 
-    fetch(window.location.href, {
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.project_tree) {
-            const treeContainer = document.querySelector('#filesSidebar ul');
-            treeContainer.innerHTML = ''; // Clear the existing tree
+        fetch(window.location.href, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.project_tree) {
+                const treeContainer = document.querySelector('#filesSidebar ul');
+                treeContainer.innerHTML = ''; // Clear the existing tree
 
-            // Generate new tree HTML
-            const treeHTML = generateTreeHTML(data.project_tree);
-            treeContainer.innerHTML = treeHTML;
+                // Generate new tree HTML
+                const treeHTML = generateTreeHTML(data.project_tree);
+                treeContainer.innerHTML = treeHTML;
 
-            // Reapply the saved collapse state
-            document.querySelectorAll('.collapse').forEach(collapseElement => {
-                const id = collapseElement.id;
-                if (collapseState[id]) {
-                    // If the state was 'expanded', reapply the 'show' class
-                    collapseElement.classList.add('show');
-                } else {
-                    // Otherwise, collapse it
-                    collapseElement.classList.remove('show');
-                }
-            });
+                // Reapply the saved collapse state
+                document.querySelectorAll('.collapse').forEach(collapseElement => {
+                    const id = collapseElement.id;
+                    if (collapseState[id]) {
+                        // If the state was 'expanded', reapply the 'show' class
+                        collapseElement.classList.add('show');
+                    } else {
+                        // Otherwise, collapse it
+                        collapseElement.classList.remove('show');
+                    }
+                });
 
-            // Reinitialize collapse buttons
-            document.querySelectorAll('.btn.folder-btn').forEach(button => {
-                const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
-                if (targetCollapse && targetCollapse.classList.contains('show')) {
-                    button.setAttribute('aria-expanded', 'true');
-                } else {
-                    button.setAttribute('aria-expanded', 'false');
-                }
-            });
+                // Reinitialize collapse buttons
+                document.querySelectorAll('.btn.folder-btn').forEach(button => {
+                    const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
+                    if (targetCollapse && targetCollapse.classList.contains('show')) {
+                        button.setAttribute('aria-expanded', 'true');
+                    } else {
+                        button.setAttribute('aria-expanded', 'false');
+                    }
+                });
 
-            // Reapply the scroll position to prevent visual movement
-            filesSidebar.scrollTop = scrollPosition;
-        }
-    })
-    .catch(error => console.error('Error fetching project tree:', error));
-}
-
-// Function to generate tree HTML from the project tree structure
-function generateTreeHTML(nodes) {
-    let html = '';
-    nodes.forEach(node => {
-        if (node.type === 'directory') {
-            html += `<li>
-                        <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#${slugify(node.name)}" aria-expanded="false">
-                            <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
-                        </button>
-                        <ul class="collapse" id="${slugify(node.name)}">
-                            ${generateTreeHTML(node.children)}  <!-- Recursive call -->
-                        </ul>
-                      </li>`;
-        } else if (node.type === 'file') {
-            html += `<li>
-                        <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
-                            <i class="bi bi-file-earmark-code"></i> ${node.name}
-                        </button>
-                      </li>`;
-        }
-    });
-    return html;
-}
-
-// Function to safely create slugs for the element IDs
-function slugify(text) {
-    return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    const sidebarCollapse = document.getElementById("sidebarCollapse");
-    const taskSidebarCollapse = document.getElementById("taskSidebarCollapse");
-    const filesSidebar = document.getElementById("filesSidebar");
-    const tasksSidebar = document.getElementById("tasksSidebar");
-    const body = document.body; // Used for applying layout classes
-
-    sidebarCollapse.addEventListener("click", () => {
-        filesSidebar.classList.toggle("active");
-        tasksSidebar.classList.remove("active"); // Close the other sidebar
-
-        // Update body class for layout adjustments
-        updateLayoutClasses();
-    });
-
-    taskSidebarCollapse.addEventListener("click", () => {
-        tasksSidebar.classList.toggle("active");
-        filesSidebar.classList.remove("active"); // Close the other sidebar
-
-        // Update body class for layout adjustments
-        updateLayoutClasses();
-    });
-
-    function updateLayoutClasses() {
-        const isFilesSidebarActive = filesSidebar.classList.contains("active");
-        const isTasksSidebarActive = tasksSidebar.classList.contains("active");
-
-        // Remove all sidebar-related classes
-        body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "both-sidebars-active");
-
-        // Apply appropriate class based on active sidebars
-        if (isFilesSidebarActive && isTasksSidebarActive) {
-            body.classList.add("both-sidebars-active");
-        } else if (isFilesSidebarActive) {
-            body.classList.add("files-sidebar-active");
-        } else if (isTasksSidebarActive) {
-            body.classList.add("tasks-sidebar-active");
-        }
-    }
-});
-
-// JavaScript to Populate Modal
-document.addEventListener('DOMContentLoaded', () => {
-    const updateTaskModal = document.getElementById('updateTaskModal');
-    updateTaskModal.addEventListener('show.bs.modal', (event) => {
-        const button = event.relatedTarget;
-        const taskId = button.getAttribute('data-task-id');
-        const taskTitle = button.getAttribute('data-task-title');
-        const taskDescription = button.getAttribute('data-task-description');
-        const taskStatus = button.getAttribute('data-task-status');
-
-        // Populate the modal fields
-        document.getElementById('task_id').value = taskId;
-        document.getElementById('task_title').value = taskTitle;
-        document.getElementById('task_description').value = taskDescription;
-        document.getElementById('task_status').value = taskStatus;
-    });
-});
-
-// Update the project tree every 3 seconds
-setInterval(updateProjectTree, 3000);
-
-var editor;
-
-function changeTheme(theme) {
-    editor.setOption("theme", theme);
-    document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
-    document.getElementById('selectedTheme').value = theme;
-}
-
-function changeSyntax(mode) {
-    editor.setOption("mode", mode);
-    document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-    document.getElementById('selectedSyntax').value = mode;
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
-        lineNumbers: true,
-        mode: "autodetect",
-        theme: "default",
-        autoCloseBrackets: true,
-        matchBrackets: true
-    });
-    editor.setSize(null, "100%");
-
-    var initialTheme = "{{ current_project.selected_theme }}";
-    var initialSyntax = "{{ current_project.selected_syntax }}";
-
-    if (initialTheme !== "default") {
-        changeTheme(initialTheme);
-    }
-    if (initialSyntax !== "auto") {
-        changeSyntax(initialSyntax);
-    }
-});
-
-document.getElementById("sidebarCollapse").addEventListener("click", function () {
-    document.getElementById("sidebar").classList.toggle("active");
-});
-
-document.querySelectorAll('.collapse').forEach(function(collapse) {
-    collapse.addEventListener('show.bs.collapse', function() {
-        this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
-        this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
-    });
-
-    collapse.addEventListener('hide.bs.collapse', function() {
-        this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
-        this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
-    });
-});
-
-
-// AJAX used to send and receive the terminal prompts and responses
-function sendPrompt() {
-    const promptValue = document.querySelector('.terminal-input').value.trim();
-    if (!promptValue) return;
-
-    // Add the command to history and reset index
-    commandHistory.push(promptValue);
-    historyIndex = commandHistory.length;
-
-    const formData = new FormData();
-    formData.append('prompt', promptValue);
-
-    const terminalDiv = document.getElementById('terminal');
-    const projectName = "{{ current_project.project_name }}";
-
-    // Append the user's command in terminal-like format
-    terminalDiv.innerHTML += `<div>
-        <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/${projectName}</span>$ ${promptValue}
-    </div>`;
-
-    if (promptValue.toLowerCase() === 'clear') {
-        terminalDiv.innerHTML = ''; // Clear the terminal
-        document.querySelector('.terminal-input').value = ''; // Clear the input field
-        return; // Exit the function
+                // Reapply the scroll position to prevent visual movement
+                filesSidebar.scrollTop = scrollPosition;
+            }
+        })
+        .catch(error => console.error('Error fetching project tree:', error));
     }
 
-    fetch('', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+    // Function to generate tree HTML from the project tree structure
+    function generateTreeHTML(nodes) {
+        let html = '';
+        nodes.forEach(node => {
+            if (node.type === 'directory') {
+                html += `<li>
+                            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#${slugify(node.name)}" aria-expanded="false">
+                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
+                            </button>
+                            <ul class="collapse" id="${slugify(node.name)}">
+                                ${generateTreeHTML(node.children)}  <!-- Recursive call -->
+                            </ul>
+                          </li>`;
+            } else if (node.type === 'file') {
+                html += `<li>
+                            <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
+                                <i class="bi bi-file-earmark-code"></i> ${node.name}
+                            </button>
+                          </li>`;
+            }
+        });
+        return html;
+    }
+
+    // Function to safely create slugs for the element IDs
+    function slugify(text) {
+        return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const sidebarCollapse = document.getElementById("sidebarCollapse");
+        const taskSidebarCollapse = document.getElementById("taskSidebarCollapse");
+        const filesSidebar = document.getElementById("filesSidebar");
+        const tasksSidebar = document.getElementById("tasksSidebar");
+        const body = document.body; // Used for applying layout classes
+
+        sidebarCollapse.addEventListener("click", () => {
+            filesSidebar.classList.toggle("active");
+            tasksSidebar.classList.remove("active"); // Close the other sidebar
+
+            // Update body class for layout adjustments
+            updateLayoutClasses();
+        });
+
+        taskSidebarCollapse.addEventListener("click", () => {
+            tasksSidebar.classList.toggle("active");
+            filesSidebar.classList.remove("active"); // Close the other sidebar
+
+            // Update body class for layout adjustments
+            updateLayoutClasses();
+        });
+
+        function updateLayoutClasses() {
+            const isFilesSidebarActive = filesSidebar.classList.contains("active");
+            const isTasksSidebarActive = tasksSidebar.classList.contains("active");
+
+            // Remove all sidebar-related classes
+            body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "both-sidebars-active");
+
+            // Apply appropriate class based on active sidebars
+            if (isFilesSidebarActive && isTasksSidebarActive) {
+                body.classList.add("both-sidebars-active");
+            } else if (isFilesSidebarActive) {
+                body.classList.add("files-sidebar-active");
+            } else if (isTasksSidebarActive) {
+                body.classList.add("tasks-sidebar-active");
+            }
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data); // Log response to console for debugging
+    });
 
-        if (data.input_prompt) {
-            // If the backend has sent an 'input_prompt', display it for user input
-            const inputDiv = document.createElement('div');
-            inputDiv.innerHTML = `<span class="output">${data.input_prompt}</span>`;
-            terminalDiv.appendChild(inputDiv);
+    // JavaScript to Populate Modal
+    document.addEventListener('DOMContentLoaded', () => {
+        const updateTaskModal = document.getElementById('updateTaskModal');
+        updateTaskModal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const taskId = button.getAttribute('data-task-id');
+            const taskTitle = button.getAttribute('data-task-title');
+            const taskDescription = button.getAttribute('data-task-description');
+            const taskStatus = button.getAttribute('data-task-status');
 
-            // Focus on the input field to allow the user to respond
-            document.querySelector('.terminal-input').focus();
+            // Populate the modal fields
+            document.getElementById('task_id').value = taskId;
+            document.getElementById('task_title').value = taskTitle;
+            document.getElementById('task_description').value = taskDescription;
+            document.getElementById('task_status').value = taskStatus;
+        });
+    });
+
+    // Update the project tree every 3 seconds
+    setInterval(updateProjectTree, 3000);
+
+    var editor;
+
+    function changeTheme(theme) {
+        editor.setOption("theme", theme);
+        document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+        document.getElementById('selectedTheme').value = theme;
+    }
+
+    function changeSyntax(mode) {
+        editor.setOption("mode", mode);
+        document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        document.getElementById('selectedSyntax').value = mode;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
+            lineNumbers: true,
+            mode: "autodetect",
+            theme: "default",
+            autoCloseBrackets: true,
+            matchBrackets: true
+        });
+        editor.setSize(null, "100%");
+
+        var initialTheme = "{{ current_project.selected_theme }}";
+        var initialSyntax = "{{ current_project.selected_syntax }}";
+
+        if (initialTheme !== "default") {
+            changeTheme(initialTheme);
+        }
+        if (initialSyntax !== "auto") {
+            changeSyntax(initialSyntax);
+        }
+    });
+
+    document.getElementById("sidebarCollapse").addEventListener("click", function () {
+        document.getElementById("sidebar").classList.toggle("active");
+    });
+
+    document.querySelectorAll('.collapse').forEach(function(collapse) {
+        collapse.addEventListener('show.bs.collapse', function() {
+            this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
+            this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
+        });
+
+        collapse.addEventListener('hide.bs.collapse', function() {
+            this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
+            this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
+        });
+    });
+
+
+    // AJAX used to send and receive the terminal prompts and responses
+    function sendPrompt() {
+        const promptValue = document.querySelector('.terminal-input').value.trim();
+        if (!promptValue) return;
+
+        // Add the command to history and reset index
+        commandHistory.push(promptValue);
+        historyIndex = commandHistory.length;
+
+        const formData = new FormData();
+        formData.append('prompt', promptValue);
+
+        const terminalDiv = document.getElementById('terminal');
+        const projectName = "{{ current_project.project_name }}";
+
+        // Append the user's command in terminal-like format
+        terminalDiv.innerHTML += `<div>
+            <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/${projectName}</span>$ ${promptValue}
+        </div>`;
+
+        if (promptValue.toLowerCase() === 'clear') {
+            terminalDiv.innerHTML = ''; // Clear the terminal
+            document.querySelector('.terminal-input').value = ''; // Clear the input field
+            return; // Exit the function
+        }
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data); // Log response to console for debugging
+
+            if (data.input_prompt) {
+                // If the backend has sent an 'input_prompt', display it for user input
+                const inputDiv = document.createElement('div');
+                inputDiv.innerHTML = `<span class="output">${data.input_prompt}</span>`;
+                terminalDiv.appendChild(inputDiv);
+
+                // Focus on the input field to allow the user to respond
+                document.querySelector('.terminal-input').focus();
+            } else {
+                // Format response with new lines for better terminal output style
+                const formattedResponse = data.response
+                    .split('\n') // Split response by newlines
+                    .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
+                    .join('');
+
+                // Append the formatted response to the terminal UI
+                terminalDiv.innerHTML += formattedResponse;
+
+                // Scroll to the bottom of the terminal
+                terminalDiv.scrollTop = terminalDiv.scrollHeight;
+
+                // Clear the input field after processing
+                document.querySelector('.terminal-input').value = '';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // Handle command history navigation
+    document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') {
+            // Navigate up the history
+            if (historyIndex > 0) historyIndex--;
+            e.target.value = commandHistory[historyIndex] || '';
+            e.preventDefault(); // Prevent default cursor movement
+        } else if (e.key === 'ArrowDown') {
+            // Navigate down the history
+            if (historyIndex < commandHistory.length - 1) historyIndex++;
+            e.target.value = commandHistory[historyIndex] || '';
+            e.preventDefault();
+        }
+    });
+
+
+    function toggleOffcanvasHeight() {
+        const offcanvasElement = document.getElementById('offcanvasBottom');
+        if (offcanvasElement.classList.contains('h-50')) {
+            offcanvasElement.classList.remove('h-50');
+            offcanvasElement.classList.add('h-100');
         } else {
-            // Format response with new lines for better terminal output style
-            const formattedResponse = data.response
-                .split('\n') // Split response by newlines
-                .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
-                .join('');
-
-            // Append the formatted response to the terminal UI
-            terminalDiv.innerHTML += formattedResponse;
-
-            // Scroll to the bottom of the terminal
-            terminalDiv.scrollTop = terminalDiv.scrollHeight;
-
-            // Clear the input field after processing
-            document.querySelector('.terminal-input').value = '';
+            offcanvasElement.classList.remove('h-100');
+            offcanvasElement.classList.add('h-50');
         }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-let commandHistory = [];
-let historyIndex = -1;
-
-// Handle command history navigation
-document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp') {
-        // Navigate up the history
-        if (historyIndex > 0) historyIndex--;
-        e.target.value = commandHistory[historyIndex] || '';
-        e.preventDefault(); // Prevent default cursor movement
-    } else if (e.key === 'ArrowDown') {
-        // Navigate down the history
-        if (historyIndex < commandHistory.length - 1) historyIndex++;
-        e.target.value = commandHistory[historyIndex] || '';
-        e.preventDefault();
     }
-});
-
-
-function toggleOffcanvasHeight() {
-    const offcanvasElement = document.getElementById('offcanvasBottom');
-    if (offcanvasElement.classList.contains('h-50')) {
-        offcanvasElement.classList.remove('h-50');
-        offcanvasElement.classList.add('h-100');
-    } else {
-        offcanvasElement.classList.remove('h-100');
-        offcanvasElement.classList.add('h-50');
-    }
-}
 
 </script>
 </html>
