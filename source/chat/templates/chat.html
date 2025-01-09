@@ -9,43 +9,73 @@
 
 {% block content %}
 <!-- Main Content -->
-<div class="card">
-    <div class="card-header">
-        <div class="d-flex align-items-center">
-            <div class="d-flex align-items-center">
-                <img src="{{ recipient.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
-                <!-- Make the username clickable to the profile -->
-                <a href="{% url 'public_profile' recipient.username %}" class="text-light">{{ recipient.username }}</a>
+
+    <div class="card p-1 d-flex">
+        <div class="d-flex">
+            <!-- Sidebar for other chats -->
+            <div class="card me-1" style="width: 20%; border-top-end-radius: 0">
+                <div class="card-header mb-1" style="height: 55px;">
+                    <h5>Other Chats</h5>
+                </div>
+                <ul class="list-group m-1">
+                    {% for chat in other_chats %}
+                        <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                            {% for participant in chat.participants.all %}
+                                {% if participant != user %}
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ participant.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                        <a href="{% url 'start_private_chat' participant.id %}" class="text-light">{{ participant.username }}</a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No other chats</li>
+                    {% endfor %}
+                </ul>
             </div>
 
-            <form id="delete-chat-history-form" method="post" class="ms-auto">
-                {% csrf_token %}
-                <button type="submit" name="delete_history" class="btn btn-danger btn-sm ms-2">Delete Chat History</button>
-            </form>
-        </div>
-    </div>
-    <div class="card-body">
-        <div id="chat-log" class="p-3 mb-3" style="height: 500px; overflow-y: scroll;">
-            <!-- Messages will appear here -->
-            {% for message in messages %}
-                <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}">
-                    <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
-                    <div class="message-content">
-                        <div class="user-name">
-                            {{ message.sender.username }}
-                            <span class="timestamp">{{ message.timestamp }}</span>
+            <!-- Main Chat Card -->
+            <div class="card" style="width: 80%;">
+                <div class="card-header" style="height: 55px;">
+                    <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="{{ recipient.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                            <!-- Make the username clickable to the profile -->
+                            <a href="{% url 'public_profile' recipient.username %}" class="text-light">{{ recipient.username }}</a>
                         </div>
-                        <div class="message-bubble">{{ message.content }}</div>
+
+                        <form id="delete-chat-history-form" method="post" class="ms-auto">
+                            {% csrf_token %}
+                            <button type="submit" name="delete_history" class="btn btn-danger btn-sm ms-2">Delete Chat History</button>
+                        </form>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-        <div class="input-group">
-            <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
-            <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+
+                <div class="card-body">
+                    <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
+                        <!-- Messages will appear here -->
+                        {% for message in messages %}
+                            <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}">
+                                <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
+                                <div class="message-content">
+                                    <div class="user-name">
+                                        {{ message.sender.username }}
+                                        <span class="timestamp">{{ message.timestamp }}</span>
+                                    </div>
+                                    <div class="message-bubble">{{ message.content }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="input-group">
+                        <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
+                        <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
 // Pass the logged-in user's username from Django to JavaScript

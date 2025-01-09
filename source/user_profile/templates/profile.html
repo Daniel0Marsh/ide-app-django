@@ -50,7 +50,13 @@
                                 Following: {{ user_profile.following.count }}
                             </button>
                         </p>
-                    </div>
+                        <p>
+                            <button type="button" class="btn follow-info p-2" data-bs-toggle="modal" data-bs-target="#likedProjectsModal">
+                                <i class="bi bi-star-fill"></i>
+                                Starred: {{ user_profile.liked_projects.count }}
+                            </button>
+                        </p>
+                </div>
                 </div>
             </div>
         </div>
@@ -318,7 +324,6 @@
                                     <a href="{% url 'public_profile' follower.username %}" class="text-light">{{ follower.username }}</a>
                                 </div>
                                 <div>
-                                    <!-- The button now links to the direct chat room -->
                                     <a href="{% url 'start_private_chat' follower.id %}" class="btn btn-sm btn-secondary">Chat</a>
                                 </div>
                             </li>
@@ -330,8 +335,6 @@
             </div>
         </div>
     </div>
-
-
 
     <!-- Following Modal -->
     <div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
@@ -358,6 +361,46 @@
                             <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">Not following anyone yet.</li>
                         {% endfor %}
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal to display starred projects -->
+    <div class="modal fade" id="likedProjectsModal" tabindex="-1" aria-labelledby="likedProjectsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="likedProjectsModalLabel">Starred Projects</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <ul class="list-group">
+                        {% if user_profile.liked_projects.exists %}
+                            {% for project in user_profile.liked_projects.all %}
+                                <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                                    <div class="d-flex flex-wrap justify-content-start">
+                                        <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title">
+                                            {{ project.user.username }} / {{ project.project_name }}
+                                        </a>
+                                        <!-- Public/Private Status -->
+                                        <p class="text-light small ms-1">
+                                            {% if project.is_public %}
+                                                <span class="badge bg-primary">Public</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Private</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <p class="card-text text-light project-description">{{ project.project_description }}</p>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <p>There is no starred projects yet.</p>
+                        {% endif %}
+                    </ul>
+
                 </div>
             </div>
         </div>

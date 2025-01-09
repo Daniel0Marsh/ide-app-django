@@ -73,6 +73,11 @@
                                     </button>
                                 </li>
                                 <li>
+                                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#assignTaskModal">
+                                        Assign Task
+                                    </button>
+                                </li>
+                                <li>
                                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#renameProjectModal">
                                         Edit Project Details
                                     </button>
@@ -135,6 +140,36 @@
         </div>
     </div>
 
+    <!-- Project Tasks -->
+    <div class="mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header text-light">Project Tasks</div>
+                <div class="card-body text-light">
+                    {% if tasks %}
+                        <ul class="list-group">
+                            {% for task in tasks %}
+                                <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong class="text-light">{{ task.title }}</strong>
+                                        <span class="badge bg-secondary">Status: {{ task.get_status_display }}</span>
+                                    </div>
+                                    <p class="mb-1 text-light">{{ task.description }}</p>
+                                    <div class="small text-light">
+                                        Assigned to: {{ task.assigned_to.username }} <br>
+                                        Assigned by: {{ task.assigned_by.username }}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-center">
+                            <p class="text-light">No tasks have been assigned to this project yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+        </div>
+    </div>
+
     <!-- Project Description -->
     <div class="mb-4">
         <div class="card shadow border-0">
@@ -159,6 +194,42 @@
         </div>
     </div>
 
+    <!-- Assign Task Modal -->
+    <div class="modal fade" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignTaskModalLabel">Assign Task</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">Task Title</label>
+                            <input type="text" class="form-control bg-dark text-light" id="taskTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Task Description</label>
+                            <textarea class="form-control bg-dark text-light" id="taskDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskAssignee" class="form-label">Assign To</label>
+                            <select class="form-select bg-dark text-light" id="taskAssignee" name="assigned_to">
+                                <option value="{{ current_project.user.id }}" selected>{{ current_project.user.username }} (Owner)</option>
+                                {% for collaborator in current_project.collaborators.all %}
+                                    <option value="{{ collaborator.id }}">{{ collaborator.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="add_task" class="btn btn-secondary">Assign Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Add Collaborator Modal -->
     <div class="modal fade" id="addCollaboratorModal" tabindex="-1" aria-labelledby="addCollaboratorModalLabel" aria-hidden="true">
@@ -181,7 +252,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Edit Project Modal -->
     <div class="modal fade" id="renameProjectModal" tabindex="-1" aria-labelledby="renameProjectModalLabel" aria-hidden="true">

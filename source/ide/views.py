@@ -1,18 +1,13 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import TemplateView
-from .models import Project
-from django.http import HttpResponseRedirect, JsonResponse, Http404, HttpResponse
-from django.urls import reverse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.conf import settings
 from django.http import FileResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password
-from django.contrib.auth import update_session_auth_hash
-from datetime import datetime, timedelta
 from django.utils.timezone import now
 from django.shortcuts import redirect
-from django.contrib import messages
+from .models import Project, Task
 from user_profile.views import add_activity_to_log
 import docker
 import os
@@ -75,6 +70,7 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
+            'tasks': current_project.tasks.all()
         }
 
         return render(request, self.template_name, context)
@@ -99,6 +95,8 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             'delete': self.delete_project,
             'remove_collaborator': self.remove_collaborator,
             'toggle_like': self.toggle_like,
+            'add_task': self.add_task,
+            'update_task': self.update_task,
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -107,7 +105,8 @@ class ProjectView(LoginRequiredMixin, TemplateView):
 
         return HttpResponse("Invalid action", status=400)
 
-    def toggle_like(self, request, project):
+    @staticmethod
+    def toggle_like(request, project):
         if request.user in project.liked_by.all():
             project.liked_by.remove(request.user)
             project.likes -= 1
@@ -116,6 +115,35 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             project.likes += 1
         project.save()
         return redirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def add_task(request, project):
+        """
+        Handle assigning tasks for a project.
+        """
+        User = get_user_model()
+        title = request.POST['title']
+        description = request.POST.get('description', '')
+        assigned_to_id = request.POST['assigned_to']
+        assigned_to = get_object_or_404(User, id=assigned_to_id)
+
+        # Create the task
+        Task.objects.create(
+            project=project,
+            assigned_to=assigned_to,
+            assigned_by=request.user,
+            title=title,
+            description=description,
+            status='not_started'
+        )
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def update_task(request, project):
+        """
+        Handle updating tasks for a project.
+        """
+        pass
 
     @staticmethod
     def add_collaborator(request, project):

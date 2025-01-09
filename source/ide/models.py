@@ -62,3 +62,36 @@ class Project(models.Model):
 
     def __str__(self):
         return self.project_name
+
+
+class Task(models.Model):
+    """
+    Model representing a task assigned to a user for a specific project.
+
+    Attributes:
+        project (Project): The project this task belongs to.
+        assigned_to (User): The user responsible for this task.
+        title (str): The title or name of the task.
+        description (str): A detailed description of the task.
+        status (str): The current status of the task (Not Started, In Progress, Completed).
+        created_at (datetime): The date and time when the task was created.
+        updated_at (datetime): The date and time when the task was last updated.
+    """
+
+    STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    ]
+
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='tasks')
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tasks')
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tasks_assigned_by')
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title}"
