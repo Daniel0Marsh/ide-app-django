@@ -1,7 +1,6 @@
 
 1) refactor all code base to follow pep8
 2) forgot password emailing system
-3) complete the update task logic
-4) list project tasks in ide
+3) update README.md
 
 

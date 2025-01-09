@@ -46,16 +46,15 @@
                         <button type="submit" class="btn btn-secondary mx-1 mb-2" name="download_project">Download Project</button>
                     </form>
 
-
                     <!-- Like/Unlike Button -->
                     <form method="post" action="{% url 'project' username=current_project.user.username project_id=current_project.id %}" class="mx-1">
                         {% csrf_token %}
                         <button type="submit" name="toggle_like" class="btn btn-secondary mx-1 mb-2">
                             <i class="bi bi-star-fill"></i>
                             {% if user in current_project.liked_by.all %}
-                                Unlike {{ current_project.likes }}
+                                Starred {{ current_project.likes }}
                             {% else %}
-                                Like {{ current_project.likes }}
+                                Star {{ current_project.likes }}
                             {% endif %}
                         </button>
                     </form>
@@ -144,29 +143,39 @@
     <div class="mb-4">
         <div class="card shadow border-0">
             <div class="card-header text-light">Project Tasks</div>
-                <div class="card-body text-light">
-                    {% if tasks %}
-                        <ul class="list-group">
-                            {% for task in tasks %}
-                                <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <strong class="text-light">{{ task.title }}</strong>
-                                        <span class="badge bg-secondary">Status: {{ task.get_status_display }}</span>
-                                    </div>
-                                    <p class="mb-1 text-light">{{ task.description }}</p>
-                                    <div class="small text-light">
-                                        Assigned to: {{ task.assigned_to.username }} <br>
-                                        Assigned by: {{ task.assigned_by.username }}
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <div class="text-center">
-                            <p class="text-light">No tasks have been assigned to this project yet.</p>
-                        </div>
-                    {% endif %}
-                </div>
+            <div class="card-body text-light">
+                {% if tasks %}
+                    <ul class="list-group">
+                        {% for task in tasks %}
+                            <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <!-- Make task title clickable -->
+                                    <a href="#"
+                                       class="text-light"
+                                       data-bs-toggle="modal"
+                                       data-bs-target="#updateTaskModal"
+                                       data-task-id="{{ task.id }}"
+                                       data-task-title="{{ task.title }}"
+                                       data-task-description="{{ task.description }}"
+                                       data-task-status="{{ task.status }}">
+                                        <strong>{{ task.title }}</strong>
+                                    </a>
+                                    <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                                </div>
+                                <p class="mb-1 text-light">{{ task.description }}</p>
+                                <div class="small text-light">
+                                    Assigned to: {{ task.assigned_to.username }} <br>
+                                    Assigned by: {{ task.assigned_by.username }}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center">
+                        <p class="text-light">No tasks have been assigned to this project yet.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -287,6 +296,41 @@
                         <button type="submit" name="edit_project_details" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- update task modal -->
+    <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateTaskForm" method="post" action="">
+                        {% csrf_token %}
+                            <input type="hidden" name="task_id" id="task_id">
+                            <div class="mb-3">
+                                <label for="task_title" class="form-label">Task Title</label>
+                                <input type="text" class="form-control bg-dark text-light" id="task_title" name="task_title">
+                            </div>
+                            <div class="mb-3">
+                                <label for="task_description" class="form-label">Description</label>
+                                <textarea class="form-control bg-dark text-light" id="task_description" name="task_description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="task_status" class="form-label">Status</label>
+                                <select class="form-select bg-dark text-light" id="task_status" name="task_status">
+                                    <option value="not_started">Not Started</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <button type="submit" name="update_task" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

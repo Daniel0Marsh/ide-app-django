@@ -38,6 +38,26 @@ def get_project_tree(project_path):
     return project_tree
 
 
+def update_task(request, project):
+    """
+    Handle updating tasks for a project.
+    """
+    task_id = request.POST.get('task_id')
+    title = request.POST.get('task_title')
+    description = request.POST.get('task_description')
+    status = request.POST.get('task_status')
+
+    # Fetch the task
+    task = get_object_or_404(Task, id=task_id, project=project)
+
+    # Update the task
+    task.title = title
+    task.description = description
+    task.status = status
+    task.save()
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
 class ProjectView(LoginRequiredMixin, TemplateView):
     template_name = 'project.html'
     login_url = 'login'
@@ -96,7 +116,7 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             'remove_collaborator': self.remove_collaborator,
             'toggle_like': self.toggle_like,
             'add_task': self.add_task,
-            'update_task': self.update_task,
+            'update_task': update_task,
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -121,11 +141,10 @@ class ProjectView(LoginRequiredMixin, TemplateView):
         """
         Handle assigning tasks for a project.
         """
-        User = get_user_model()
         title = request.POST['title']
         description = request.POST.get('description', '')
         assigned_to_id = request.POST['assigned_to']
-        assigned_to = get_object_or_404(User, id=assigned_to_id)
+        assigned_to = get_object_or_404(get_user_model(), id=assigned_to_id)
 
         # Create the task
         Task.objects.create(
@@ -137,13 +156,6 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             status='not_started'
         )
         return redirect(request.META.get('HTTP_REFERER', '/'))
-
-    @staticmethod
-    def update_task(request, project):
-        """
-        Handle updating tasks for a project.
-        """
-        pass
 
     @staticmethod
     def add_collaborator(request, project):
@@ -322,10 +334,10 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'file_name': 'README.md',
             'file_path': readme_path,
             'file_content': readme_content,
+            'tasks': current_project.tasks.all()
         }
 
         return render(request, self.template_name, context)
-
 
     def post(self, request, *args, **kwargs):
         """
@@ -348,6 +360,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'open_file': self.open_file,
             'prompt': self.prompt,
             'download_project': self.download_project,
+            'update_theme': self.update_theme,
+            'update_task': update_task,
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -355,7 +369,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return action_map[action](request, project)
 
         return HttpResponse("Invalid action", status=400)
-
 
     def prompt(self, request, project):
         """
@@ -380,6 +393,22 @@ class IdeView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             return JsonResponse({'response': str(e)}, status=500)
 
+    @staticmethod
+    def update_theme(request, project):
+        """
+        updates the theme and syntax on a project.
+        """
+        # Save theme and syntax settings
+
+        selected_theme = request.POST.get('selected_theme', 'default_theme')
+        selected_syntax = request.POST.get('selected_syntax', 'default_syntax')
+
+        project.selected_theme = selected_theme
+        project.selected_syntax = selected_syntax
+        project.last_modified_at = now()
+        project.save()
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     def open_file(self, request, project):
         """
@@ -447,8 +476,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         user = request.user  # Get the user who made the change
         project_name = project.project_name  # Get the project name
-        selected_theme = request.POST.get('selected_theme')
-        selected_syntax = request.POST.get('selected_syntax')
 
         file_name = request.POST.get('file_name')
         file_content = request.POST.get('file_contents', '')
@@ -500,13 +527,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
         # Log the activity
         add_activity_to_log(user, project_name, action)
 
-        # Save theme and syntax settings
-        if selected_theme and selected_syntax:
-            project.selected_theme = selected_theme
-            project.selected_syntax = selected_syntax
-            project.last_modified_at = now()
-            project.save()
-
         context = {
             'all_projects': all_projects,
             'current_project': project,
@@ -519,7 +539,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
         # Render the IDE view with the updated file information
         return render(request, self.template_name, context)
 
-    def download_project(self, request, project):
+    @staticmethod
+    def download_project(request, project):
         """
         Create and return a zip file of the project's directory for download.
         """
@@ -560,6 +581,7 @@ class ProjectContainerManager:
     """
     Manage Docker containers for each project.
     """
+
     def __init__(self, project):
         self.project = project
         self.project_name = os.path.basename(project.project_path)
@@ -585,8 +607,7 @@ class ProjectContainerManager:
             name=self.container_name,
             volumes={
                 self.project_path: {'bind': f'/{self.project_name}', 'mode': 'rw'},
-                '/host/path/.bash_history': {'bind': '/root/.bash_history', 'mode': 'rw'}
-            },
+                '/host/path/.bash_history': {'bind': '/root/.bash_history', 'mode': 'rw'}},
             working_dir=f'/{self.project_name}',
             stdin_open=True,
             tty=True,

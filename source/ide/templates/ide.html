@@ -14,28 +14,113 @@
 </head>
 
 <body>
+
+    <!-- Navbar -->
+    <nav class="navbar fixed-top navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand text-light" href="{% url 'personal_profile' %}">
+                CodeBlock
+            </a>
+            <div class="dropdown ms-auto">
+                <a href="{% url 'personal_profile' %}" class="d-flex align-items-center dropdown-toggle"
+                    id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                        class="rounded-circle">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <!-- Non-clickable header -->
+                    <li>
+                        <span class="dropdown-item-text fw-bold">
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                                class="rounded-circle">
+                            @{{ user.username }}
+                        </span>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <!-- Other dropdown items -->
+                    <li><a class="dropdown-item" href="{% url 'personal_profile' %}"> My Profile</a></li>
+                    <li>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item">
+                                Logout
+                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
 <!-- project side-nav -->
 <div class="side-nav shadow-end border-end border-dark">
-    <button type="button" id="sidebarCollapse" class="btn mx-auto btn-dark mb-4">
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip" title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
 
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-        <button class="btn mx-auto btn-dark mb-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
+        <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip" title="Tasks">
+            <i class="bi bi-card-checklist fs-5 text-light"></i>
+        </button>
+
+        <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
             aria-controls="offcanvasBottom">
         <i class="bi bi-terminal fs-5 text-light"></i>
         </button>
     {% endif %}
 
-    <a class="btn mx-auto btn-dark mb-4" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
+    <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal" data-bs-target="#colorChangeModal">
+        <i class="bi bi-paint-bucket fs-5 text-light"></i>
+    </button>
+
+    <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
         <i class="bi bi-house fs-5 text-light"></i>
     </a>
 </div>
 
+<!-- Task Sidebar -->
+<div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
+    <h5  class="p-2">Project Tasks</h5>
+    {% if tasks %}
+    <ul class="list-group p-2">
+        {% for task in tasks %}
+            <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <!-- Make task title clickable -->
+                    <a href="#"
+                       class="text-light"
+                       data-bs-toggle="modal"
+                       data-bs-target="#updateTaskModal"
+                       data-task-id="{{ task.id }}"
+                       data-task-title="{{ task.title }}"
+                       data-task-description="{{ task.description }}"
+                       data-task-status="{{ task.status }}">
+                        <strong>{{ task.title }}</strong>
+                    </a>
+                    <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                </div>
+                <p class="mb-1 text-light">{{ task.description }}</p>
+                <div class="small text-light">
+                    Assigned to: {{ task.assigned_to.username }} <br>
+                    Assigned by: {{ task.assigned_by.username }}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="text-center">
+        <p class="text-light">No tasks have been assigned to this project yet.</p>
+    </div>
+{% endif %}
+</div>
+
 <!-- Project Tree Form -->
 <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
-      class="sidebar active shadow-end border-end border-dark" id="sidebar">
+      class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
     {% csrf_token %}
+    <h5  class="p-2">Project Files</h5>
     <ul>
         {% for node in project_tree %}
         {% if node.type == 'directory' %}
@@ -85,13 +170,9 @@
     </ul>
 </form>
 
-
-
 <!--- This is the main CodeMirror IDE section including the nave buttons--->
-<form method="post" enctype="multipart/form-data" action="" class="card ide-card border-0">
+<form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
     {% csrf_token %}
-    <input type="hidden" id="selectedThemeInput" name="selected_theme" value="default">
-    <input type="hidden" id="selectedSyntaxInput" name="selected_syntax" value="auto">
     <input type="hidden" name="file_path" value="{{file_path}}">
     <input type="hidden" name="file_name" value="{{file_name}}">
     <input type="hidden" name="project_id" value="{{current_project.id}}">
@@ -125,62 +206,6 @@
                 {% endif %}
             </div>
             <!-- Add dropdown buttons -->
-            <div class=" ms-auto">
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        Theme: <span id="currentTheme">Default</span>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="themeDropdown">
-                        <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
-                        <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="p-2">
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto Detect</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('javascript')">JavaScript</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeSyntax('typescript')">TypeScript</a></li>
-                        <!-- Add more syntax highlighting options as needed -->
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
@@ -224,12 +249,123 @@
     </div>
 </div>
 
+<!-- update task modal -->
+<div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateTaskForm" method="post" action="">
+                    {% csrf_token %}
+                        <input type="hidden" name="task_id" id="task_id">
+                        <div class="mb-3">
+                            <label for="task_title" class="form-label">Task Title</label>
+                            <input type="text" class="form-control bg-dark text-light" id="task_title" name="task_title">
+                        </div>
+                        <div class="mb-3">
+                            <label for="task_description" class="form-label">Description</label>
+                            <textarea class="form-control bg-dark text-light" id="task_description" name="task_description"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="task_status" class="form-label">Status</label>
+                            <select class="form-select bg-dark text-light" id="task_status" name="task_status">
+                                <option value="not_started">Not Started</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <button type="submit" name="update_task" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Modal for changing background color and text syntax -->
+<div class="modal fade" id="colorChangeModal" tabindex="-1" aria-labelledby="colorChangeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <form method="post" enctype="multipart/form-data" action="">
+              {% csrf_token %}
+                <input type="hidden" id="selectedTheme" name="selected_theme" value="">
+                <input type="hidden" id="selectedSyntax" name="selected_syntax" value="">
+                <div class=" ms-auto">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
+                            Theme: <span id="currentTheme">Default</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                            <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
+                            <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="p-2">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto Detect</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('javascript')">JavaScript</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('typescript')">TypeScript</a></li>
+                            <!-- Add more syntax highlighting options as needed -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_theme" class="btn btn-secondary">Apply Changes</button>
+                </div>
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal for renaming file-->
 <div class="modal fade modal-dark" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-light">
+        <div class="modal-content text-light">
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
             </div>
@@ -240,7 +376,7 @@
                 <input type="hidden" name="file_path" value="{{ file_path }}">
                 <input type="hidden" name="file_contents" value="{{ file_content }}">
                 <input type="hidden" name="project_id" value="{{ current_project.id }}">
-                <button type="submit" name="rename_file" class="btn btn-primary">Save changes</button>
+                <button type="submit" name="rename_file" class="btn btn-secondary">Save changes</button>
             </form>
         </div>
     </div>
@@ -312,121 +448,170 @@
 
 
 <script>
-    // Store the collapse state in an object
-    let collapseState = {};
+// Store the collapse state in an object
+let collapseState = {};
 
-    // Function to update the project tree
-    function updateProjectTree() {
-        // Before updating the tree, store the current state of collapse elements
-        document.querySelectorAll('.collapse').forEach(collapseElement => {
-            const id = collapseElement.id;
-            collapseState[id] = collapseElement.classList.contains('show');
-        });
+// Function to update the project tree
+function updateProjectTree() {
+    // Before updating the tree, store the current state of collapse elements
+    document.querySelectorAll('.collapse').forEach(collapseElement => {
+        const id = collapseElement.id;
+        collapseState[id] = collapseElement.classList.contains('show');
+    });
 
-        // Save the scroll position of the sidebar to avoid shifting
-        const sidebar = document.querySelector('#sidebar');
-        const scrollPosition = sidebar.scrollTop;
+    // Save the scroll position of the filesSidebar to avoid shifting
+    const filesSidebar = document.querySelector('#filesSidebar');
+    const scrollPosition = filesSidebar.scrollTop;
 
-        fetch(window.location.href, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.project_tree) {
-                const treeContainer = document.querySelector('#sidebar ul');
-                treeContainer.innerHTML = ''; // Clear the existing tree
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.project_tree) {
+            const treeContainer = document.querySelector('#filesSidebar ul');
+            treeContainer.innerHTML = ''; // Clear the existing tree
 
-                // Generate new tree HTML
-                const treeHTML = generateTreeHTML(data.project_tree);
-                treeContainer.innerHTML = treeHTML;
+            // Generate new tree HTML
+            const treeHTML = generateTreeHTML(data.project_tree);
+            treeContainer.innerHTML = treeHTML;
 
-                // Reapply the saved collapse state
-                document.querySelectorAll('.collapse').forEach(collapseElement => {
-                    const id = collapseElement.id;
-                    if (collapseState[id]) {
-                        // If the state was 'expanded', reapply the 'show' class
-                        collapseElement.classList.add('show');
-                    } else {
-                        // Otherwise, collapse it
-                        collapseElement.classList.remove('show');
-                    }
-                });
+            // Reapply the saved collapse state
+            document.querySelectorAll('.collapse').forEach(collapseElement => {
+                const id = collapseElement.id;
+                if (collapseState[id]) {
+                    // If the state was 'expanded', reapply the 'show' class
+                    collapseElement.classList.add('show');
+                } else {
+                    // Otherwise, collapse it
+                    collapseElement.classList.remove('show');
+                }
+            });
 
-                // Reinitialize collapse buttons
-                document.querySelectorAll('.btn.folder-btn').forEach(button => {
-                    const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
-                    if (targetCollapse && targetCollapse.classList.contains('show')) {
-                        button.setAttribute('aria-expanded', 'true');
-                    } else {
-                        button.setAttribute('aria-expanded', 'false');
-                    }
-                });
+            // Reinitialize collapse buttons
+            document.querySelectorAll('.btn.folder-btn').forEach(button => {
+                const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
+                if (targetCollapse && targetCollapse.classList.contains('show')) {
+                    button.setAttribute('aria-expanded', 'true');
+                } else {
+                    button.setAttribute('aria-expanded', 'false');
+                }
+            });
 
-                // Reapply the scroll position to prevent visual movement
-                sidebar.scrollTop = scrollPosition;
-            }
-        })
-        .catch(error => console.error('Error fetching project tree:', error));
+            // Reapply the scroll position to prevent visual movement
+            filesSidebar.scrollTop = scrollPosition;
+        }
+    })
+    .catch(error => console.error('Error fetching project tree:', error));
+}
+
+// Function to generate tree HTML from the project tree structure
+function generateTreeHTML(nodes) {
+    let html = '';
+    nodes.forEach(node => {
+        if (node.type === 'directory') {
+            html += `<li>
+                        <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#${slugify(node.name)}" aria-expanded="false">
+                            <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
+                        </button>
+                        <ul class="collapse" id="${slugify(node.name)}">
+                            ${generateTreeHTML(node.children)}  <!-- Recursive call -->
+                        </ul>
+                      </li>`;
+        } else if (node.type === 'file') {
+            html += `<li>
+                        <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
+                            <i class="bi bi-file-earmark-code"></i> ${node.name}
+                        </button>
+                      </li>`;
+        }
+    });
+    return html;
+}
+
+// Function to safely create slugs for the element IDs
+function slugify(text) {
+    return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const sidebarCollapse = document.getElementById("sidebarCollapse");
+    const taskSidebarCollapse = document.getElementById("taskSidebarCollapse");
+    const filesSidebar = document.getElementById("filesSidebar");
+    const tasksSidebar = document.getElementById("tasksSidebar");
+    const body = document.body; // Used for applying layout classes
+
+    sidebarCollapse.addEventListener("click", () => {
+        filesSidebar.classList.toggle("active");
+        tasksSidebar.classList.remove("active"); // Close the other sidebar
+
+        // Update body class for layout adjustments
+        updateLayoutClasses();
+    });
+
+    taskSidebarCollapse.addEventListener("click", () => {
+        tasksSidebar.classList.toggle("active");
+        filesSidebar.classList.remove("active"); // Close the other sidebar
+
+        // Update body class for layout adjustments
+        updateLayoutClasses();
+    });
+
+    function updateLayoutClasses() {
+        const isFilesSidebarActive = filesSidebar.classList.contains("active");
+        const isTasksSidebarActive = tasksSidebar.classList.contains("active");
+
+        // Remove all sidebar-related classes
+        body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "both-sidebars-active");
+
+        // Apply appropriate class based on active sidebars
+        if (isFilesSidebarActive && isTasksSidebarActive) {
+            body.classList.add("both-sidebars-active");
+        } else if (isFilesSidebarActive) {
+            body.classList.add("files-sidebar-active");
+        } else if (isTasksSidebarActive) {
+            body.classList.add("tasks-sidebar-active");
+        }
     }
+});
 
-    // Function to generate tree HTML from the project tree structure
-    function generateTreeHTML(nodes) {
-        let html = '';
-        nodes.forEach(node => {
-            if (node.type === 'directory') {
-                html += `<li>
-                            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#${slugify(node.name)}" aria-expanded="false">
-                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
-                            </button>
-                            <ul class="collapse" id="${slugify(node.name)}">
-                                ${generateTreeHTML(node.children)}  <!-- Recursive call -->
-                            </ul>
-                          </li>`;
-            } else if (node.type === 'file') {
-                html += `<li>
-                            <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
-                                <i class="bi bi-file-earmark-code"></i> ${node.name}
-                            </button>
-                          </li>`;
-            }
-        });
-        return html;
-    }
+// JavaScript to Populate Modal
+document.addEventListener('DOMContentLoaded', () => {
+    const updateTaskModal = document.getElementById('updateTaskModal');
+    updateTaskModal.addEventListener('show.bs.modal', (event) => {
+        const button = event.relatedTarget;
+        const taskId = button.getAttribute('data-task-id');
+        const taskTitle = button.getAttribute('data-task-title');
+        const taskDescription = button.getAttribute('data-task-description');
+        const taskStatus = button.getAttribute('data-task-status');
 
-    // Function to safely create slugs for the element IDs
-    function slugify(text) {
-        return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-    }
+        // Populate the modal fields
+        document.getElementById('task_id').value = taskId;
+        document.getElementById('task_title').value = taskTitle;
+        document.getElementById('task_description').value = taskDescription;
+        document.getElementById('task_status').value = taskStatus;
+    });
+});
 
-    // Update the project tree every 5 seconds
-    setInterval(updateProjectTree, 3000);
-</script>
-
-
-
-
-
-
-
-
-<script>
+// Update the project tree every 3 seconds
+setInterval(updateProjectTree, 3000);
 
 var editor;
 
 function changeTheme(theme) {
     editor.setOption("theme", theme);
     document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
-    document.getElementById('selectedThemeInput').value = theme;
+    document.getElementById('selectedTheme').value = theme;
 }
 
 function changeSyntax(mode) {
     editor.setOption("mode", mode);
     document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-    document.getElementById('selectedSyntaxInput').value = mode;
+    document.getElementById('selectedSyntax').value = mode;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -561,9 +746,6 @@ function toggleOffcanvasHeight() {
         offcanvasElement.classList.add('h-50');
     }
 }
-
-
-
 
 </script>
 </html>
