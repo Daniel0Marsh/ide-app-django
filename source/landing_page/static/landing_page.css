@@ -1,0 +1,62 @@
+:root {
+    --bg-dark: #1e1e2f;
+    --bg-darker: #151521;
+    --text-light: #e4e4e7;
+    --text-accent: #00c8ff;
+    --btn-primary: #4caf50;
+    --btn-secondary: #6c63ff;
+    --btn-danger: #e74c3c;
+}
+
+.video-background {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1;
+}
+
+.navbar.fixed-top {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background-color: transparent;
+    color: var(--text-accent);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    /* Fallback background color */
+    background-color: #343a40;
+    color: #c7c9cb;
+    overflow-x: hidden;
+}
+
+.video-background {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1;
+}
+
+.greeting {
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 20%;
+    left: 0%;
+    padding: 5px;
+    overflow-x: hidden;
+}
