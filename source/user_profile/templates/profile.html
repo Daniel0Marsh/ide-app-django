@@ -323,9 +323,11 @@
                                     <!-- Make the username clickable to the profile -->
                                     <a href="{% url 'public_profile' follower.username %}" class="text-light">{{ follower.username }}</a>
                                 </div>
+                                {% if follower != request.user %}
                                 <div>
                                     <a href="{% url 'start_private_chat' follower.id %}" class="btn btn-sm btn-secondary">Chat</a>
                                 </div>
+                                {% endif %}
                             </li>
                         {% empty %}
                             <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">No followers yet.</li>
@@ -353,9 +355,11 @@
                                     <!-- Make the username clickable to the profile -->
                                     <a href="{% url 'public_profile' following.username %}" class="text-light">{{ following.username }}</a>
                                 </div>
+                                {% if following != request.user %}
                                 <div>
                                     <a href="{% url 'start_private_chat' following.id %}" class="btn btn-sm btn-secondary">Chat</a>
                                 </div>
+                                {% endif %}
                             </li>
                         {% empty %}
                             <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">Not following anyone yet.</li>
