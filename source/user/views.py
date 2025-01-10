@@ -22,7 +22,7 @@ class LoginView(View):
         if user:
             login(request, user)
             messages.success(request, 'Login successful!')
-            return redirect(reverse_lazy('personal_profile'))
+            return redirect(reverse_lazy('public_profile', kwargs={'username': username}))
         else:
             messages.error(request, 'Invalid username or password')
             return redirect('login')
@@ -60,4 +60,4 @@ class LogoutView(View):
 
     def post(self, request, *args, **kwargs):
         logout(request)
-        return redirect('login')
+        return redirect('landing-page')

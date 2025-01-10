@@ -19,7 +19,7 @@
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="navbar-brand" href="{% url 'personal_profile' %}">
+            <a class="navbar-brand" href="{% url 'landing-page' %}">
                 CodeBlock
             </a>
 
@@ -45,7 +45,7 @@
 
                 <!-- User dropdown -->
                 <div class="dropdown me-4">
-                    <a href="{% url 'personal_profile' %}" class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a href="{% url 'public_profile' username=user.username %}" class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -56,7 +56,7 @@
                             </span>
                         </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'personal_profile' %}">My Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a></li>
                         <li>
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}

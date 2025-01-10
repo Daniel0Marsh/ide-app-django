@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeBlock{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'base.css' %}">
+        {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <!-- Brand -->
+            <a class="navbar-brand" href="{% url 'landing-page' %}">
+                CodeBlock
+            </a>
+
+            <!-- Navbar toggler for mobile view -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar content -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Spacer to push the search bar to the right -->
+                <div class="ms-auto">
+                    <!-- Search bar -->
+                    <form class="d-flex me-4" action="{% url 'search' %}" method="get">
+                        <div class="input-group">
+                            <input class="form-control" type="search" name="query" placeholder="Search users or projects" aria-label="Search">
+                            <button class="btn btn-outline-light" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- User dropdown -->
+                <div class="dropdown me-4">
+                    <a href="{% url 'public_profile' username=user.username %}" class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <span class="dropdown-item-text fw-bold">
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
+                                @{{ user.username }}
+                            </span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% block ide %}{% endblock %}
+    <!-- Main Content -->
+    <main class="main-content pt-5">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+    {% block extra_script %}{% endblock %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</html>
