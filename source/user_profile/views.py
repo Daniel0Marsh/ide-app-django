@@ -15,6 +15,7 @@ from django.db import models
 from django.db.models import Q
 from ide.models import Project
 from user.models import CustomUser
+from chat.models import ChatRoom, Message
 import os
 
 
@@ -105,6 +106,21 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         activity_days, recent_activity = user_activity(user_projects, user_profile)
         is_following = request.user.is_authenticated and request.user.is_following(user_profile)
 
+        # Get a list of users the logged-in user is following and is being followed by
+        following_users = request.user.following.all()
+        followers_users = request.user.followers.all()
+
+        # Combine the two querysets into one list of users (you can use `.distinct()` to avoid duplicates)
+        all_users = (following_users | followers_users).distinct()
+
+        # Get all chat rooms where the user is a participant
+        chat_rooms = ChatRoom.objects.filter(participants=request.user)
+
+        # Get all messages associated with the user from each chat room
+        all_messages = Message.objects.filter(
+            room__in=chat_rooms
+        ).order_by('timestamp')
+
         context = {
             'user_profile': user_profile,
             'user_projects': user_projects,
@@ -112,7 +128,11 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             'recent_activity': recent_activity,
             'is_own_profile': user_profile == request.user,
             'is_following': is_following,
+            'recent_chats': ChatRoom.objects.filter(participants=request.user),
+            'all_users': all_users,
+            'all_messages': all_messages,
         }
+
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):

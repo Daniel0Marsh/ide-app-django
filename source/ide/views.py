@@ -9,6 +9,7 @@ from django.utils.timezone import now
 from django.shortcuts import redirect
 from .models import Project, Task
 from user_profile.views import add_activity_to_log
+from chat.models import ChatRoom
 import docker
 import os
 import shutil
@@ -90,7 +91,8 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
-            'tasks': current_project.tasks.all()
+            'tasks': current_project.tasks.all(),
+            'other_chats': ChatRoom.objects.filter(participants=request.user),
         }
 
         return render(request, self.template_name, context)

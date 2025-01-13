@@ -52,6 +52,15 @@ body {
     background-color: #c0392b;
 }
 
+.btn-dark {
+    background-color: var(--btn-dark);
+    border: none;
+}
+
+.btn-dark:hover {
+    background-color: var(--btn-secondary);
+}
+
 .card {
     background-color: var(--bg-darker);
     border: none;
@@ -89,4 +98,99 @@ body {
     margin: 0 auto;
     max-width: 1200px;
     margin-top: 20px
+}
+
+/* Chat styles....................................................................................................... */
+
+/* Chat message styles */
+
+.chat-box {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  width: 30%;
+  max-height: 90%
+}
+
+#chatCard {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #161b22;
+  position: relative;
+  padding: 5px;
+}
+
+/* For small screens */
+@media (max-width: 1200px) {
+  .chat-box {
+    width: 100%; /* Make it take the full width of the screen */
+    bottom: 0;
+    right: 0;
+    margin: 0;
+  }
+
+  #chatCard {
+    padding: 10px;
+  }
+}
+
+
+.message-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.message-item.sender {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+.message-item.receiver {
+    flex-direction: row;
+    text-align: left;
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px;
+}
+
+.message-item.sender .message-content {
+    margin: 0 10px 0 0;
+}
+
+.message-bubble {
+    padding: 10px;
+    border-radius: 10px;
+    word-wrap: break-word;
+}
+
+.message-item.sender .message-bubble {
+    background-color: #007bff;
+    color: white;
+}
+
+.message-item.receiver .message-bubble {
+    background-color: #f8f9fa;
+    color: black;
+}
+
+.profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-top: 15px;
+}
+
+.user-name {
+    font-weight: bold;
+    color: white;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    margin-left: 8px;
 }

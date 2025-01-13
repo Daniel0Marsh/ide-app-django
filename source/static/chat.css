@@ -1,4 +1,35 @@
 /* Chat message styles */
+
+.chat-box {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+  width: 30%;
+}
+
+#chatCard {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #161b22;
+  position: relative;
+  padding: 5px;
+}
+
+/* For small screens */
+@media (max-width: 1200px) {
+  .chat-box {
+    width: 100%; /* Make it take the full width of the screen */
+    bottom: 0;
+    right: 0;
+    margin: 0;
+  }
+
+  #chatCard {
+    padding: 10px;
+  }
+}
+
+
 .message-item {
     display: flex;
     align-items: flex-start;

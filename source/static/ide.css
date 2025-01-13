@@ -4,16 +4,26 @@
     --text-light: #e4e4e7;
     --text-accent: #00c8ff;
     --btn-primary: #4caf50;
-    --btn-primary-hover: #3b8e3b;
     --btn-secondary: #6c63ff;
-    --btn-secondary-hover: #554ae0;
-    --btn-dark: #151521;
-    --btn-dark-hover: #554ae0;
-    --text-white: #ffffff;
-    --text-dark: #000000;
-    --highlight-yellow: #ffcc00;
-    --link-blue: #4C8BF5;
-    --border-color: #e4e4e7;
+    --btn-danger: #e74c3c;
+}
+
+.navbar.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: var(--bg-darker);
+  color: var(--text-accent);
+  padding: 0px;
+  margin: 0px;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: 'Arial', sans-serif;
 }
 
 .btn-primary {
@@ -22,7 +32,7 @@
 }
 
 .btn-primary:hover {
-    background-color: var(--btn-primary-hover);
+    background-color: #3b8e3b;
 }
 
 .btn-secondary {
@@ -31,7 +41,16 @@
 }
 
 .btn-secondary:hover {
-    background-color: var(--btn-secondary-hover);
+    background-color: #554ae0;
+}
+
+.btn-danger {
+    background-color: var(--btn-danger);
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
 }
 
 .btn-dark {
@@ -40,13 +59,46 @@
 }
 
 .btn-dark:hover {
-    background-color: var(--btn-dark-hover);
+    background-color: var(--btn-secondary);
 }
 
-body {
+.card {
+    background-color: var(--bg-darker);
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
     background-color: var(--bg-dark);
-    margin-top: 0px;
-    overflow: hidden;
+    font-weight: bold;
+    color: var(--text-light);
+}
+
+.card-title {
+    color: var(--text-accent);
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.card-title:hover {
+    text-decoration: underline;
+}
+
+.card-body p {
+    font-size: 1.1rem;
+}
+
+.modal-content {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.main-content {
+    margin: 0 auto;
+    max-width: 1200px;
+    margin-top: 20px
 }
 
 .navbar {
@@ -57,13 +109,13 @@ body {
     position: fixed;
     top: 0;
     width: 100%;
-    background-color: var(--bg-dark);
+    background-color: var(--bg-darker);
     z-index: 1000;
 }
 
 .side-nav {
     position: fixed;
-    top: 0px;
+    top: 40px;
     height: 100vh;
     width: 50px;
     z-index: 900;
@@ -76,20 +128,35 @@ body {
 
 .sidebar {
     position: fixed;
-    top: 0px;
+    top: 56px;
     left: -300px;
     height: 100vh;
-    width: 240px;
+    width: 250px;
     z-index: 800;
     background-color: var(--bg-dark);
     padding-top: 1rem;
     transition: all 0.1s ease;
     color: var(--text-white);
-    margin-top: 5px;
 }
 
 .sidebar.active {
     left: 50;
+}
+
+.sidebar.active + .ide-card {
+    margin-left: 300px;
+}
+
+.files-sidebar-active .ide-content {
+    margin-left: 300px; /* Adjust when filesSidebar is active */
+}
+
+.tasks-sidebar-active .ide-content {
+    margin-left: 300px; /* Adjust when tasksSidebar is active */
+}
+
+.both-sidebars-active .ide-content {
+    margin-left: 300px; /* Adjust when both sidebars are active */
 }
 
 .sidebar ul.components {
@@ -112,7 +179,7 @@ body {
 }
 
 .folder-btn {
-    color: var(--highlight-yellow);
+    color: var(--text-white);
     font-size: 15px;
 }
 
@@ -124,13 +191,10 @@ body {
 .ide-card {
     height: 100vh;
     transition: all 0.1s ease;
-    color: var(--highlight-yellow);
+    color: var(--text-white);
     background-color: var(--bg-dark);
     margin-left: 50px;
-}
-
-.sidebar.active + .ide-card {
-    margin-left: 290px;
+    padding-top: 56px;
 }
 
 .terminal-header {

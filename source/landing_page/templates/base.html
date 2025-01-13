@@ -79,6 +79,291 @@
     <main class="main-content pt-5">
         {% block content %}{% endblock %}
     </main>
+
+
+<div class="chat-box">
+  <div class="card">
+    <div class='card-header'>
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+        <i class="bi bi-info-circle"></i>
+      </button>
+    </div>
+    <div class="card-body collapse p-0" id="mainChatCard">
+
+        <!-- List of chats (initially collapsible) -->
+        <div class="card" id="ListChatCard">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center">
+                        <p>Recent Chats</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                <ul class="list-group m-1">
+                    {% for chat in recent_chats %}
+                        <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                            {% for participant in chat.participants.all %}
+                                {% if participant != user %}
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ participant.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                        <a href="#" class="text-light participant-link"
+                                           data-recipient-id="{{ participant.id }}"
+                                           data-recipient-username="{{ participant.username }}"
+                                           data-recipient-profile="{{ participant.profile_picture.url }}"
+                                           data-bs-target="#openChatCard">
+                                          {{ participant.username }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No recent chats</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center">
+                        <p>All Chats</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                <ul class="list-group m-1">
+                    {% for chat in all_users %}
+                        <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                            {% if chat != user %}
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ chat.profile_picture.url }}" alt="Profile" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                    <a href="#" class="text-light participant-link"
+                                       data-recipient-id="{{ chat.id }}"
+                                       data-recipient-username="{{ chat.username }}"
+                                       data-recipient-profile="{{ chat.profile_picture.url }}"
+                                       data-bs-target="#openChatCard">
+                                      {{ chat.username }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">No recent chats</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Chat Card (Initially hidden) -->
+        <div class="card collapse" id="openChatCard">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center">
+                        <img src="" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;" id="recipient-profile-img">
+                        <a href="" class="text-light" id="recipient-username"></a>
+                    </div>
+                    <button id="backToChatsButton" class="btn btn-secondary btn-sm ms-2 ms-auto">Back to Chat List</button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
+                    <!-- Messages will appear here -->
+                    {% for message in all_messages %}
+                        <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
+                             data-room-id="{{ message.room.name }}">
+                            <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
+                            <div class="message-content">
+                                <div class="user-name">
+                                    {{ message.sender.username }}
+                                    <span class="timestamp">{{ message.timestamp }}</span>
+                                </div>
+                                <div class="message-bubble">{{ message.content }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="input-group">
+                    <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
+                    <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+                </div>
+            </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const loggedInUsername = "{{ request.user.username|escapejs }}";  // Logged-in username
+    const loggedInUserId = "{{ request.user.id }}";  // Logged-in user ID
+    const roomId = "{{ room_id }}";  // Current room name from the backend (it is now a string)
+    const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
+
+    // Select elements
+    const participantLinks = document.querySelectorAll('.participant-link');
+    const backToChatsButton = document.getElementById('backToChatsButton');
+    const openChatCard = document.getElementById('openChatCard');
+    const listChatCard = document.getElementById('ListChatCard');
+    const chatLog = document.querySelector('#chat-log');
+    const messageInputDom = document.querySelector('#chat-message-input');
+    const messageSubmitButton = document.querySelector('#chat-message-submit');
+    let currentRecipientId = null;
+
+    // Update the recipient ID when a participant is selected
+    if (participantLinks.length > 0) {
+        participantLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentRecipientId = this.dataset.recipientId;
+                const recipientUsername = this.dataset.recipientUsername;
+                const recipientProfileImage = this.dataset.recipientProfile;
+                const recipientProfileUrl = `/profile/${this.dataset.recipientUsername}`;
+
+                // Calculate the room name in numerical order
+                const roomName = Math.min(loggedInUserId, currentRecipientId) + '-' + Math.max(loggedInUserId, currentRecipientId);
+
+                // Update recipient info in the UI
+                document.getElementById('recipient-username').textContent = recipientUsername;
+                document.getElementById('recipient-username').href = recipientProfileUrl;
+                document.getElementById('recipient-profile-img').src = recipientProfileImage;
+
+                // Join WebSocket room
+                chatSocket.send(JSON.stringify({
+                    'action': 'join',
+                    'recipient_id': currentRecipientId,
+                    'room_id': roomName
+                }));
+
+                // Show open chat
+                toggleChatVisibility(true);
+            });
+        });
+    }
+
+    // Filter messages to show only those with the current room ID (room name)
+    function filterMessages() {
+        const messages = chatLog.querySelectorAll('.message-item');
+        messages.forEach(message => {
+            const messageRoomId = message.getAttribute('data-room-id');
+            if (messageRoomId === roomName) {
+                message.style.display = 'block';  // Show message
+            } else {
+                message.style.display = 'none';  // Hide message
+            }
+        });
+
+    }
+
+    // Call filterMessages when the page loads to ensure only the current room's messages are visible
+    filterMessages();
+
+
+
+    // Back button handler
+    if (backToChatsButton) {
+        backToChatsButton.addEventListener('click', function() {
+            toggleChatVisibility(false);
+        });
+    }
+
+    // WebSocket message handler
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+
+        // Check if the message is for the current chat (recipient)
+        if (data.recipient_id !== currentRecipientId) {
+            return;  // Ignore messages not related to the current recipient
+        }
+
+        // Create message element
+        const messageItem = document.createElement('div');
+        messageItem.classList.add('message-item', data.sender === loggedInUsername ? 'sender' : 'receiver');
+
+        // Profile image
+        const profileImg = document.createElement('img');
+        profileImg.classList.add('profile-img');
+        profileImg.src = data.profile_image_url;
+
+        // Message content
+        const messageContent = document.createElement('div');
+        messageContent.classList.add('message-content');
+
+        // Username and timestamp
+        const userName = document.createElement('span');
+        userName.classList.add('user-name');
+        userName.textContent = data.sender;
+
+        const timestamp = document.createElement('span');
+        timestamp.classList.add('timestamp');
+        timestamp.textContent = data.timestamp;
+
+        // Message bubble
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('message-bubble');
+        messageBubble.textContent = data.message;
+
+        // Append elements
+        const usernameContainer = document.createElement('div');
+        usernameContainer.appendChild(userName);
+        usernameContainer.appendChild(timestamp);
+        messageContent.appendChild(usernameContainer);
+        messageContent.appendChild(messageBubble);
+        messageItem.appendChild(profileImg);
+        messageItem.appendChild(messageContent);
+        chatLog.appendChild(messageItem);
+
+        // Auto-scroll to the latest message
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // Helper function to toggle chat visibility
+    function toggleChatVisibility(showChat) {
+        if (showChat) {
+            listChatCard.style.display = 'none';
+            openChatCard.style.display = 'block';
+            openChatCard.classList.add('fade-in');
+        } else {
+            openChatCard.style.display = 'none';
+            listChatCard.style.display = 'block';
+        }
+    }
+
+    // Send message function
+    function sendMessage() {
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'action': 'message',
+            'message': message,
+            'sender': loggedInUsername,
+            'recipient_id': currentRecipientId,
+        }));
+        messageInputDom.value = '';  // Clear input after sending
+    }
+
+    // Send message on button click
+    messageSubmitButton.onclick = function(e) {
+        sendMessage();
+    };
+
+    // Send message on Enter key press
+    messageInputDom.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+});
+
+</script>
+
+
+
+
+
+
+
 </body>
 
     {% block extra_script %}{% endblock %}

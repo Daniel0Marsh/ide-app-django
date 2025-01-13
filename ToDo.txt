@@ -2,7 +2,8 @@
 1) refactor all code base to follow pep8
 2) forgot password emailing system
 3) update README.md
-4) finish landing page
-5)
+4) integrate GitHub
+5) test messaging on all pages
+6) user projects and containers
 
 
