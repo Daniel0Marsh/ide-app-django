@@ -8,6 +8,19 @@
     --btn-danger: #e74c3c;
 }
 
+  /* Styling for text */
+  .title-text {
+    color: #f8f9fa;
+    font-size: 50px;
+    font-weight: bold;
+  }
+
+  .main-text {
+    color: #8b949e;
+    font-size: 30px;
+    font-weight: bold;
+  }
+
 .video-wrapper {
     position: fixed;
     top: 0;
@@ -74,7 +87,7 @@ body {
 
 .section {
     margin-top: 45%;
-    margin-bottom: 50%;
+    margin-bottom: 0;
     max-width: 100%;
 }
 
@@ -85,7 +98,7 @@ body {
     box-shadow: 0 0 30px rgba(108, 99, 255, 0.8);
 }
 
-.card {
+.hero-card {
     box-shadow: 0 0 30px rgba(108, 99, 255, 0.8);
     background: linear-gradient(to bottom, #6c63ff 0.5%, #1e1e2f 90%);
     border-top-left-radius: 30px;
