@@ -2,8 +2,6 @@ from django.core.files.storage import FileSystemStorage
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.http import HttpResponse
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from datetime import timedelta
 from django.utils.timezone import now
@@ -177,41 +175,38 @@ class ProfileView(TemplateView):
         project_name = request.POST.get('project_name')
         project_description = request.POST.get('project_description')
 
-        if not project_name:
-            return HttpResponse("Project name is required", status=400)
-
-        # Define the base directory for projects
-        default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
-        project_path = os.path.join(default_project_path, project_name)
-
         try:
-            # Create the project directory
+            # Define the project directory path
+            project_path = os.path.join(request.user.project_dir, project_name)
+
+            # Ensure the project directory exists
             os.makedirs(project_path, exist_ok=True)
 
-            # Create a README.md file
-            readme_path = os.path.join(project_path, "README.md")
+            # Create and save the project with the correct project_path
+            current_project = Project(
+                project_name=project_name,
+                project_description=project_description,
+                user=request.user,  # Associate the project with the logged-in user
+                project_path=project_path  # Set the project path
+            )
+            current_project.save()  # Save the project to the database
+
+            # Create the README.md file after saving the project
+            readme_path = os.path.join(current_project.project_path, "README.md")
             with open(readme_path, "w") as readme_file:
                 readme_content = f"# {project_name}\n\n{project_description or 'No description provided.'}"
                 readme_file.write(readme_content)
 
-            # Save the project to the database with the user as the owner
-            current_project = Project(
-                project_name=project_name,
-                project_description=project_description,
-                project_path=project_path,
-                user=request.user  # Associate the project with the logged-in user
-            )
-            current_project.save()
         except Exception as e:
             return HttpResponse(f"Error creating project: {e}", status=500)
 
-        user = request.user
+        # Log the activity
         project_name = current_project.project_name
         action = 'Created Project'
-        add_activity_to_log(user, project_name, action)
+        add_activity_to_log(request.user, project_name, action)
 
         # Redirect to the IDE view for the new project
-        return redirect('project', username=user, project_id=current_project.id)
+        return redirect('project', username=request.user, project_id=current_project.id)
 
     @staticmethod
     def edit_profile(request):

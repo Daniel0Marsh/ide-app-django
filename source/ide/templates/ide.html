@@ -273,18 +273,24 @@
         </div>
         <div class="card terminal rounded-0 border p-0 text-light border-dark">
             <div class="card-body">
-                <div id="terminal" class="p-1 text-light">{{response}}</div>
-                <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
-                    {% csrf_token %}
+                <!-- Terminal output section -->
+                <div id="terminal" class="p-1 text-light"></div>
+                <!-- Input section -->
+                <div class="d-flex align-items-center">
                     <div class="prompt p-1 text-light">
-                        <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/{{ current_project.project_name }}</span>$
+                        <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}/{{ current_project.project_name }}</span>$
                     </div>
-                    <input name="terminalInput" class="terminal-input border-0 text-light" autocomplete="off">
-                </form>
+                    <!-- Terminal input field -->
+                    <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Hidden inputs for username and project_id -->
+<input type="hidden" id="username" value="{{ user.username }}">
+<input type="hidden" id="project-id" value="{{ current_project.id }}">
 
 <!-- update task modal -->
 <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
@@ -699,8 +705,71 @@
         });
     });
 
+    function toggleOffcanvasHeight() {
+        const offcanvasElement = document.getElementById('offcanvasBottom');
+        if (offcanvasElement.classList.contains('h-50')) {
+            offcanvasElement.classList.remove('h-50');
+            offcanvasElement.classList.add('h-100');
+        } else {
+            offcanvasElement.classList.remove('h-100');
+            offcanvasElement.classList.add('h-50');
+        }
+    }
 
-    // AJAX used to send and receive the terminal prompts and responses
+</script>
+
+<script>
+        let socket; // Declare the WebSocket connection
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // Function to initialize WebSocket connection
+    function initWebSocket(username, projectId) {
+        const socketUrl = `ws://127.0.0.1:8000/ws/ide/${username}/${projectId}/`;
+        socket = new WebSocket(socketUrl);
+
+        // When the WebSocket connection is established
+        socket.onopen = function() {
+            console.log("WebSocket connection established.");
+        };
+
+        // When a message is received from the WebSocket server
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            // Handle terminal output response
+            if (data.type === 'terminal_output') {
+                const terminalDiv = document.getElementById('terminal');
+                const formattedResponse = data.output
+                    .split('\n')  // Split response by newlines
+                    .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
+                    .join('');
+
+                terminalDiv.innerHTML += formattedResponse;
+                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+            }
+
+            // Handle terminal error if any
+            if (data.type === 'terminal_error') {
+                const terminalDiv = document.getElementById('terminal');
+                const errorResponse = `<div><span class="error">${data.error}</span></div>`;
+                terminalDiv.innerHTML += errorResponse;
+                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+            }
+        };
+
+        // Handle WebSocket errors
+        socket.onerror = function(error) {
+            console.error("WebSocket Error:", error);
+        };
+
+        // Handle WebSocket connection closure
+        socket.onclose = function(event) {
+            console.log("WebSocket connection closed:", event);
+        };
+    }
+
+    // Function to send the terminal prompt via WebSocket
     function sendPrompt() {
         const promptValue = document.querySelector('.terminal-input').value.trim();
         if (!promptValue) return;
@@ -709,15 +778,11 @@
         commandHistory.push(promptValue);
         historyIndex = commandHistory.length;
 
-        const formData = new FormData();
-        formData.append('prompt', promptValue);
-
         const terminalDiv = document.getElementById('terminal');
-        const projectName = "{{ current_project.project_name }}";
 
         // Append the user's command in terminal-like format
         terminalDiv.innerHTML += `<div>
-            <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/${projectName}</span>$ ${promptValue}
+            <span class="username">user@Ubuntu</span>:<span class="path">~/{{user}}/{{ current_project.project_name }}</span>$ ${promptValue}
         </div>`;
 
         if (promptValue.toLowerCase() === 'clear') {
@@ -726,51 +791,25 @@
             return; // Exit the function
         }
 
-        fetch('', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token for Django
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data); // Log response to console for debugging
+        // Send the command via WebSocket
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                'command': promptValue
+            }));
+        } else {
+            console.error("WebSocket is not open.");
+        }
 
-            if (data.input_prompt) {
-                // If the backend has sent an 'input_prompt', display it for user input
-                const inputDiv = document.createElement('div');
-                inputDiv.innerHTML = `<span class="output">${data.input_prompt}</span>`;
-                terminalDiv.appendChild(inputDiv);
-
-                // Focus on the input field to allow the user to respond
-                document.querySelector('.terminal-input').focus();
-            } else {
-                // Format response with new lines for better terminal output style
-                const formattedResponse = data.response
-                    .split('\n') // Split response by newlines
-                    .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
-                    .join('');
-
-                // Append the formatted response to the terminal UI
-                terminalDiv.innerHTML += formattedResponse;
-
-                // Scroll to the bottom of the terminal
-                terminalDiv.scrollTop = terminalDiv.scrollHeight;
-
-                // Clear the input field after processing
-                document.querySelector('.terminal-input').value = '';
-            }
-        })
-        .catch(error => console.error('Error:', error));
+        // Clear the input field after sending
+        document.querySelector('.terminal-input').value = '';
     }
 
-    let commandHistory = [];
-    let historyIndex = -1;
-
-    // Handle command history navigation
+    // Handle keydown event on terminal input field
     document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowUp') {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent the default behavior (typing a new line)
+            sendPrompt(); // Call the function to send the prompt
+        } else if (e.key === 'ArrowUp') {
             // Navigate up the history
             if (historyIndex > 0) historyIndex--;
             e.target.value = commandHistory[historyIndex] || '';
@@ -783,17 +822,12 @@
         }
     });
 
-
-    function toggleOffcanvasHeight() {
-        const offcanvasElement = document.getElementById('offcanvasBottom');
-        if (offcanvasElement.classList.contains('h-50')) {
-            offcanvasElement.classList.remove('h-50');
-            offcanvasElement.classList.add('h-100');
-        } else {
-            offcanvasElement.classList.remove('h-100');
-            offcanvasElement.classList.add('h-50');
-        }
-    }
+    // Call initWebSocket with the username and project_id when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const username = document.getElementById('username').value;  // Assume the username is in a hidden input
+        const projectId = document.getElementById('project-id').value;  // Assume project_id is also passed in a hidden input
+        initWebSocket(username, projectId);  // Initialize WebSocket connection
+    });
 
 </script>
 </html>

@@ -3,8 +3,6 @@ from django.conf import settings
 from django.db.models import TextField
 import os
 
-default_project_path = os.path.join(settings.BASE_DIR, "UserProjects")
-
 
 class Project(models.Model):
     """
@@ -49,7 +47,7 @@ class Project(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
-    project_path = models.CharField(max_length=100, default=default_project_path)
+    project_path = models.CharField(max_length=100,)
     project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')

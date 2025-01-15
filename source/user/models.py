@@ -2,6 +2,20 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.conf import settings
+import os
+
+default_user_dir = os.path.join(settings.BASE_DIR, "UserDir")
+
+
+class DockerSession(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    container_id = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20,
+                              choices=[('running', 'Running'), ('stopped', 'Stopped'), ('removed', 'Removed')],
+                              default='stopped')
+    mounted_volume = models.CharField(max_length=255, null=True, blank=True)
 
 
 class CustomUser(AbstractUser):
@@ -14,6 +28,7 @@ class CustomUser(AbstractUser):
     )
     bio = models.TextField(null=True, blank=True)
     activity_log = models.JSONField(default=dict, blank=True)
+    project_dir = models.CharField(max_length=512, null=True, blank=True)
 
     def __str__(self):
         return self.username
@@ -35,7 +50,7 @@ class CustomUser(AbstractUser):
         return self.followers.filter(id=user.id).exists()
 
 
-# Signal to create a default profile
+# Signal to create a default profile and user project directory
 @receiver(post_save, sender=CustomUser)
 def create_default_profile(sender, instance, created, **kwargs):
     if created:
@@ -48,3 +63,12 @@ def create_default_profile(sender, instance, created, **kwargs):
         admin_user = CustomUser.objects.filter(is_superuser=True).first()
         if admin_user and admin_user != instance:
             instance.follow(admin_user)
+
+        # Create user-specific directory for projects
+        user_project_dir = os.path.join(default_user_dir, instance.username)
+        if not os.path.exists(user_project_dir):
+            os.makedirs(user_project_dir)
+
+        # Store the path of the project directory in the user's model
+        instance.project_dir = user_project_dir
+        instance.save()

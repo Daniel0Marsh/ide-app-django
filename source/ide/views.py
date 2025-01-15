@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import TemplateView
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.http import FileResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from .models import Project, Task
 from user_profile.views import add_activity_to_log
 from chat.models import ChatRoom, Message
-import docker
+from .utils import ProjectContainerManager
 import os
 import shutil
 import markdown
@@ -241,7 +241,6 @@ class ProjectView(TemplateView):
         """
         Handle the updating of both project name, project description, and project visibility.
         """
-        user = request.user  # Get the user who made the changes
         project_name = project.project_name  # Get the current project name
         new_name = request.POST.get('name')
         new_description = request.POST.get('description')
@@ -257,7 +256,7 @@ class ProjectView(TemplateView):
             if project.project_name != new_name:
                 # Rename the project directory
                 old_project_path = project.project_path
-                new_project_path = os.path.join(settings.BASE_DIR, "UserProjects", new_name)
+                new_project_path = os.path.join(request.user.project_dir, new_name)
 
                 # Rename the directory
                 os.rename(old_project_path, new_project_path)
@@ -273,7 +272,7 @@ class ProjectView(TemplateView):
             project.save()
 
             # Log the activity for updating project details
-            add_activity_to_log(user, project_name, action if action else f"Updated project details for {new_name}")
+            add_activity_to_log(request.user, project_name, action if action else f"Updated project details for {new_name}")
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -290,17 +289,16 @@ class ProjectView(TemplateView):
 
         try:
             # Delete the Docker container associated with the project
-            container_manager = ProjectContainerManager(project)
+            container_manager = ProjectContainerManager(project, request.user)
             container_manager.delete_container()  # Delete the container if it exists
 
             # Delete the project directory
             shutil.rmtree(project.project_path)  # Remove the project's directory
 
             # add deletion of the project to the users activity log
-            user = request.user
             project_name = project.project_name
             action = 'Deleted Project'
-            add_activity_to_log(user, project_name, action)
+            add_activity_to_log(request.user, project_name, action)
 
             # Delete the project from the database
             project.delete()
@@ -394,7 +392,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'save_file': self.save_file,
             'rename_file': self.save_file,
             'open_file': self.open_file,
-            'prompt': self.prompt,
             'download_project': self.download_project,
             'update_theme': self.update_theme,
             'update_task': update_task,
@@ -405,29 +402,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return action_map[action](request, project)
 
         return HttpResponse("Invalid action", status=400)
-
-    def prompt(self, request, project):
-        """
-        Execute a command in the project's Docker container.
-        """
-        prompt = request.POST.get('prompt')
-        if not prompt:
-            return JsonResponse({'response': ''}, status=400)
-
-        manager = ProjectContainerManager(project)
-
-        try:
-            # Execute the command using the method in ProjectContainerManager
-            response_output = manager.execute_command(prompt)
-
-            # Return the response
-            if response_output['exit_code'] != 0:
-                return JsonResponse({'response': response_output['formatted_output']}, status=500)
-
-            return JsonResponse({'response': response_output['formatted_output']}, status=200)
-
-        except Exception as e:
-            return JsonResponse({'response': str(e)}, status=500)
 
     @staticmethod
     def update_theme(request, project):
@@ -611,100 +585,3 @@ class IdeView(LoginRequiredMixin, TemplateView):
         add_activity_to_log(user, project_name, action)
 
         return response
-
-
-class ProjectContainerManager:
-    """
-    Manage Docker containers for each project.
-    """
-
-    def __init__(self, project):
-        self.project = project
-        self.project_name = os.path.basename(project.project_path)
-        self.container_name = f"{self.project_name}_container"
-        self.project_path = project.project_path
-        self.client = docker.from_env()
-
-    def get_container(self):
-        """
-        Retrieve the Docker container for the project.
-        """
-        try:
-            return self.client.containers.get(self.container_name)
-        except docker.errors.NotFound:
-            return None
-
-    def create_container(self):
-        """
-        Create a new Docker container for the project.
-        """
-        return self.client.containers.run(
-            image='terminal_session',
-            name=self.container_name,
-            volumes={
-                self.project_path: {'bind': f'/{self.project_name}', 'mode': 'rw'},
-                '/host/path/.bash_history': {'bind': '/root/.bash_history', 'mode': 'rw'}},
-            working_dir=f'/{self.project_name}',
-            stdin_open=True,
-            tty=True,
-            command='/bin/bash -l',
-            detach=True,
-            user=f"{os.getuid()}:{os.getgid()}",
-            security_opt=["no-new-privileges"],
-            read_only=False,
-        )
-
-    def start_container(self):
-        """
-        Start the Docker container if it exists but is not running.
-        """
-        container = self.get_container()
-        if container and container.status != "running":
-            container.start()
-        elif not container:
-            container = self.create_container()
-        return container
-
-    def attach_container(self):
-        """
-        Attach to the container for real-time terminal interaction.
-        """
-        container = self.start_container()
-        return container.attach(stdin=True, stdout=True, stderr=True, stream=True, logs=True)
-
-    def execute_command(self, command):
-        """
-        Execute a given command in the container.
-        """
-        container = self.start_container()
-        try:
-            response = container.exec_run(
-                cmd=['/bin/bash', '-c', command],
-                stdout=True,
-                stderr=True,
-                stdin=True,
-                tty=True
-            )
-            output = response.output.decode().strip()
-            return {
-                'formatted_output': output,
-                'exit_code': response.exit_code
-            }
-        except Exception as e:
-            raise RuntimeError(f"Error executing command: {str(e)}")
-
-    def stop_container(self):
-        """
-        Stop the Docker container if it's running.
-        """
-        container = self.get_container()
-        if container and container.status == "running":
-            container.stop()
-
-    def delete_container(self):
-        """
-        Delete the Docker container if it exists.
-        """
-        container = self.get_container()
-        if container:
-            container.remove(force=True)
