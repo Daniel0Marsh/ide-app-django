@@ -11,14 +11,16 @@
         </div>
         <ul class="list-group list-group-flush">
             {% for user in user_results %}
-                <li class="list-group-item bg-transparent text-light d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-                        <a href="{% url 'public_profile' user.username %}" class="text-light text-decoration-none">{{ user.username }}</a>
-                    </div>
-                </li>
+            <li class="list-group-item bg-transparent text-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3"
+                         style="width: 40px; height: 40px;">
+                    <a href="{% url 'public_profile' user.username %}" class="text-light text-decoration-none">{{
+                        user.username }}</a>
+                </div>
+            </li>
             {% empty %}
-                <li class="list-group-item bg-transparent text-light">No users found.</li>
+            <li class="list-group-item bg-transparent text-light">No users found.</li>
             {% endfor %}
         </ul>
     </div>
@@ -30,31 +32,34 @@
         </div>
         <ul class="list-group list-group-flush">
             {% for project in project_results %}
-                <li class="list-group-item bg-transparent text-light">
-                    <div class="d-flex align-items-center p-2">
-                        <img src="{{ project.user.profile_picture.url }}" alt="Profile" class="rounded-circle me-1" style="width: 30px; height: 30px;">
-                        <a href="{% url 'project' username=project.user.username project_id=project.id %}" class="card-title text-decoration-none d-block fw-bold" >
-                            {{ project.user.username }}/{{ project.project_name }}
-                        </a>
-                    </div>
-                    <p class="text-light p-1">{{ project.project_description }}</p>
-                    <div class="d-flex align-items-center mb-1">
-                        <form method="post" action="{% url 'project' username=project.user.username project_id=project.id %}">
-                            {% csrf_token %}
-                            <button type="submit" name="toggle_like" class="btn btn-sm btn-secondary me-2">
-                                <i class="bi bi-star-fill"></i>
-                                {% if user in project.liked_by.all %}
-                                    Starred {{ project.likes }}
-                                {% else %}
-                                    Star {{ project.likes }}
-                                {% endif %}
-                            </button>
-                        </form>
-                        <p class="mb-0 small text-light">Last modified: {{ project.modified_at|date:"M d, Y" }}</p>
-                    </div>
-                </li>
+            <li class="list-group-item bg-transparent text-light">
+                <div class="d-flex align-items-center p-2">
+                    <img src="{{ project.user.profile_picture.url }}" alt="Profile" class="rounded-circle me-1"
+                         style="width: 30px; height: 30px;">
+                    <a href="{% url 'project' username=project.user.username project_id=project.id %}"
+                       class="card-title text-decoration-none d-block fw-bold">
+                        {{ project.user.username }}/{{ project.project_name }}
+                    </a>
+                </div>
+                <p class="text-light p-1">{{ project.project_description }}</p>
+                <div class="d-flex align-items-center mb-1">
+                    <form method="post"
+                          action="{% url 'project' username=project.user.username project_id=project.id %}">
+                        {% csrf_token %}
+                        <button type="submit" name="toggle_like" class="btn btn-sm btn-secondary me-2">
+                            <i class="bi bi-star-fill"></i>
+                            {% if user in project.liked_by.all %}
+                            Starred {{ project.likes }}
+                            {% else %}
+                            Star {{ project.likes }}
+                            {% endif %}
+                        </button>
+                    </form>
+                    <p class="mb-0 small text-light">Last modified: {{ project.modified_at|date:"M d, Y" }}</p>
+                </div>
+            </li>
             {% empty %}
-                <li class="list-group-item bg-transparent text-light">No projects found.</li>
+            <li class="list-group-item bg-transparent text-light">No projects found.</li>
             {% endfor %}
         </ul>
     </div>

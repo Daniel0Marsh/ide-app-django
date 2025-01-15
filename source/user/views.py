@@ -7,57 +7,56 @@ from .models import CustomUser
 
 
 class LoginView(View):
-    """Custom LoginView to handle user login."""
+    """Handle user login by rendering login form and authenticating user."""
     template_name = 'login.html'
 
     def get(self, request):
+        """Render login form."""
         return render(request, self.template_name)
 
     def post(self, request):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
+        """Authenticate user and log them in if credentials are valid."""
+        username, password = request.POST.get('username'), request.POST.get('password')
         user = authenticate(request, username=username, password=password)
 
         if user:
             login(request, user)
             messages.success(request, 'Login successful!')
             return redirect(reverse_lazy('profile', kwargs={'username': username}))
-        else:
-            messages.error(request, 'Invalid username or password')
-            return redirect('login')
+
+        messages.error(request, 'Invalid username or password')
+        return redirect('login')
 
 
 class RegisterView(View):
-    """Custom registration view to handle user registration."""
+    """Handle user registration by rendering registration form and creating a new user."""
     template_name = 'register.html'
 
     def get(self, request):
+        """Render registration form."""
         return render(request, self.template_name)
 
     def post(self, request):
-        email = request.POST.get('email')
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        """Validate input and create a new user if no conflicts are found."""
+        email, username, password = request.POST.get('email'), request.POST.get('username'), request.POST.get(
+            'password')
 
-        # Check for existing username or email
         if CustomUser.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken')
-            return redirect('register')
-
-        if CustomUser.objects.filter(email=email).exists():
+        elif CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered')
-            return redirect('register')
+        else:
+            CustomUser.objects.create_user(username=username, email=email, password=password)
+            messages.success(request, 'Registration successful! Please log in.')
+            return redirect(reverse_lazy('login'))
 
-        # Create user using CustomUser
-        CustomUser.objects.create_user(username=username, email=email, password=password)
-        messages.success(request, 'Registration successful! Please log in.')
-        return redirect(reverse_lazy('login'))
+        return redirect('register')
 
 
 class LogoutView(View):
-    """Handle logout with a redirect after logging out."""
+    """Handle user logout."""
 
     def post(self, request, *args, **kwargs):
+        """Log the user out and redirect to home page."""
         logout(request)
         return redirect('home')

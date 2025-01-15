@@ -22,12 +22,10 @@
 <!-- Navbar -->
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
-        <!-- Brand -->
         <a class="navbar-brand" href="{% url 'home' %}">
             CodeBlock
         </a>
 
-        <!-- Navbar toggler for mobile view -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                 aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -35,9 +33,7 @@
 
         <!-- Navbar content -->
         <div class="collapse navbar-collapse" id="navbarContent">
-            <!-- Spacer to push the search bar to the right -->
             <div class="ms-auto">
-                <!-- Search bar -->
                 <form class="d-flex me-4" action="{% url 'search' %}" method="get">
                     <div class="input-group">
                         <input class="form-control" type="search" name="query" placeholder="Search users or projects"
@@ -49,10 +45,8 @@
                 </form>
             </div>
 
-            <!-- User dropdown or Login/Sign Up -->
             <div class="dropdown me-4">
                 {% if user.is_authenticated %}
-                    <!-- If user is authenticated, show profile dropdown -->
                     <a href="{% url 'profile' username=user.username %}"
                        class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
                        aria-expanded="false">
@@ -82,7 +76,6 @@
                         </li>
                     </ul>
                 {% else %}
-                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
                     <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
                     <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
                 {% endif %}

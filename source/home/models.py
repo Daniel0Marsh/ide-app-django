@@ -4,11 +4,6 @@ from django.db import models
 class HomePage(models.Model):
     """
     Model representing the home page.
-
-    Attributes:
-        page_title (str): The title of the home page.
-        page_description (str): The description of the home page.
-        updated_at (datetime): The date and time when the home page was last updated.
     """
 
     website_title = models.CharField(max_length=100, blank=True, null=True)
@@ -19,9 +14,6 @@ class HomePage(models.Model):
     def __str__(self):
         """
         String representation of the home page.
-
-        Returns:
-            str: The title of the home page.
         """
         return self.page_title or "Untitled Home Page"
 
@@ -32,11 +24,7 @@ class HomePage(models.Model):
 
 class Logo(models.Model):
     """
-    Model representing images uploaded for the home page.
-
-    Attributes:
-        home_page (HomePage): The home page associated with the image.
-        image (ImageField): The uploaded image.
+    Model representing an image uploaded for the home page.
     """
 
     home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
@@ -45,9 +33,6 @@ class Logo(models.Model):
     def __str__(self):
         """
         String representation of the home page image.
-
-        Returns:
-            str: The filename of the image.
         """
         return self.image.name
 
@@ -55,10 +40,6 @@ class Logo(models.Model):
 class Favicon(models.Model):
     """
     Model representing the favicon for the home page.
-
-    Attributes:
-        home_page (HomePage): The home page associated with the favicon.
-        favicon (ImageField): The uploaded favicon image.
     """
 
     home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
@@ -67,9 +48,6 @@ class Favicon(models.Model):
     def __str__(self):
         """
         String representation of the favicon.
-
-        Returns:
-            str: The filename of the favicon.
         """
         return self.favicon.name
 
@@ -77,10 +55,6 @@ class Favicon(models.Model):
 class ImageOne(models.Model):
     """
     Model representing an image for the home page.
-
-    Attributes:
-        home_page (HomePage): The home page associated with the image_one.
-        image_one (ImageOne): The uploaded image_one image.
     """
 
     home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
@@ -88,10 +62,7 @@ class ImageOne(models.Model):
 
     def __str__(self):
         """
-        String representation of the image_one.
-
-        Returns:
-            str: The filename of the image_one.
+        String representation of the image.
         """
         return self.image_one.name
 
@@ -99,10 +70,6 @@ class ImageOne(models.Model):
 class Background(models.Model):
     """
     Model representing the background video for the home page.
-
-    Attributes:
-        home_page (HomePage): The home page associated with the background video.
-        video (FileField): The uploaded background video file.
     """
 
     home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
@@ -111,10 +78,5 @@ class Background(models.Model):
     def __str__(self):
         """
         String representation of the background video.
-
-        Returns:
-            str: The filename of the video.
         """
         return self.video.name
-
-

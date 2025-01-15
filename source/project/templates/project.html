@@ -26,7 +26,6 @@
                         {{ current_project.project_name }}
                     </a>
                 </h3>
-                <!-- Public/Private Status -->
                 <p class="text-light small ms-2">
                     {% if current_project.is_public %}
                     <span class="badge bg-primary">Public</span>
@@ -36,12 +35,10 @@
                 </p>
             </div>
             <div class="d-flex flex-wrap justify-content-start">
-                <!-- Primary actions first -->
                 <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
                    class="btn btn-primary mx-1 mb-2">
                     Open IDE
                 </a>
-
                 <form method="post"
                       action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
                       class="ms-1">
@@ -51,7 +48,6 @@
                     </button>
                 </form>
 
-                <!-- Like/Unlike Button -->
                 {% if user.is_authenticated %}
                 <form method="post"
                       action="{% url 'project' username=current_project.user.username project_id=current_project.id %}"
@@ -123,7 +119,6 @@
         </div>
         <div class="card-body text-light">
             <ul class="list-group list-group-flush">
-                <!-- Add owner to the list -->
                 <li class="list-group-item bg-transparent text-light d-flex align-items-center">
                     <img src="{{ current_project.user.profile_picture.url }}" alt="Profile"
                          class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
@@ -155,7 +150,6 @@
                         {% endif %}
                     </div>
                 </li>
-
                 {% empty %}
                 <li class="list-group-item bg-transparent text-light">No collaborators added yet.</li>
                 {% endfor %}
@@ -174,7 +168,6 @@
                 {% for task in tasks %}
                 <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <!-- Make task title clickable -->
                         <a href="#"
                            class="text-light"
                            data-bs-toggle="modal"
@@ -308,21 +301,18 @@
                   action="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <!-- Project Name Field -->
                     <div class="mb-3">
                         <label for="projectName" class="form-label">Project Name</label>
                         <input type="text" class="form-control bg-dark text-light" id="projectName" name="name"
                                value="{{ current_project.project_name }}">
                     </div>
 
-                    <!-- Project Description Field -->
                     <div class="mb-3">
                         <label for="projectDescription" class="form-label">Project Description</label>
                         <textarea class="form-control bg-dark text-light" id="projectDescription" name="description"
                                   rows="3">{{ current_project.project_description }}</textarea>
                     </div>
 
-                    <!-- Public/Private Toggle -->
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="projectVisibility" name="is_public"
                                {% if current_project.is_public %}checked{% endif %}>
@@ -338,8 +328,8 @@
     </div>
 </div>
 
-{% if request.user == current_project.user %}
 <!-- update task modal -->
+{% if request.user == current_project.user %}
 <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

@@ -1,22 +1,12 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import TextField
-import os
 
 
 class Project(models.Model):
     """
-    Model representing a software project with configured theme and syntax settings.
-
-    Attributes:
-        project_name (str): The name of the project.
-        selected_theme (str): The selected theme for the project.
-        selected_syntax (str): The selected syntax highlighting for the project.
-        is_public (bool): Whether the project is public or private.
-        likes (int): The number of likes the project has received.
+    Represents a software project with theme, syntax settings, and user-related information.
     """
-
-    # Define choices for themes
     THEME_CHOICES = [
         ('default', 'Light Mode'),
         ('eclipse', 'Eclipse'),
@@ -26,7 +16,6 @@ class Project(models.Model):
         ('dracula', 'Dracula'),
     ]
 
-    # Define choices for syntax
     SYNTAX_CHOICES = [
         ('auto', 'Auto Detect'),
         ('plain', 'Plain Text'),
@@ -47,7 +36,7 @@ class Project(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
-    project_path = models.CharField(max_length=100,)
+    project_path = models.CharField(max_length=100)
     project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
@@ -64,18 +53,8 @@ class Project(models.Model):
 
 class Task(models.Model):
     """
-    Model representing a task assigned to a user for a specific project.
-
-    Attributes:
-        project (Project): The project this task belongs to.
-        assigned_to (User): The user responsible for this task.
-        title (str): The title or name of the task.
-        description (str): A detailed description of the task.
-        status (str): The current status of the task (Not Started, In Progress, Completed).
-        created_at (datetime): The date and time when the task was created.
-        updated_at (datetime): The date and time when the task was last updated.
+    Represents a task assigned to a user for a project.
     """
-
     STATUS_CHOICES = [
         ('not_started', 'Not Started'),
         ('in_progress', 'In Progress'),

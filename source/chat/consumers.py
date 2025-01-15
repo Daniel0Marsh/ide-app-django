@@ -5,17 +5,22 @@ from asgiref.sync import sync_to_async
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    """Consumer for handling WebSocket connections and messages in a chat room."""
+
     async def connect(self):
+        """Handles WebSocket connection."""
         self.room_group_name = None
         await self.accept()
 
     async def disconnect(self, close_code):
+        """Handles WebSocket disconnection."""
         if self.room_group_name:
             await self.channel_layer.group_discard(
                 self.room_group_name, self.channel_name
             )
 
     async def receive(self, text_data):
+        """Handles incoming WebSocket messages."""
         text_data_json = json.loads(text_data)
         action = text_data_json.get("action")
 
@@ -25,8 +30,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.handle_message(text_data_json)
 
     async def handle_join(self, text_data_json):
+        """Handles the join action for a user."""
         recipient_id = text_data_json.get("recipient_id")
-        room_name = text_data_json.get("roomName")  # The roomName is now directly provided
+        room_name = text_data_json.get("roomName")
 
         if not recipient_id:
             await self.send_error("recipient_id is missing in the join action.")
@@ -36,14 +42,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send_error("room_name is missing in the join action.")
             return
 
-        self.room_group_name = room_name  # Using the provided room_name directly
+        self.room_group_name = room_name
         await self.get_or_create_chat_room(self.room_group_name)
 
-        await self.channel_layer.group_add(
-            self.room_group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
     async def handle_message(self, text_data_json):
+        """Handles sending a message in the chat room."""
         if not self.room_group_name:
             await self.send_error("room_group_name is not set. Did you join a room first?")
             return
@@ -74,18 +79,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_error(self, error_message):
+        """Sends an error message to the WebSocket."""
         await self.send(text_data=json.dumps({"error": error_message}))
 
     async def chat_message(self, event):
+        """Handles incoming chat messages to the WebSocket."""
         await self.send(text_data=json.dumps(event))
 
     @sync_to_async
     def get_chat_room(self, room_name):
+        """Fetches the chat room by name."""
         from .models import ChatRoom
         return ChatRoom.objects.get(name=room_name)
 
     @sync_to_async
     def get_or_create_chat_room(self, room_name):
+        """Gets or creates a chat room and adds participants."""
         from .models import ChatRoom
         from django.contrib.auth import get_user_model
 
@@ -93,7 +102,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         room, created = ChatRoom.objects.get_or_create(name=room_name)
         if created:
-            participant_ids = [int(id_str) for id_str in room_name.split("-") if id_str.isdigit()]
+            participant_ids = [
+                int(id_str) for id_str in room_name.split("-") if id_str.isdigit()
+            ]
             participants = User.objects.filter(id__in=participant_ids)
 
             if len(participants) != 2:
@@ -104,6 +115,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def save_message(self, room, sender, recipient_id, message):
+        """Saves the message to the database."""
         from .models import Message
         from django.contrib.auth import get_user_model
 

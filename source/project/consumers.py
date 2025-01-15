@@ -4,26 +4,39 @@ from asgiref.sync import sync_to_async
 
 
 class TerminalConsumer(AsyncWebsocketConsumer):
+    """
+    WebSocket consumer for handling terminal commands within a project context.
+    """
+
     async def connect(self):
+        """
+        Establish connection, retrieve user and project, and join room group.
+        """
         self.username = self.scope['url_route']['kwargs']['username']
         self.project_id = self.scope['url_route']['kwargs']['project_id']
 
         self.user = await self.get_user(self.username)
         if not self.user:
-            await self.close()  # Close if user not found
+            await self.close()
 
         self.project = await self.get_project(self.project_id)
         if not self.project:
-            await self.close()  # Close if project not found
+            await self.close()
 
         self.room_group_name = f"terminal_{self.user.id}_{self.project.id}"
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
+        """
+        Remove channel from room group on disconnect.
+        """
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
+        """
+        Handle received message and send terminal command output or error.
+        """
         text_data_json = json.loads(text_data)
         command = text_data_json.get('command', None)
 
@@ -32,11 +45,13 @@ class TerminalConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps(response))
 
     async def execute_terminal_command(self, command):
+        """
+        Execute terminal command and return result or error.
+        """
         from .utils import ProjectContainerManager
         container_manager = ProjectContainerManager(project=self.project, user=self.user)
 
         try:
-            # Ensure this call is wrapped with sync_to_async
             result = await sync_to_async(container_manager.execute_command)(command)
             return {
                 'type': 'terminal_output',
@@ -51,6 +66,9 @@ class TerminalConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def get_user(self, username):
+        """
+        Retrieve user by username.
+        """
         from django.contrib.auth import get_user_model
         try:
             return get_user_model().objects.get(username=username)
@@ -59,7 +77,9 @@ class TerminalConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def get_project(self, project_id):
-        # Importing the Project model locally to avoid AppRegistryNotReady error
+        """
+        Retrieve project by ID.
+        """
         from .models import Project
         try:
             return Project.objects.get(id=project_id)

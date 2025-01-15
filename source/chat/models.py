@@ -3,7 +3,7 @@ from django.conf import settings
 
 
 class ChatRoom(models.Model):
-    """Model to represent a chat room."""
+    """Represents a chat room with participants."""
     name = models.CharField(max_length=255, unique=True)
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name='chat_rooms', blank=True
@@ -14,13 +14,16 @@ class ChatRoom(models.Model):
 
 
 class Message(models.Model):
-    """Model to store messages."""
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
+    """Represents a message sent within a chat room."""
+    room = models.ForeignKey(
+        ChatRoom, on_delete=models.CASCADE, related_name='messages'
+    )
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages'
     )
     recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='received_messages', null=True, blank=True
     )
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)

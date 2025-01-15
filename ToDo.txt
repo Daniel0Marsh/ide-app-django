@@ -1,9 +1,9 @@
 
-1) refactor all code base to follow pep8
-2) forgot password emailing system
-3) update README.md
-4) integrate GitHub
-5) persistent shell docker containers
-6)
+1) forgot password emailing system
+2) integrate GitHub
+3) persistent shell docker containers
+4) notifications (tasks, messages, new followers)
+5)
+
 
 

@@ -18,22 +18,15 @@
 <!-- Navbar -->
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
-        <!-- Brand -->
         <a class="navbar-brand" href="{% url 'home' %}">
             CodeBlock
         </a>
-
-        <!-- Navbar toggler for mobile view -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                 aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <!-- Navbar content -->
         <div class="collapse navbar-collapse" id="navbarContent">
-            <!-- Spacer to push the search bar to the right -->
             <div class="ms-auto">
-                <!-- Search bar -->
                 <form class="d-flex me-4 m-2" action="{% url 'search' %}" method="get">
                     <div class="input-group">
                         <input class="form-control" type="search" name="query" placeholder="Search users or projects"
@@ -45,10 +38,8 @@
                 </form>
             </div>
 
-            <!-- User dropdown or Login/Sign Up -->
             <div class="dropdown me-4">
                 {% if user.is_authenticated %}
-                    <!-- If user is authenticated, show profile dropdown -->
                     <a href="{% url 'profile' username=user.username %}"
                        class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
                        aria-expanded="false">
@@ -78,7 +69,6 @@
                         </li>
                     </ul>
                 {% else %}
-                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
                     <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
                     <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
                 {% endif %}
@@ -89,30 +79,25 @@
 
 <!-- project side-nav -->
 <div class="side-nav shadow-end border-end border-dark">
-
     <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip"
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
-
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
     <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip"
             title="Tasks">
         <i class="bi bi-card-checklist fs-5 text-light"></i>
     </button>
-
     <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas"
             data-bs-target="#offcanvasBottom"
             aria-controls="offcanvasBottom">
         <i class="bi bi-terminal fs-5 text-light"></i>
     </button>
     {% endif %}
-
     <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal"
             data-bs-target="#colorChangeModal">
         <i class="bi bi-paint-bucket fs-5 text-light"></i>
     </button>
-
     <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home"
        href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
         <i class="bi bi-house fs-5 text-light"></i>
@@ -127,7 +112,6 @@
         {% for task in tasks %}
         <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <!-- Make task title clickable -->
                 <a href="#"
                    class="text-light"
                    data-bs-toggle="modal"
@@ -246,7 +230,6 @@
                 </button>
                 {% endif %}
             </div>
-            <!-- Add dropdown buttons -->
         </div>
     </div>
     <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
@@ -273,24 +256,19 @@
         </div>
         <div class="card terminal rounded-0 border p-0 text-light border-dark">
             <div class="card-body">
-                <!-- Terminal output section -->
                 <div id="terminal" class="p-1 text-light"></div>
-                <!-- Input section -->
                 <div class="d-flex align-items-center">
                     <div class="prompt p-1 text-light">
                         <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}/{{ current_project.project_name }}</span>$
                     </div>
-                    <!-- Terminal input field -->
                     <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
+                    <input type="hidden" id="username" value="{{ user.username }}">
+                    <input type="hidden" id="project-id" value="{{ current_project.id }}">
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Hidden inputs for username and project_id -->
-<input type="hidden" id="username" value="{{ user.username }}">
-<input type="hidden" id="project-id" value="{{ current_project.id }}">
 
 <!-- update task modal -->
 <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">

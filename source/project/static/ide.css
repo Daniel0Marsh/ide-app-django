@@ -148,15 +148,15 @@ body {
 }
 
 .files-sidebar-active .ide-content {
-    margin-left: 300px; /* Adjust when filesSidebar is active */
+    margin-left: 300px;
 }
 
 .tasks-sidebar-active .ide-content {
-    margin-left: 300px; /* Adjust when tasksSidebar is active */
+    margin-left: 300px;
 }
 
 .both-sidebars-active .ide-content {
-    margin-left: 300px; /* Adjust when both sidebars are active */
+    margin-left: 300px;
 }
 
 .sidebar ul.components {

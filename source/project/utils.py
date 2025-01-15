@@ -7,12 +7,14 @@ from user.models import DockerSession
 
 class ProjectContainerManager:
     """
-    Manage Docker containers for each user and their projects.
+    Manages Docker containers for user projects.
     """
-
-    TIMEOUT_SECONDS = 3600  # Example timeout duration (3600seconds = 1 hour)
+    TIMEOUT_SECONDS = 3600  # Timeout duration (1 hour)
 
     def __init__(self, project, user):
+        """
+        Initializes the container manager with the project and user details.
+        """
         self.project = project
         self.user = user
         self.container_name = f"{self.user.username}_{self.user.id}"
@@ -22,7 +24,7 @@ class ProjectContainerManager:
 
     def get_container(self):
         """
-        Retrieve the Docker container for the project from the model.
+        Retrieves the container associated with the user from the model.
         """
         try:
             docker_session = DockerSession.objects.get(user=self.user)
@@ -32,18 +34,10 @@ class ProjectContainerManager:
 
     def create_container(self):
         """
-        Create a new Docker container for the user and store its session in the model.
+        Creates a new Docker container for the user and saves the session in the model.
         """
         volume_path = f'/mnt/{self.user.id}_volume'
-
-        # Remove existing container if it exists
         self._remove_existing_container()
-
-        # Retrieve resource limits from the user's settings
-        mem_limit = self.user.default_mem_limit
-        memswap_limit = self.user.default_memswap_limit
-        cpus = self.user.default_cpus
-        cpu_shares = self.user.default_cpu_shares
 
         container = self.client.containers.run(
             image='terminal_session',
@@ -60,14 +54,12 @@ class ProjectContainerManager:
             user=f"{os.getuid()}:{os.getgid()}",
             security_opt=["no-new-privileges"],
             read_only=False,
-            # Apply resource constraints
-            mem_limit=mem_limit,
-            memswap_limit=memswap_limit,
-            cpus=str(cpus),  # Convert Decimal to string if necessary
-            cpu_shares=cpu_shares,
+            mem_limit=self.user.default_mem_limit,
+            memswap_limit=self.user.default_memswap_limit,
+            cpus=str(self.user.default_cpus),
+            cpu_shares=self.user.default_cpu_shares,
         )
 
-        # Store Docker session with the current timestamp
         DockerSession.objects.create(
             user=self.user,
             container_id=container.id,
@@ -77,22 +69,22 @@ class ProjectContainerManager:
             mounted_volume=volume_path,
         )
 
-        # Start the timeout timer
         self._start_timeout_timer()
-
         return container
 
     def _remove_existing_container(self):
-        """Helper method to remove an existing container."""
+        """
+        Removes any existing container with the same name.
+        """
         try:
             existing_container = self.client.containers.get(self.container_name)
             existing_container.remove(force=True)
         except docker.errors.NotFound:
-            pass  # No action needed if the container doesn't exist
+            pass
 
     def start_container(self):
         """
-        Start the Docker container if it's not running.
+        Starts the container if it's not already running, or creates a new one.
         """
         container = self.get_container()
         if container and container.status != "running":
@@ -101,39 +93,36 @@ class ProjectContainerManager:
         elif not container:
             container = self.create_container()
 
-        # Reset the timeout timer
         self._start_timeout_timer()
-
         return container
 
     def attach_container(self):
         """
-        Attach to the container for terminal interaction.
+        Attaches to the container for terminal interaction.
         """
         container = self.start_container()
-
-        # Update the last activity timestamp
         self._update_last_activity()
-
         return container
 
     def _update_last_activity(self):
-        """Update the last activity timestamp for the session."""
+        """
+        Updates the last activity timestamp for the user's session.
+        """
         DockerSession.objects.filter(user=self.user).update(last_activity_at=timezone.now())
 
     def _start_timeout_timer(self):
         """
-        Start or reset the timeout timer for the container session.
+        Starts or resets the timeout timer for the container session.
         """
         if self.timeout_timer:
-            self.timeout_timer.cancel()  # Cancel any existing timer
+            self.timeout_timer.cancel()
 
         self.timeout_timer = Timer(self.TIMEOUT_SECONDS, self._stop_container_due_to_timeout)
         self.timeout_timer.start()
 
     def _stop_container_due_to_timeout(self):
         """
-        Stop the container if the session times out.
+        Stops the container if the session times out.
         """
         container = self.get_container()
         if container:
@@ -142,7 +131,7 @@ class ProjectContainerManager:
 
     def execute_command(self, command):
         """
-        Execute a command in the container and return the output.
+        Executes a command in the container and returns the output.
         """
         container = self.start_container()
 
@@ -154,7 +143,6 @@ class ProjectContainerManager:
             tty=True
         )
 
-        # Reset the timeout timer after command execution
         self._start_timeout_timer()
 
         return {
@@ -164,13 +152,12 @@ class ProjectContainerManager:
 
     def delete_container(self):
         """
-        Delete the Docker container and update the model status to 'removed'.
+        Deletes the Docker container and updates the session status to 'removed'.
         """
         container = self.get_container()
         if container:
             container.remove(force=True)
             DockerSession.objects.filter(user=self.user).update(status='removed')
 
-        # Cancel the timeout timer if it exists
         if self.timeout_timer:
             self.timeout_timer.cancel()
