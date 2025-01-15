@@ -4,6 +4,7 @@ from django.views.generic import TemplateView
 from django.http import HttpResponse
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AnonymousUser
 from datetime import timedelta
 from django.utils.timezone import now
 from django.contrib.auth.hashers import check_password
@@ -69,9 +70,8 @@ def user_activity(user_projects, user_profile):
     return activity_days, recent_activity
 
 
-class ProfileView(LoginRequiredMixin, TemplateView):
+class ProfileView(TemplateView):
     template_name = "profile.html"
-    login_url = 'login'  # Redirect to the login page if not authenticated
 
     def get(self, request, *args, **kwargs):
         """
@@ -94,25 +94,34 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # Combine owned and collaborated projects
         user_projects = owned_projects | collaborating_projects
 
-        # Filter projects based on visibility
-        if user_profile != request.user:  # If viewing someone else's profile
-            user_projects = user_projects.filter(
-                models.Q(is_public=True) |
-                models.Q(collaborators=request.user)
-            )
+        # Check if the user is authenticated
+        if isinstance(request.user, AnonymousUser):
+            # Handle the case for anonymous users
+            user_projects = user_projects.filter(is_public=True)  # Only show public projects
+            is_following = False  # Anonymous users can't follow
+            following_users = []
+            followers_users = []
+            chat_rooms = []
+        else:
+            # Filter projects based on visibility for logged-in users
+            if user_profile != request.user:  # If viewing someone else's profile
+                user_projects = user_projects.filter(
+                    models.Q(is_public=True) |
+                    models.Q(collaborators=request.user)
+                )
+            # For authenticated users, check follow status and chats
+            is_following = request.user.is_following(user_profile)
+            following_users = request.user.following.all()
+            followers_users = request.user.followers.all()
+            chat_rooms = ChatRoom.objects.filter(participants=request.user)
 
-        user_projects = user_projects.distinct().order_by('-modified_at')  # Remove duplicates and sort by modified date
+        # Remove duplicates and sort by modified date
+        user_projects = user_projects.distinct().order_by('-modified_at')
 
+        # Get user activity data
         activity_days, recent_activity = user_activity(user_projects, user_profile)
-        is_following = request.user.is_authenticated and request.user.is_following(user_profile)
 
-        # Get a list of users the logged-in user is following and is being followed by
-        following_users = request.user.following.all()
-        followers_users = request.user.followers.all()
-
-        # required data for messages and chat logic
-        chat_rooms = ChatRoom.objects.filter(participants=request.user)
-
+        # Prepare the context data
         context = {
             'user_profile': user_profile,
             'user_projects': user_projects,
@@ -120,8 +129,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             'recent_activity': recent_activity,
             'is_own_profile': user_profile == request.user,
             'is_following': is_following,
-            'recent_chats': ChatRoom.objects.filter(participants=request.user),
-            'all_users': (following_users | followers_users).distinct(),
+            'recent_chats': chat_rooms,
+            'all_users': list(set(following_users) | set(followers_users)),
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 

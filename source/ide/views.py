@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.conf import settings
 from django.http import FileResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from django.shortcuts import redirect
@@ -59,9 +60,8 @@ def update_task(request, project):
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
-class ProjectView(LoginRequiredMixin, TemplateView):
+class ProjectView(TemplateView):
     template_name = 'project.html'
-    login_url = 'login'
 
     def get(self, request, *args, **kwargs):
         """
@@ -69,6 +69,7 @@ class ProjectView(LoginRequiredMixin, TemplateView):
         """
         project_id = kwargs.get('project_id')
 
+        # Fetch the project by its ID or get the latest modified project
         if project_id:
             try:
                 current_project = Project.objects.get(id=project_id)
@@ -86,21 +87,35 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             with open(readme_path, "r", encoding="utf-8") as readme_file:
                 readme_content = markdown.markdown(readme_file.read())
 
-        # Get a list of users the logged-in user is following and is being followed by
-        following_users = request.user.following.all()
-        followers_users = request.user.followers.all()
+        # Default empty lists for guests or unauthenticated users
+        following_users = []
+        followers_users = []
+        chat_rooms = []
+        all_users = []
 
-        # required data for messages and chat logic
-        chat_rooms = ChatRoom.objects.filter(participants=request.user)
+        # If the user is authenticated, fetch the relevant data
+        if isinstance(request.user, AnonymousUser):
+            # For unauthenticated users, no user-specific data
+            pass
+        else:
+            # For authenticated users, fetch the user's following and followers
+            following_users = request.user.following.all()
+            followers_users = request.user.followers.all()
 
-        # Pass the README content to the context
+            # For chat-related logic, fetch the user's chat rooms
+            chat_rooms = ChatRoom.objects.filter(participants=request.user)
+
+            # Merge the following and followers lists
+            all_users = (following_users | followers_users).distinct()
+
+        # Pass the context to the template
         context = {
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
             'tasks': current_project.tasks.all(),
-            'recent_chats': ChatRoom.objects.filter(participants=request.user),
-            'all_users': (following_users | followers_users).distinct(),
+            'recent_chats': chat_rooms,
+            'all_users': all_users,
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 

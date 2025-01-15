@@ -15,24 +15,31 @@
             <div class="card profile-info shadow border-0">
                 <div class="card-body text-center">
                     <!-- Profile Image as Edit Button -->
-                    {% if is_own_profile %}
-                        <button type="button" class="btn text-light p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                            <i class="bi bi-pencil-square"></i>
-                            <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
-                        </button>
-                    {% else %}
-                        <form method="post" action="">
-                            {% csrf_token %}
-                            <input type="hidden" name="target_user" value="{{ user_profile.username }}">
-                            <button type="submit" name="follow_unfollow" class="btn text-light p-0">
-                                {% if is_following %}
-                                    <i class="bi bi-dash-square"></i> <!-- Unfollow Icon -->
-                                {% else %}
-                                    <i class="bi bi-plus-square"></i> <!-- Follow Icon -->
-                                {% endif %}
-                                <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                    {% if user.is_authenticated %}
+                        {% if is_own_profile %}
+                            <button type="button" class="btn text-light p-0" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                <i class="bi bi-pencil-square"></i>
+                                <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
                             </button>
-                        </form>
+                        {% else %}
+                            <form method="post" action="">
+                                {% csrf_token %}
+                                <input type="hidden" name="target_user" value="{{ user_profile.username }}">
+                                <button type="submit" name="follow_unfollow" class="btn text-light p-0">
+                                    {% if is_following %}
+                                        <i class="bi bi-person-dash"></i> <!-- Unfollow Icon -->
+                                    {% else %}
+                                        <i class="bi bi-person-add"></i> <!-- Follow Icon -->
+                                    {% endif %}
+                                    <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn text-light p-0">
+                            <i class="bi bi-person-circle"></i> <!-- Login Icon -->
+                            <img src="{{ user_profile.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
+                        </a>
                     {% endif %}
 
                     <h5>{{ user_profile.username }}</h5>

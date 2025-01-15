@@ -18,6 +18,7 @@
 
 <body>
 
+
 <!-- Navbar -->
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
@@ -48,41 +49,48 @@
                 </form>
             </div>
 
-            <!-- User dropdown -->
+            <!-- User dropdown or Login/Sign Up -->
             <div class="dropdown me-4">
-                <a href="{% url 'public_profile' username=user.username %}"
-                   class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
-                   aria-expanded="false">
-                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                         class="rounded-circle">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li>
+                {% if user.is_authenticated %}
+                    <!-- If user is authenticated, show profile dropdown -->
+                    <a href="{% url 'public_profile' username=user.username %}"
+                       class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                             class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
                             <span class="dropdown-item-text fw-bold">
                                 <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
                                      class="rounded-circle">
                                 @{{ user.username }}
                             </span>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a>
-                    </li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item">
-                                Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
+                {% endif %}
             </div>
         </div>
     </div>
 </nav>
+
 
 {% block ide %}{% endblock %}
 <!-- Main Content -->
@@ -90,126 +98,126 @@
     {% block content %}{% endblock %}
 </main>
 
-
-<div class="chat-box">
-    <div class="card">
-        <div class='card-header'>
-            <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
-                <i class="bi bi-info-circle"></i>
-            </button>
-        </div>
-        <div class="card-body collapse p-0" id="mainChatCard">
-
-            <div class="card" id="ListChatCard">
-                <div class="card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="d-flex align-items-center">
-                            <p>Recent Chats</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body" style="height: 300px; overflow-y: scroll;">
-                    <ul class="list-group m-1">
-                        {% for chat in recent_chats %}
-                        <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
-                            style="background-color: rgba(255, 255, 255, 0.1);">
-                            {% for participant in chat.participants.all %}
-                            {% if participant != user %}
-                            <div class="d-flex align-items-center">
-                                <img src="{{ participant.profile_picture.url }}" alt="Profile"
-                                     class="rounded-circle me-2" style="width: 30px; height: 30px;">
-                                <a href="#" class="text-light participant-link"
-                                   data-recipient-id="{{ participant.id }}"
-                                   data-recipient-username="{{ participant.username }}"
-                                   data-recipient-profile="{{ participant.profile_picture.url }}"
-                                   data-bs-target="#openChatCard">
-                                    {{ participant.username }}
-                                </a>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item">No recent chats</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                <div class="card-header">
-                    <div class="d-flex align-items-center">
-                        <div class="d-flex align-items-center">
-                            <p>All Chats</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body" style="height: 300px; overflow-y: scroll;">
-                    <ul class="list-group m-1">
-                        {% for chat in all_users %}
-                        <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
-                            style="background-color: rgba(255, 255, 255, 0.1);">
-                            {% if chat != user %}
-                            <div class="d-flex align-items-center">
-                                <img src="{{ chat.profile_picture.url }}" alt="Profile" class="rounded-circle me-2"
-                                     style="width: 30px; height: 30px;">
-                                <a href="#" class="text-light participant-link"
-                                   data-recipient-id="{{ chat.id }}"
-                                   data-recipient-username="{{ chat.username }}"
-                                   data-recipient-profile="{{ chat.profile_picture.url }}"
-                                   data-bs-target="#openChatCard">
-                                    {{ chat.username }}
-                                </a>
-                            </div>
-                            {% endif %}
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item">No recent chats</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+{% if user.is_authenticated %}
+    <div class="chat-box">
+        <div class="card">
+            <div class='card-header'>
+                <button class="btn btn-secondary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+                    <i class="bi bi-chat-dots"></i>
+                </button>
             </div>
+            <div class="card-body collapse p-0" id="mainChatCard">
 
-            <!-- Main Chat Card (Initially hidden) -->
-            <div class="card collapse" id="openChatCard">
-                <div class="card-header">
-                    <div class="d-flex align-items-center">
+                <div class="card" id="ListChatCard">
+                    <div class="card-header">
                         <div class="d-flex align-items-center">
-                            <img src="" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;"
-                                 id="recipient-profile-img">
-                            <a href="" class="text-light" id="recipient-username"></a>
+                            <div class="d-flex align-items-center">
+                                <p>Recent Chats</p>
+                            </div>
                         </div>
-                        <button id="backToChatsButton" class="btn btn-secondary btn-sm ms-2 ms-auto">Back to Chat List
-                        </button>
+                    </div>
+                    <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                        <ul class="list-group m-1">
+                            {% for chat in recent_chats %}
+                            <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
+                                style="background-color: rgba(255, 255, 255, 0.1);">
+                                {% for participant in chat.participants.all %}
+                                {% if participant != user %}
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ participant.profile_picture.url }}" alt="Profile"
+                                         class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                    <a href="#" class="text-light participant-link"
+                                       data-recipient-id="{{ participant.id }}"
+                                       data-recipient-username="{{ participant.username }}"
+                                       data-recipient-profile="{{ participant.profile_picture.url }}"
+                                       data-bs-target="#openChatCard">
+                                        {{ participant.username }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No recent chats</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center">
+                                <p>All Chats</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                        <ul class="list-group m-1">
+                            {% for chat in all_users %}
+                            <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
+                                style="background-color: rgba(255, 255, 255, 0.1);">
+                                {% if chat != user %}
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ chat.profile_picture.url }}" alt="Profile" class="rounded-circle me-2"
+                                         style="width: 30px; height: 30px;">
+                                    <a href="#" class="text-light participant-link"
+                                       data-recipient-id="{{ chat.id }}"
+                                       data-recipient-username="{{ chat.username }}"
+                                       data-recipient-profile="{{ chat.profile_picture.url }}"
+                                       data-bs-target="#openChatCard">
+                                        {{ chat.username }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No recent chats</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
 
-                <div class="card-body">
-                    <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
-                        {% for message in all_messages %}
-                        <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
-                             data-roomName="{{ message.room.name }}">
-                            <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
-                            <div class="message-content">
-                                <div class="user-name">
-                                    {{ message.sender.username }}
-                                    <span class="timestamp">{{ message.timestamp }}</span>
-                                </div>
-                                <div class="message-bubble">{{ message.content }}</div>
+                <!-- Main Chat Card (Initially hidden) -->
+                <div class="card collapse" id="openChatCard">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;"
+                                     id="recipient-profile-img">
+                                <a href="" class="text-light" id="recipient-username"></a>
                             </div>
+                            <button id="backToChatsButton" class="btn btn-secondary btn-sm ms-2 ms-auto">Back to Chat List
+                            </button>
                         </div>
-                        {% endfor %}
                     </div>
-                    <div class="input-group">
-                        <input id="chat-message-input" type="text" class="form-control bg-dark text-light"
-                               aria-label="Message">
-                        <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+
+                    <div class="card-body">
+                        <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
+                            {% for message in all_messages %}
+                            <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
+                                 data-roomName="{{ message.room.name }}">
+                                <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
+                                <div class="message-content">
+                                    <div class="user-name">
+                                        {{ message.sender.username }}
+                                        <span class="timestamp">{{ message.timestamp }}</span>
+                                    </div>
+                                    <div class="message-bubble">{{ message.content }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="input-group">
+                            <input id="chat-message-input" type="text" class="form-control bg-dark text-light"
+                                   aria-label="Message">
+                            <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
+{% endif %}
 
 </body>
 

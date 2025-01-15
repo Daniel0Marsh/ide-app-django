@@ -34,7 +34,7 @@
             <!-- Spacer to push the search bar to the right -->
             <div class="ms-auto">
                 <!-- Search bar -->
-                <form class="d-flex m-2 me-4" action="{% url 'search' %}" method="get">
+                <form class="d-flex me-4" action="{% url 'search' %}" method="get">
                     <div class="input-group">
                         <input class="form-control" type="search" name="query" placeholder="Search users or projects"
                                aria-label="Search">
@@ -45,37 +45,43 @@
                 </form>
             </div>
 
-            <!-- User dropdown -->
+            <!-- User dropdown or Login/Sign Up -->
             <div class="dropdown me-4">
-                <a href="{% url 'public_profile' username=user.username %}"
-                   class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
-                   aria-expanded="false">
-                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                         class="rounded-circle">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li>
+                {% if user.is_authenticated %}
+                    <!-- If user is authenticated, show profile dropdown -->
+                    <a href="{% url 'public_profile' username=user.username %}"
+                       class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                             class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
                             <span class="dropdown-item-text fw-bold">
                                 <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
                                      class="rounded-circle">
                                 @{{ user.username }}
                             </span>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a>
-                    </li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item">
-                                Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
+                {% endif %}
             </div>
         </div>
     </div>
