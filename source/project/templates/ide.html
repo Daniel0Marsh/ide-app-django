@@ -1,0 +1,833 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {{current_project.project_name}}/{{file_name}} {% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'ide.css' %}">
+    <script src="{% static ide.js %}"></script>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand" href="{% url 'home' %}">
+            CodeBlock
+        </a>
+
+        <!-- Navbar toggler for mobile view -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Spacer to push the search bar to the right -->
+            <div class="ms-auto">
+                <!-- Search bar -->
+                <form class="d-flex me-4 m-2" action="{% url 'search' %}" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="query" placeholder="Search users or projects"
+                               aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- User dropdown or Login/Sign Up -->
+            <div class="dropdown me-4">
+                {% if user.is_authenticated %}
+                    <!-- If user is authenticated, show profile dropdown -->
+                    <a href="{% url 'profile' username=user.username %}"
+                       class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                             class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <span class="dropdown-item-text fw-bold">
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                                     class="rounded-circle">
+                                @{{ user.username }}
+                            </span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- project side-nav -->
+<div class="side-nav shadow-end border-end border-dark">
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip"
+            title="Project">
+        <i class="bi bi-folder2-open fs-5 text-light"></i>
+    </button>
+
+    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip"
+            title="Tasks">
+        <i class="bi bi-card-checklist fs-5 text-light"></i>
+    </button>
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasBottom"
+            aria-controls="offcanvasBottom">
+        <i class="bi bi-terminal fs-5 text-light"></i>
+    </button>
+    {% endif %}
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal"
+            data-bs-target="#colorChangeModal">
+        <i class="bi bi-paint-bucket fs-5 text-light"></i>
+    </button>
+
+    <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home"
+       href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
+        <i class="bi bi-house fs-5 text-light"></i>
+    </a>
+</div>
+
+<!-- Task Sidebar -->
+<div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
+    <h5 class="p-2">Project Tasks</h5>
+    {% if tasks %}
+    <ul class="list-group p-2">
+        {% for task in tasks %}
+        <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <!-- Make task title clickable -->
+                <a href="#"
+                   class="text-light"
+                   data-bs-toggle="modal"
+                   data-bs-target="#updateTaskModal"
+                   data-task-id="{{ task.id }}"
+                   data-task-title="{{ task.title }}"
+                   data-task-description="{{ task.description }}"
+                   data-task-status="{{ task.status }}">
+                    <strong>{{ task.title }}</strong>
+                </a>
+                <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+            </div>
+            <p class="mb-1 text-light">{{ task.description }}</p>
+            <div class="small text-light">
+                Assigned to: {{ task.assigned_to.username }} <br>
+                Assigned by: {{ task.assigned_by.username }}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="text-center">
+        <p class="text-light">No tasks have been assigned to this project yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Project Tree Form -->
+<form method="post" enctype="multipart/form-data"
+      action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+      class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
+    {% csrf_token %}
+    <h5 class="p-2">Project Files</h5>
+    <ul>
+        {% for node in project_tree %}
+        {% if node.type == 'directory' %}
+        <li>
+            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
+                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
+            </button>
+            <ul class="collapse show" id="{{node.name|slugify}}">
+                {% for child in node.children %}
+                {% if child.type == 'directory' %}
+                <li>
+                    <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
+                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
+                    </button>
+                    <ul class="collapse show" id="{{ child.name|slugify }}">
+                        {% for grandchild in child.children %}
+                        {% if grandchild.type == 'file' %}
+                        <li>
+                            <button class="btn btn-sm file-item" type="submit" name="open_file"
+                                    value="{{grandchild.path}}">
+                                <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% elif child.type == 'file' %}
+                <li>
+                    <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
+                        <i class="bi bi-file-earmark-code"></i> {{child.name}}
+                    </button>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </li>
+        {% elif node.type == 'file' %}
+        <li>
+            <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
+                <i class="bi bi-file-earmark-code"></i> {{node.name}}
+            </button>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+</form>
+
+<!--- This is the main CodeMirror IDE section including the nave buttons--->
+<form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
+    {% csrf_token %}
+    <input type="hidden" name="file_path" value="{{file_path}}">
+    <input type="hidden" name="file_name" value="{{file_name}}">
+    <input type="hidden" name="project_id" value="{{current_project.id}}">
+
+    <div class="card-header shadow-end border-end border-dark">
+        <div class="hstack gap-3 align-middle">
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
+                    <i class="bi bi-pencil"></i> {{file_name}}
+                </button>
+                {% else %}
+                <p class="btn folder-btn">
+                    <i class="bi bi-pencil"></i> {{file_name}}
+                </p>
+                {% endif %}
+            </div>
+            <div class="vr"></div>
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn file-item" name="save_file" type="submit">
+                    <i class="bi bi-save"></i> Save
+                </button>
+                {% endif %}
+            </div>
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn file-item" name="delete" type="submit">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+                {% endif %}
+            </div>
+            <!-- Add dropdown buttons -->
+        </div>
+    </div>
+    <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+</form>
+</body>
+
+<!-- Terminal -->
+<div class="offcanvas offcanvas-bottom h-50 rounded-0 bg-transparent overflow-hidden"
+     tabindex="-1"
+     id="offcanvasBottom"
+     aria-labelledby="offcanvasBottomLabel"
+     data-bs-backdrop="false">
+    <div class="card terminal p-0">
+        <div class="card-header terminal-header border border-dark text-light d-flex justify-content-between align-items-center">
+            <span>Terminal</span>
+            <div class="ml-auto">
+                <button type="button" class="btn btn-dark fs-5" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-dash-lg text-light"></i>
+                </button>
+                <button id="toggleHeightButton" class="btn btn-dark fs-5" onclick="toggleOffcanvasHeight()">
+                    <i class="bi bi-arrows-fullscreen text-light"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card terminal rounded-0 border p-0 text-light border-dark">
+            <div class="card-body">
+                <!-- Terminal output section -->
+                <div id="terminal" class="p-1 text-light"></div>
+                <!-- Input section -->
+                <div class="d-flex align-items-center">
+                    <div class="prompt p-1 text-light">
+                        <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}/{{ current_project.project_name }}</span>$
+                    </div>
+                    <!-- Terminal input field -->
+                    <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden inputs for username and project_id -->
+<input type="hidden" id="username" value="{{ user.username }}">
+<input type="hidden" id="project-id" value="{{ current_project.id }}">
+
+<!-- update task modal -->
+<div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateTaskForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="task_id" id="task_id">
+                    <div class="mb-3">
+                        <label for="task_title" class="form-label">Task Title</label>
+                        <input type="text" class="form-control bg-dark text-light" id="task_title" name="task_title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_description" class="form-label">Description</label>
+                        <textarea class="form-control bg-dark text-light" id="task_description"
+                                  name="task_description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_status" class="form-label">Status</label>
+                        <select class="form-select bg-dark text-light" id="task_status" name="task_status">
+                            <option value="not_started">Not Started</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <button type="submit" name="update_task" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for changing background color and text syntax -->
+<div class="modal fade" id="colorChangeModal" tabindex="-1" aria-labelledby="colorChangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="">
+                    {% csrf_token %}
+                    <input type="hidden" id="selectedTheme" name="selected_theme" value="">
+                    <input type="hidden" id="selectedSyntax" name="selected_syntax" value="">
+                    <div class=" ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
+                                Theme: <span id="currentTheme">Default</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                                <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a>
+                                </li>
+                                <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow
+                                    Night Bright</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto
+                                    Detect</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a>
+                                </li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
+                                <li><a class="dropdown-item" href="#"
+                                       onclick="changeSyntax('javascript')">JavaScript</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
+                                <li><a class="dropdown-item" href="#"
+                                       onclick="changeSyntax('typescript')">TypeScript</a></li>
+                                <!-- Add more syntax highlighting options as needed -->
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="update_theme" class="btn btn-secondary">Apply Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for renaming file-->
+<div class="modal fade modal-dark" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-light">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
+            </div>
+            <form method="post" enctype="multipart/form-data"
+                  action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+                  class="modal-body">
+                {% csrf_token %}
+                <input type="text" name="new_file_name" value="{{ file_name }}"
+                       class="form-control bg-dark text-light border-secondary mb-4">
+                <input type="hidden" name="file_path" value="{{ file_path }}">
+                <input type="hidden" name="file_contents" value="{{ file_content }}">
+                <input type="hidden" name="project_id" value="{{ current_project.id }}">
+                <button type="submit" name="rename_file" class="btn btn-secondary">Save changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- CodeMirror js and css -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+<!-- JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+
+<!-- Here are all the links to the different syntax highlighting for CodeMirror -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/plain/plain.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/mode/multiplex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/swift/swift.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/rust/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/typescript/typescript.min.js"></script>
+
+<!-- Here are all the links to the different themes for CodeMirror -->
+<!-- XQ Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/xq-light.min.css">
+<!-- Base16 Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/base16-light.min.css">
+<!-- Paraiso Light -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/paraiso-light.min.css">
+<!-- MDN Like -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mdn-like.min.css">
+<!-- Tomorrow Night Bright -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/tomorrow-night-bright.min.css">
+<!-- Hopscotch -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/hopscotch.min.css">
+<!-- Lucario -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/lucario.min.css">
+<!-- Solarized -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/solarized.min.css">
+<!-- 3024 Day -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/3024-day.min.css">
+<!-- Material -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/material.min.css">
+<!-- Nord -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/nord.min.css">
+<!-- Oceanic Next -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/oceanic-next.min.css">
+<!-- Panda Syntax -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/panda-syntax.min.css">
+<!-- Paraiso Dark -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/paraiso-dark.min.css">
+<!-- Seti -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/seti.min.css">
+<!-- Cobalt -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/cobalt.min.css">
+<!-- Eclipse -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/eclipse.min.css">
+<!-- MBO -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/mbo.min.css">
+<!-- Monokai -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
+
+
+<!-- IDE js logic -->
+<script>
+    // Store the collapse state in an object
+    let collapseState = {};
+
+    // Function to update the project tree
+    function updateProjectTree() {
+        // Before updating the tree, store the current state of collapse elements
+        document.querySelectorAll('.collapse').forEach(collapseElement => {
+            const id = collapseElement.id;
+            collapseState[id] = collapseElement.classList.contains('show');
+        });
+
+        // Save the scroll position of the filesSidebar to avoid shifting
+        const filesSidebar = document.querySelector('#filesSidebar');
+        const scrollPosition = filesSidebar.scrollTop;
+
+        fetch(window.location.href, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.project_tree) {
+                const treeContainer = document.querySelector('#filesSidebar ul');
+                treeContainer.innerHTML = ''; // Clear the existing tree
+
+                // Generate new tree HTML
+                const treeHTML = generateTreeHTML(data.project_tree);
+                treeContainer.innerHTML = treeHTML;
+
+                // Reapply the saved collapse state
+                document.querySelectorAll('.collapse').forEach(collapseElement => {
+                    const id = collapseElement.id;
+                    if (collapseState[id]) {
+                        // If the state was 'expanded', reapply the 'show' class
+                        collapseElement.classList.add('show');
+                    } else {
+                        // Otherwise, collapse it
+                        collapseElement.classList.remove('show');
+                    }
+                });
+
+                // Reinitialize collapse buttons
+                document.querySelectorAll('.btn.folder-btn').forEach(button => {
+                    const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
+                    if (targetCollapse && targetCollapse.classList.contains('show')) {
+                        button.setAttribute('aria-expanded', 'true');
+                    } else {
+                        button.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                // Reapply the scroll position to prevent visual movement
+                filesSidebar.scrollTop = scrollPosition;
+            }
+        })
+        .catch(error => console.error('Error fetching project tree:', error));
+    }
+
+    // Function to generate tree HTML from the project tree structure
+    function generateTreeHTML(nodes) {
+        let html = '';
+        nodes.forEach(node => {
+            if (node.type === 'directory') {
+                html += `<li>
+                            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#${slugify(node.name)}" aria-expanded="false">
+                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
+                            </button>
+                            <ul class="collapse" id="${slugify(node.name)}">
+                                ${generateTreeHTML(node.children)}  <!-- Recursive call -->
+                            </ul>
+                          </li>`;
+            } else if (node.type === 'file') {
+                html += `<li>
+                            <button class="btn btn-sm file-item" name="open_file" value="${node.path}" type="submit">
+                                <i class="bi bi-file-earmark-code"></i> ${node.name}
+                            </button>
+                          </li>`;
+            }
+        });
+        return html;
+    }
+
+    // Function to safely create slugs for the element IDs
+    function slugify(text) {
+        return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const sidebarCollapse = document.getElementById("sidebarCollapse");
+        const taskSidebarCollapse = document.getElementById("taskSidebarCollapse");
+        const filesSidebar = document.getElementById("filesSidebar");
+        const tasksSidebar = document.getElementById("tasksSidebar");
+        const body = document.body; // Used for applying layout classes
+
+        sidebarCollapse.addEventListener("click", () => {
+            filesSidebar.classList.toggle("active");
+            tasksSidebar.classList.remove("active"); // Close the other sidebar
+
+            // Update body class for layout adjustments
+            updateLayoutClasses();
+        });
+
+        taskSidebarCollapse.addEventListener("click", () => {
+            tasksSidebar.classList.toggle("active");
+            filesSidebar.classList.remove("active"); // Close the other sidebar
+
+            // Update body class for layout adjustments
+            updateLayoutClasses();
+        });
+
+        function updateLayoutClasses() {
+            const isFilesSidebarActive = filesSidebar.classList.contains("active");
+            const isTasksSidebarActive = tasksSidebar.classList.contains("active");
+
+            // Remove all sidebar-related classes
+            body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "both-sidebars-active");
+
+            // Apply appropriate class based on active sidebars
+            if (isFilesSidebarActive && isTasksSidebarActive) {
+                body.classList.add("both-sidebars-active");
+            } else if (isFilesSidebarActive) {
+                body.classList.add("files-sidebar-active");
+            } else if (isTasksSidebarActive) {
+                body.classList.add("tasks-sidebar-active");
+            }
+        }
+    });
+
+    // JavaScript to Populate Modal
+    document.addEventListener('DOMContentLoaded', () => {
+        const updateTaskModal = document.getElementById('updateTaskModal');
+        updateTaskModal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const taskId = button.getAttribute('data-task-id');
+            const taskTitle = button.getAttribute('data-task-title');
+            const taskDescription = button.getAttribute('data-task-description');
+            const taskStatus = button.getAttribute('data-task-status');
+
+            // Populate the modal fields
+            document.getElementById('task_id').value = taskId;
+            document.getElementById('task_title').value = taskTitle;
+            document.getElementById('task_description').value = taskDescription;
+            document.getElementById('task_status').value = taskStatus;
+        });
+    });
+
+    // Update the project tree every 3 seconds
+    setInterval(updateProjectTree, 3000);
+
+    var editor;
+
+    function changeTheme(theme) {
+        editor.setOption("theme", theme);
+        document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+        document.getElementById('selectedTheme').value = theme;
+    }
+
+    function changeSyntax(mode) {
+        editor.setOption("mode", mode);
+        document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        document.getElementById('selectedSyntax').value = mode;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
+            lineNumbers: true,
+            mode: "autodetect",
+            theme: "default",
+            autoCloseBrackets: true,
+            matchBrackets: true
+        });
+        editor.setSize(null, "100%");
+
+        var initialTheme = "{{ current_project.selected_theme }}";
+        var initialSyntax = "{{ current_project.selected_syntax }}";
+
+        if (initialTheme !== "default") {
+            changeTheme(initialTheme);
+        }
+        if (initialSyntax !== "auto") {
+            changeSyntax(initialSyntax);
+        }
+    });
+
+    document.getElementById("sidebarCollapse").addEventListener("click", function () {
+        document.getElementById("sidebar").classList.toggle("active");
+    });
+
+    document.querySelectorAll('.collapse').forEach(function(collapse) {
+        collapse.addEventListener('show.bs.collapse', function() {
+            this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
+            this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
+        });
+
+        collapse.addEventListener('hide.bs.collapse', function() {
+            this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
+            this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
+        });
+    });
+
+    function toggleOffcanvasHeight() {
+        const offcanvasElement = document.getElementById('offcanvasBottom');
+        if (offcanvasElement.classList.contains('h-50')) {
+            offcanvasElement.classList.remove('h-50');
+            offcanvasElement.classList.add('h-100');
+        } else {
+            offcanvasElement.classList.remove('h-100');
+            offcanvasElement.classList.add('h-50');
+        }
+    }
+
+</script>
+
+<script>
+        let socket; // Declare the WebSocket connection
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // Function to initialize WebSocket connection
+    function initWebSocket(username, projectId) {
+        const socketUrl = `ws://127.0.0.1:8000/ws/ide/${username}/${projectId}/`;
+        socket = new WebSocket(socketUrl);
+
+        // When the WebSocket connection is established
+        socket.onopen = function() {
+            console.log("WebSocket connection established.");
+        };
+
+        // When a message is received from the WebSocket server
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            // Handle terminal output response
+            if (data.type === 'terminal_output') {
+                const terminalDiv = document.getElementById('terminal');
+                const formattedResponse = data.output
+                    .split('\n')  // Split response by newlines
+                    .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
+                    .join('');
+
+                terminalDiv.innerHTML += formattedResponse;
+                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+            }
+
+            // Handle terminal error if any
+            if (data.type === 'terminal_error') {
+                const terminalDiv = document.getElementById('terminal');
+                const errorResponse = `<div><span class="error">${data.error}</span></div>`;
+                terminalDiv.innerHTML += errorResponse;
+                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+            }
+        };
+
+        // Handle WebSocket errors
+        socket.onerror = function(error) {
+            console.error("WebSocket Error:", error);
+        };
+
+        // Handle WebSocket connection closure
+        socket.onclose = function(event) {
+            console.log("WebSocket connection closed:", event);
+        };
+    }
+
+    // Function to send the terminal prompt via WebSocket
+    function sendPrompt() {
+        const promptValue = document.querySelector('.terminal-input').value.trim();
+        if (!promptValue) return;
+
+        // Add the command to history and reset index
+        commandHistory.push(promptValue);
+        historyIndex = commandHistory.length;
+
+        const terminalDiv = document.getElementById('terminal');
+
+        // Append the user's command in terminal-like format
+        terminalDiv.innerHTML += `<div>
+            <span class="username">user@Ubuntu</span>:<span class="path">~/{{user}}/{{ current_project.project_name }}</span>$ ${promptValue}
+        </div>`;
+
+        if (promptValue.toLowerCase() === 'clear') {
+            terminalDiv.innerHTML = ''; // Clear the terminal
+            document.querySelector('.terminal-input').value = ''; // Clear the input field
+            return; // Exit the function
+        }
+
+        // Send the command via WebSocket
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                'command': promptValue
+            }));
+        } else {
+            console.error("WebSocket is not open.");
+        }
+
+        // Clear the input field after sending
+        document.querySelector('.terminal-input').value = '';
+    }
+
+    // Handle keydown event on terminal input field
+    document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent the default behavior (typing a new line)
+            sendPrompt(); // Call the function to send the prompt
+        } else if (e.key === 'ArrowUp') {
+            // Navigate up the history
+            if (historyIndex > 0) historyIndex--;
+            e.target.value = commandHistory[historyIndex] || '';
+            e.preventDefault(); // Prevent default cursor movement
+        } else if (e.key === 'ArrowDown') {
+            // Navigate down the history
+            if (historyIndex < commandHistory.length - 1) historyIndex++;
+            e.target.value = commandHistory[historyIndex] || '';
+            e.preventDefault();
+        }
+    });
+
+    // Call initWebSocket with the username and project_id when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const username = document.getElementById('username').value;  // Assume the username is in a hidden input
+        const projectId = document.getElementById('project-id').value;  // Assume project_id is also passed in a hidden input
+        initWebSocket(username, projectId);  // Initialize WebSocket connection
+    });
+
+</script>
+</html>

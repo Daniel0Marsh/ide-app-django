@@ -7,9 +7,20 @@ from .models import CustomUser, DockerSession
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Custom Fields', {
-            'fields': ('profile_picture', 'following', 'activity_log', 'project_dir'),
+            'fields': (
+                'profile_picture',
+                'following',
+                'activity_log',
+                'project_dir',
+                'default_mem_limit',
+                'default_memswap_limit',
+                'default_cpus',
+                'default_cpu_shares'
+            ),
         }),
     )
+
+    list_display = UserAdmin.list_display + ('default_mem_limit', 'default_cpus', 'project_dir')
 
 
 @admin.register(DockerSession)

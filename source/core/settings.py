@@ -23,10 +23,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'chat',
-    'landing_page',
+    'home',
     'user',
-    'user_profile',
-    'ide',
+    'profile',
+    'project',
 ]
 
 

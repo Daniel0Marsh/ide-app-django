@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeBlock{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'base.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'base.js' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+
+<!-- Navbar -->
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand" href="{% url 'home' %}">
+            CodeBlock
+        </a>
+
+        <!-- Navbar toggler for mobile view -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Spacer to push the search bar to the right -->
+            <div class="ms-auto">
+                <!-- Search bar -->
+                <form class="d-flex me-4" action="{% url 'search' %}" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="query" placeholder="Search users or projects"
+                               aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- User dropdown or Login/Sign Up -->
+            <div class="dropdown me-4">
+                {% if user.is_authenticated %}
+                    <!-- If user is authenticated, show profile dropdown -->
+                    <a href="{% url 'profile' username=user.username %}"
+                       class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                             class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <span class="dropdown-item-text fw-bold">
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                                     class="rounded-circle">
+                                @{{ user.username }}
+                            </span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    Logout
+                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- If user is not authenticated, show Login and Sign Up buttons -->
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                    <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+{% block ide %}{% endblock %}
+<!-- Main Content -->
+<main class="main-content pt-5">
+    {% block content %}{% endblock %}
+</main>
+
+{% if user.is_authenticated %}
+    <div class="chat-box">
+        <div class="card">
+            <div class='card-header'>
+                <button class="btn btn-secondary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+                    <i class="bi bi-chat-dots"></i>
+                </button>
+            </div>
+            <div class="card-body collapse p-0" id="mainChatCard">
+
+                <div class="card" id="ListChatCard">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center">
+                                <p>Recent Chats</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                        <ul class="list-group m-1">
+                            {% for chat in recent_chats %}
+                            <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
+                                style="background-color: rgba(255, 255, 255, 0.1);">
+                                {% for participant in chat.participants.all %}
+                                {% if participant != user %}
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ participant.profile_picture.url }}" alt="Profile"
+                                         class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                    <a href="#" class="text-light participant-link"
+                                       data-recipient-id="{{ participant.id }}"
+                                       data-recipient-username="{{ participant.username }}"
+                                       data-recipient-profile="{{ participant.profile_picture.url }}"
+                                       data-bs-target="#openChatCard">
+                                        {{ participant.username }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No recent chats</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center">
+                                <p>All Chats</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                        <ul class="list-group m-1">
+                            {% for chat in all_users %}
+                            <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
+                                style="background-color: rgba(255, 255, 255, 0.1);">
+                                {% if chat != user %}
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ chat.profile_picture.url }}" alt="Profile" class="rounded-circle me-2"
+                                         style="width: 30px; height: 30px;">
+                                    <a href="#" class="text-light participant-link"
+                                       data-recipient-id="{{ chat.id }}"
+                                       data-recipient-username="{{ chat.username }}"
+                                       data-recipient-profile="{{ chat.profile_picture.url }}"
+                                       data-bs-target="#openChatCard">
+                                        {{ chat.username }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No recent chats</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Chat Card (Initially hidden) -->
+                <div class="card collapse" id="openChatCard">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="" alt="Profile" class="rounded-circle me-2" style="width: 40px; height: 40px;"
+                                     id="recipient-profile-img">
+                                <a href="" class="text-light" id="recipient-username"></a>
+                            </div>
+                            <button id="backToChatsButton" class="btn btn-secondary btn-sm ms-2 ms-auto">Back to Chat List
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
+                            {% for message in all_messages %}
+                            <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
+                                 data-roomName="{{ message.room.name }}">
+                                <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
+                                <div class="message-content">
+                                    <div class="user-name">
+                                        {{ message.sender.username }}
+                                        <span class="timestamp">{{ message.timestamp }}</span>
+                                    </div>
+                                    <div class="message-bubble">{{ message.content }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="input-group">
+                            <input id="chat-message-input" type="text" class="form-control bg-dark text-light"
+                                   aria-label="Message">
+                            <button id="chat-message-submit" class="btn btn-secondary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+</body>
+
+{% block extra_script %}{% endblock %}
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Retrieve the logged-in user's information from the server-side template
+        const loggedInUsername = "{{ request.user.username|escapejs }}"; // Username of the logged-in user
+        const loggedInUserId = parseInt("{{ request.user.id }}", 10);  // ID of the logged-in user
+
+        // Initialize the WebSocket connection for real-time chat
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
+
+        // Select DOM elements for interactions
+        const participantLinks = document.querySelectorAll('.participant-link'); // All participant links
+        const backToChatsButton = document.getElementById('backToChatsButton'); // Back button to list chats
+        const openChatCard = document.getElementById('openChatCard'); // Card displaying open chat
+        const listChatCard = document.getElementById('ListChatCard'); // Card displaying list of chats
+        const chatLog = document.querySelector('#chat-log'); // Log where messages will be displayed
+        const messageInputDom = document.querySelector('#chat-message-input'); // Input field for new messages
+        const messageSubmitButton = document.querySelector('#chat-message-submit'); // Button to submit a message
+
+        // Variables for the current chat recipient and room
+        let currentRecipientId = null;
+        let currentRoomName = null;
+
+        // Event listener for when a participant is selected to start a chat
+        if (participantLinks.length > 0) {
+            participantLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Set the recipient's ID and other details from the data attributes of the clicked link
+                    currentRecipientId = parseInt(this.dataset.recipientId, 10);
+                    const recipientUsername = this.dataset.recipientUsername;
+                    const recipientProfileImage = this.dataset.recipientProfile;
+                    const recipientProfileUrl = `/profile/${recipientUsername}`;
+
+                    // Generate the chat room name based on the IDs (to ensure uniqueness)
+                    currentRoomName = `${Math.min(loggedInUserId, currentRecipientId)}-${Math.max(loggedInUserId, currentRecipientId)}`;
+
+                    // Update the UI with the selected recipient's details
+                    document.getElementById('recipient-username').textContent = recipientUsername;
+                    document.getElementById('recipient-username').href = recipientProfileUrl;
+                    document.getElementById('recipient-profile-img').src = recipientProfileImage;
+
+                    // Filter and display messages for the selected chat room
+                    filterMessagesByRoom(currentRoomName);
+
+                    // Join the WebSocket room for the selected recipient
+                    chatSocket.send(JSON.stringify({
+                        'action': 'join',
+                        'recipient_id': currentRecipientId,
+                        'roomName': currentRoomName
+                    }));
+
+                    // Show the chat interface
+                    toggleChatVisibility(true);
+                });
+            });
+        }
+
+        // Event listener for the "back to chats" button to return to the chat list
+        if (backToChatsButton) {
+            backToChatsButton.addEventListener('click', function() {
+                toggleChatVisibility(false);
+            });
+        }
+
+        // Function to filter and display messages for the selected chat room
+        function filterMessagesByRoom(roomName) {
+            // Get all message items
+            const allMessages = Array.from(document.querySelectorAll('.message-item'));
+
+            console.log(`Filtering messages for room: ${roomName}`);
+
+            // Loop through all messages and display only those belonging to the selected room
+            allMessages.forEach(message => {
+                if (message.dataset.roomname === roomName) {
+                    message.style.display = '';  // Show the message
+                } else {
+                    message.style.display = 'none';  // Hide the message
+                }
+            });
+
+            // Auto-scroll to the latest visible message
+            const visibleMessages = document.querySelectorAll('.message-item[style="display: inline;"]');
+            if (visibleMessages.length > 0) {
+                chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom of the chat log
+            }
+        }
+
+        // WebSocket onmessage handler to display incoming messages
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            // Check if the message was sent by the current logged-in user
+            const isSender = data.sender === loggedInUsername;
+
+            // Create a message element for the incoming message
+            const messageItem = createMessageElement(data, isSender);
+
+            // Append the message element to the chat log
+            chatLog.appendChild(messageItem);
+
+            // Auto-scroll to the latest message
+            chatLog.scrollTop = chatLog.scrollHeight;
+        };
+
+        // Function to create a new message element and return it
+        function createMessageElement(data, isSender) {
+            const messageItem = document.createElement('div');
+            messageItem.classList.add('message-item', isSender ? 'sender' : 'receiver');
+            messageItem.dataset.roomname = data.roomName; // Add room name for filtering
+
+            // Create the profile image for the sender
+            const profileImg = document.createElement('img');
+            profileImg.classList.add('profile-img');
+            profileImg.src = data.profile_image_url;
+
+            // Create the container for the message content (including username and timestamp)
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+
+            // Username and timestamp container
+            const usernameContainer = document.createElement('div');
+
+            const userName = document.createElement('span');
+            userName.classList.add('user-name');
+            userName.textContent = data.sender;
+
+            const timestamp = document.createElement('span');
+            timestamp.classList.add('timestamp');
+            timestamp.textContent = data.timestamp;
+
+            // Append username and timestamp to the container
+            usernameContainer.appendChild(userName);
+            usernameContainer.appendChild(timestamp);
+
+            // Message bubble container
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+            messageBubble.textContent = data.message;
+
+            // Append username, timestamp, and message bubble to the message content
+            messageContent.appendChild(usernameContainer);
+            messageContent.appendChild(messageBubble);
+
+            // Append profile image and message content to the message item
+            messageItem.appendChild(profileImg);
+            messageItem.appendChild(messageContent);
+
+            return messageItem;
+        }
+
+        // WebSocket onclose handler for unexpected disconnections
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        // Helper function to toggle chat visibility (show or hide the open chat interface)
+        function toggleChatVisibility(showChat) {
+            if (showChat) {
+                listChatCard.style.display = 'none'; // Hide chat list
+                openChatCard.style.display = 'block'; // Show open chat interface
+                openChatCard.classList.add('fade-in'); // Apply fade-in effect
+            } else {
+                openChatCard.style.display = 'none'; // Hide open chat
+                listChatCard.style.display = 'block'; // Show chat list
+            }
+        }
+
+        // Function to send a message to the WebSocket server
+        function sendMessage() {
+            const message = messageInputDom.value; // Get the message from the input field
+            chatSocket.send(JSON.stringify({
+                'action': 'message',
+                'message': message,
+                'sender': loggedInUsername,
+                'recipient_id': currentRecipientId,
+            }));
+            messageInputDom.value = '';  // Clear the input field after sending the message
+        }
+
+        // Send message when the submit button is clicked
+        messageSubmitButton.onclick = function(e) {
+            sendMessage();
+        };
+
+        // Send message when Enter key is pressed (without Shift for new lines)
+        messageInputDom.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+</script>
+</html>

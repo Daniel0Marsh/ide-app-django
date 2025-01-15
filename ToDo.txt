@@ -3,7 +3,7 @@
 2) forgot password emailing system
 3) update README.md
 4) integrate GitHub
-5) user projects and containers
+5) persistent shell docker containers
 6)
 
 

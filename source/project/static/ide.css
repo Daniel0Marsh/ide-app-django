@@ -1,0 +1,240 @@
+:root {
+    --bg-dark: #1e1e2f;
+    --bg-darker: #151521;
+    --text-light: #e4e4e7;
+    --text-accent: #00c8ff;
+    --btn-primary: #4caf50;
+    --btn-secondary: #6c63ff;
+    --btn-danger: #e74c3c;
+}
+
+.navbar.fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: var(--bg-darker);
+  color: var(--text-accent);
+  padding: 0px;
+  margin: 0px;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-primary {
+    background-color: var(--btn-primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #3b8e3b;
+}
+
+.btn-secondary {
+    background-color: var(--btn-secondary);
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: #554ae0;
+}
+
+.btn-danger {
+    background-color: var(--btn-danger);
+    border: none;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-dark {
+    background-color: var(--btn-dark);
+    border: none;
+}
+
+.btn-dark:hover {
+    background-color: var(--btn-secondary);
+}
+
+.card {
+    background-color: var(--bg-darker);
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: var(--bg-dark);
+    font-weight: bold;
+    color: var(--text-light);
+}
+
+.card-title {
+    color: var(--text-accent);
+    font-size: 20px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.card-title:hover {
+    text-decoration: underline;
+}
+
+.card-body p {
+    font-size: 1.1rem;
+}
+
+.modal-content {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.main-content {
+    margin: 0 auto;
+    max-width: 1200px;
+    margin-top: 20px
+}
+
+.navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-white);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: var(--bg-darker);
+    z-index: 1000;
+}
+
+.side-nav {
+    position: fixed;
+    top: 40px;
+    height: 100vh;
+    width: 50px;
+    z-index: 900;
+    background-color: var(--bg-darker);
+    padding-top: 1rem;
+    color: var(--text-white);
+    text-align: center;
+    margin-top: 5px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 56px;
+    left: -300px;
+    height: 100vh;
+    width: 250px;
+    z-index: 800;
+    background-color: var(--bg-dark);
+    padding-top: 1rem;
+    transition: all 0.1s ease;
+    color: var(--text-white);
+}
+
+.sidebar.active {
+    left: 50;
+}
+
+.sidebar.active + .ide-card {
+    margin-left: 300px;
+}
+
+.files-sidebar-active .ide-content {
+    margin-left: 300px; /* Adjust when filesSidebar is active */
+}
+
+.tasks-sidebar-active .ide-content {
+    margin-left: 300px; /* Adjust when tasksSidebar is active */
+}
+
+.both-sidebars-active .ide-content {
+    margin-left: 300px; /* Adjust when both sidebars are active */
+}
+
+.sidebar ul.components {
+    padding: 20px 0;
+}
+
+.sidebar ul.components li a {
+    padding: 10px 15px;
+    display: block;
+    color: var(--text-white);
+}
+
+.sidebar ul.components li a:hover {
+    background-color: var(--bg-dark);
+    text-decoration: none;
+}
+
+.sidebar ul.components ul.nested li a {
+    padding-left: 30px;
+}
+
+.folder-btn {
+    color: var(--text-white);
+    font-size: 15px;
+}
+
+.file-item {
+    color: var(--text-white);
+    font-size: 15px;
+}
+
+.ide-card {
+    height: 100vh;
+    transition: all 0.1s ease;
+    color: var(--text-white);
+    background-color: var(--bg-dark);
+    margin-left: 50px;
+    padding-top: 56px;
+}
+
+.terminal-header {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.terminal {
+    background-color: var(--bg-dark);
+    overflow: auto;
+    font-size: 16px;
+    font-weight: bold;
+    height: 100%;
+    font-family: monospace;
+    color: var(--text-light);
+}
+
+.prompt {
+    padding: 0;
+}
+
+.username {
+    color: var(--text-accent);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.path {
+    color: var(--link-blue);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.terminal-input {
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    outline: none;
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    resize: vertical;
+    flex-grow: 1;
+    -webkit-appearance: none;
