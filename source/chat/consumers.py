@@ -26,18 +26,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def handle_join(self, text_data_json):
         recipient_id = text_data_json.get("recipient_id")
-        room_id = text_data_json.get("room_id")  # The room_id is now directly provided
-        user_id = self.scope["user"].id
+        room_name = text_data_json.get("roomName")  # The roomName is now directly provided
 
         if not recipient_id:
             await self.send_error("recipient_id is missing in the join action.")
             return
 
-        if not room_id:
-            await self.send_error("room_id is missing in the join action.")
+        if not room_name:
+            await self.send_error("room_name is missing in the join action.")
             return
 
-        self.room_group_name = room_id  # Using the provided room_id directly
+        self.room_group_name = room_name  # Using the provided room_name directly
         await self.get_or_create_chat_room(self.room_group_name)
 
         await self.channel_layer.group_add(
@@ -70,6 +69,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "profile_image_url": profile_image_url,
                 "timestamp": timestamp,
                 "recipient_id": recipient_id,
+                "roomName": self.room_group_name,
             },
         )
 
@@ -90,7 +90,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
-        user_id = self.scope["user"].id
 
         room, created = ChatRoom.objects.get_or_create(name=room_name)
         if created:

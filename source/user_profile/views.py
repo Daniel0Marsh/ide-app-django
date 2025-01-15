@@ -110,16 +110,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         following_users = request.user.following.all()
         followers_users = request.user.followers.all()
 
-        # Combine the two querysets into one list of users (you can use `.distinct()` to avoid duplicates)
-        all_users = (following_users | followers_users).distinct()
-
-        # Get all chat rooms where the user is a participant
+        # required data for messages and chat logic
         chat_rooms = ChatRoom.objects.filter(participants=request.user)
-
-        # Get all messages associated with the user from each chat room
-        all_messages = Message.objects.filter(
-            room__in=chat_rooms
-        ).order_by('timestamp')
 
         context = {
             'user_profile': user_profile,
@@ -129,8 +121,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
             'is_own_profile': user_profile == request.user,
             'is_following': is_following,
             'recent_chats': ChatRoom.objects.filter(participants=request.user),
-            'all_users': all_users,
-            'all_messages': all_messages,
+            'all_users': (following_users | followers_users).distinct(),
+            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 
         return self.render_to_response(context)

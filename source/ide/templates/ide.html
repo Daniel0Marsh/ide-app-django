@@ -15,220 +15,236 @@
 
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <!-- Brand -->
-            <a class="navbar-brand" href="{% url 'landing-page' %}">
-                CodeBlock
-            </a>
+<!-- Navbar -->
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand" href="{% url 'landing-page' %}">
+            CodeBlock
+        </a>
 
-            <!-- Navbar toggler for mobile view -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- Navbar toggler for mobile view -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <!-- Navbar content -->
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <!-- Spacer to push the search bar to the right -->
-                <div class="ms-auto">
-                    <!-- Search bar -->
-                    <form class="d-flex m-2 me-4" action="{% url 'search' %}" method="get">
-                        <div class="input-group">
-                            <input class="form-control" type="search" name="query" placeholder="Search users or projects" aria-label="Search">
-                            <button class="btn btn-outline-light" type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+        <!-- Navbar content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Spacer to push the search bar to the right -->
+            <div class="ms-auto">
+                <!-- Search bar -->
+                <form class="d-flex m-2 me-4" action="{% url 'search' %}" method="get">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="query" placeholder="Search users or projects"
+                               aria-label="Search">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-                <!-- User dropdown -->
-                <div class="dropdown me-4">
-                    <a href="{% url 'public_profile' username=user.username %}" class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li>
+            <!-- User dropdown -->
+            <div class="dropdown me-4">
+                <a href="{% url 'public_profile' username=user.username %}"
+                   class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                         class="rounded-circle">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
                             <span class="dropdown-item-text fw-bold">
-                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30" class="rounded-circle">
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                                     class="rounded-circle">
                                 @{{ user.username }}
                             </span>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a></li>
-                        <li>
-                            <form method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item">
-                                    Logout
-                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- project side-nav -->
-    <div class="side-nav shadow-end border-end border-dark">
-
-        <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip" title="Project">
-            <i class="bi bi-folder2-open fs-5 text-light"></i>
-        </button>
-
-        {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-            <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip" title="Tasks">
-                <i class="bi bi-card-checklist fs-5 text-light"></i>
-            </button>
-
-            <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBottom"
-                aria-controls="offcanvasBottom">
-            <i class="bi bi-terminal fs-5 text-light"></i>
-            </button>
-        {% endif %}
-
-        <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal" data-bs-target="#colorChangeModal">
-            <i class="bi bi-paint-bucket fs-5 text-light"></i>
-        </button>
-
-        <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home" href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
-            <i class="bi bi-house fs-5 text-light"></i>
-        </a>
-    </div>
-
-    <!-- Task Sidebar -->
-    <div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
-        <h5  class="p-2">Project Tasks</h5>
-        {% if tasks %}
-        <ul class="list-group p-2">
-            {% for task in tasks %}
-                <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <!-- Make task title clickable -->
-                        <a href="#"
-                           class="text-light"
-                           data-bs-toggle="modal"
-                           data-bs-target="#updateTaskModal"
-                           data-task-id="{{ task.id }}"
-                           data-task-title="{{ task.title }}"
-                           data-task-description="{{ task.description }}"
-                           data-task-status="{{ task.status }}">
-                            <strong>{{ task.title }}</strong>
-                        </a>
-                        <span class="badge bg-secondary">{{ task.get_status_display }}</span>
-                    </div>
-                    <p class="mb-1 text-light">{{ task.description }}</p>
-                    <div class="small text-light">
-                        Assigned to: {{ task.assigned_to.username }} <br>
-                        Assigned by: {{ task.assigned_by.username }}
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="text-center">
-            <p class="text-light">No tasks have been assigned to this project yet.</p>
-        </div>
-    {% endif %}
-    </div>
-
-    <!-- Project Tree Form -->
-    <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
-          class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
-        {% csrf_token %}
-        <h5  class="p-2">Project Files</h5>
-        <ul>
-            {% for node in project_tree %}
-            {% if node.type == 'directory' %}
-            <li>
-                <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
-                    <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
-                </button>
-                <ul class="collapse show" id="{{node.name|slugify}}">
-                    {% for child in node.children %}
-                    {% if child.type == 'directory' %}
-                    <li>
-                        <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
-                            <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
-                        </button>
-                        <ul class="collapse show" id="{{ child.name|slugify }}">
-                            {% for grandchild in child.children %}
-                            {% if grandchild.type == 'file' %}
-                            <li>
-                                <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{grandchild.path}}">
-                                    <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
-                                </button>
-                            </li>
-                            {% endif %}
-                            {% endfor %}
-                        </ul>
                     </li>
-                    {% elif child.type == 'file' %}
                     <li>
-                        <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
-                            <i class="bi bi-file-earmark-code"></i> {{child.name}}
-                        </button>
+                        <hr class="dropdown-divider">
                     </li>
-                    {% endif %}
-                    {% endfor %}
+                    <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}">My Profile</a>
+                    </li>
+                    <li>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item">
+                                Logout
+                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                            </button>
+                        </form>
+                    </li>
                 </ul>
-            </li>
-            {% elif node.type == 'file' %}
-            <li>
-                <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
-                    <i class="bi bi-file-earmark-code"></i> {{node.name}}
-                </button>
-            </li>
-            {% endif %}
-            {% endfor %}
-        </ul>
-    </form>
-
-    <!--- This is the main CodeMirror IDE section including the nave buttons--->
-    <form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
-        {% csrf_token %}
-        <input type="hidden" name="file_path" value="{{file_path}}">
-        <input type="hidden" name="file_name" value="{{file_name}}">
-        <input type="hidden" name="project_id" value="{{current_project.id}}">
-
-        <div class="card-header shadow-end border-end border-dark">
-            <div class="hstack gap-3 align-middle">
-                <div class="p-1">
-                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                        <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
-                            <i class="bi bi-pencil"></i> {{file_name}}
-                        </button>
-                    {% else %}
-                        <p class="btn folder-btn">
-                                <i class="bi bi-pencil"></i> {{file_name}}
-                        </p>
-                    {% endif %}
-                </div>
-                <div class="vr"></div>
-                <div class="p-1">
-                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                        <button class="btn file-item" name="save_file" type="submit">
-                            <i class="bi bi-save"></i> Save
-                        </button>
-                    {% endif %}
-                </div>
-                <div class="p-1">
-                    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-                    <button class="btn file-item" name="delete" type="submit">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                    {% endif %}
-                </div>
-                <!-- Add dropdown buttons -->
             </div>
         </div>
-            <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
-    </form>
+    </div>
+</nav>
+
+<!-- project side-nav -->
+<div class="side-nav shadow-end border-end border-dark">
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip"
+            title="Project">
+        <i class="bi bi-folder2-open fs-5 text-light"></i>
+    </button>
+
+    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip"
+            title="Tasks">
+        <i class="bi bi-card-checklist fs-5 text-light"></i>
+    </button>
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas"
+            data-bs-target="#offcanvasBottom"
+            aria-controls="offcanvasBottom">
+        <i class="bi bi-terminal fs-5 text-light"></i>
+    </button>
+    {% endif %}
+
+    <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal"
+            data-bs-target="#colorChangeModal">
+        <i class="bi bi-paint-bucket fs-5 text-light"></i>
+    </button>
+
+    <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home"
+       href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
+        <i class="bi bi-house fs-5 text-light"></i>
+    </a>
+</div>
+
+<!-- Task Sidebar -->
+<div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
+    <h5 class="p-2">Project Tasks</h5>
+    {% if tasks %}
+    <ul class="list-group p-2">
+        {% for task in tasks %}
+        <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <!-- Make task title clickable -->
+                <a href="#"
+                   class="text-light"
+                   data-bs-toggle="modal"
+                   data-bs-target="#updateTaskModal"
+                   data-task-id="{{ task.id }}"
+                   data-task-title="{{ task.title }}"
+                   data-task-description="{{ task.description }}"
+                   data-task-status="{{ task.status }}">
+                    <strong>{{ task.title }}</strong>
+                </a>
+                <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+            </div>
+            <p class="mb-1 text-light">{{ task.description }}</p>
+            <div class="small text-light">
+                Assigned to: {{ task.assigned_to.username }} <br>
+                Assigned by: {{ task.assigned_by.username }}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="text-center">
+        <p class="text-light">No tasks have been assigned to this project yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Project Tree Form -->
+<form method="post" enctype="multipart/form-data"
+      action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+      class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
+    {% csrf_token %}
+    <h5 class="p-2">Project Files</h5>
+    <ul>
+        {% for node in project_tree %}
+        {% if node.type == 'directory' %}
+        <li>
+            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
+                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
+            </button>
+            <ul class="collapse show" id="{{node.name|slugify}}">
+                {% for child in node.children %}
+                {% if child.type == 'directory' %}
+                <li>
+                    <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
+                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
+                    </button>
+                    <ul class="collapse show" id="{{ child.name|slugify }}">
+                        {% for grandchild in child.children %}
+                        {% if grandchild.type == 'file' %}
+                        <li>
+                            <button class="btn btn-sm file-item" type="submit" name="open_file"
+                                    value="{{grandchild.path}}">
+                                <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% elif child.type == 'file' %}
+                <li>
+                    <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
+                        <i class="bi bi-file-earmark-code"></i> {{child.name}}
+                    </button>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </li>
+        {% elif node.type == 'file' %}
+        <li>
+            <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
+                <i class="bi bi-file-earmark-code"></i> {{node.name}}
+            </button>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+</form>
+
+<!--- This is the main CodeMirror IDE section including the nave buttons--->
+<form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
+    {% csrf_token %}
+    <input type="hidden" name="file_path" value="{{file_path}}">
+    <input type="hidden" name="file_name" value="{{file_name}}">
+    <input type="hidden" name="project_id" value="{{current_project.id}}">
+
+    <div class="card-header shadow-end border-end border-dark">
+        <div class="hstack gap-3 align-middle">
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
+                    <i class="bi bi-pencil"></i> {{file_name}}
+                </button>
+                {% else %}
+                <p class="btn folder-btn">
+                    <i class="bi bi-pencil"></i> {{file_name}}
+                </p>
+                {% endif %}
+            </div>
+            <div class="vr"></div>
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn file-item" name="save_file" type="submit">
+                    <i class="bi bi-save"></i> Save
+                </button>
+                {% endif %}
+            </div>
+            <div class="p-1">
+                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                <button class="btn file-item" name="delete" type="submit">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+                {% endif %}
+            </div>
+            <!-- Add dropdown buttons -->
+        </div>
+    </div>
+    <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+</form>
 </body>
 
 <!-- Terminal -->
@@ -255,7 +271,7 @@
                 <form class="hstack" method="post" onsubmit="sendPrompt(); return false;">
                     {% csrf_token %}
                     <div class="prompt p-1 text-light">
-                      <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/{{ current_project.project_name }}</span>$
+                        <span class="username">user@Ubuntu</span>:<span class="path">~/UserProjects/{{ current_project.project_name }}</span>$
                     </div>
                     <input name="terminalInput" class="terminal-input border-0 text-light" autocomplete="off">
                 </form>
@@ -270,29 +286,31 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="updateTaskForm" method="post" action="">
                     {% csrf_token %}
-                        <input type="hidden" name="task_id" id="task_id">
-                        <div class="mb-3">
-                            <label for="task_title" class="form-label">Task Title</label>
-                            <input type="text" class="form-control bg-dark text-light" id="task_title" name="task_title">
-                        </div>
-                        <div class="mb-3">
-                            <label for="task_description" class="form-label">Description</label>
-                            <textarea class="form-control bg-dark text-light" id="task_description" name="task_description"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="task_status" class="form-label">Status</label>
-                            <select class="form-select bg-dark text-light" id="task_status" name="task_status">
-                                <option value="not_started">Not Started</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                        </div>
-                        <button type="submit" name="update_task" class="btn btn-primary">Save Changes</button>
+                    <input type="hidden" name="task_id" id="task_id">
+                    <div class="mb-3">
+                        <label for="task_title" class="form-label">Task Title</label>
+                        <input type="text" class="form-control bg-dark text-light" id="task_title" name="task_title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_description" class="form-label">Description</label>
+                        <textarea class="form-control bg-dark text-light" id="task_description"
+                                  name="task_description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="task_status" class="form-label">Status</label>
+                        <select class="form-select bg-dark text-light" id="task_status" name="task_status">
+                            <option value="not_started">Not Started</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <button type="submit" name="update_task" class="btn btn-primary">Save Changes</button>
                 </form>
             </div>
         </div>
@@ -301,80 +319,87 @@
 
 <!-- Modal for changing background color and text syntax -->
 <div class="modal fade" id="colorChangeModal" tabindex="-1" aria-labelledby="colorChangeModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-          <form method="post" enctype="multipart/form-data" action="">
-              {% csrf_token %}
-                <input type="hidden" id="selectedTheme" name="selected_theme" value="">
-                <input type="hidden" id="selectedSyntax" name="selected_syntax" value="">
-                <div class=" ms-auto">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
-                                data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
-                            Theme: <span id="currentTheme">Default</span>
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="themeDropdown">
-                            <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
-                            <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow Night Bright</a></li>
-                        </ul>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="">
+                    {% csrf_token %}
+                    <input type="hidden" id="selectedTheme" name="selected_theme" value="">
+                    <input type="hidden" id="selectedSyntax" name="selected_syntax" value="">
+                    <div class=" ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
+                                Theme: <span id="currentTheme">Default</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="themeDropdown">
+                                <li><a class="dropdown-item" onclick="changeTheme('default')">Light Mode</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('xq-light')">XQ Light</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('base16-light')">Base16 Light</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('3024-day')">3024 Day</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('solarized')">Solarized</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('paraiso-light')">Paraiso Light</a>
+                                </li>
+                                <li><a class="dropdown-item" onclick="changeTheme('mdn-like')">MDN Like</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('hopscotch')">Hopscotch</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('lucario')">Lucario</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('material')">Material</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('nord')">Nord</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('oceanic-next')">Oceanic Next</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('cobalt')">Cobalt</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('paraiso-dark')">Paraiso Dark</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('mbo')">MBO</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('panda-syntax')">Panda Syntax</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('seti')">Seti</a></li>
+                                <li><a class="dropdown-item" onclick="changeTheme('tomorrow-night-bright')">Tomorrow
+                                    Night Bright</a></li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-                <div class="p-2">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto Detect</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('javascript')">JavaScript</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="changeSyntax('typescript')">TypeScript</a></li>
-                            <!-- Add more syntax highlighting options as needed -->
-                        </ul>
+                    <div class="p-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto
+                                    Detect</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a>
+                                </li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
+                                <li><a class="dropdown-item" href="#"
+                                       onclick="changeSyntax('javascript')">JavaScript</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
+                                <li><a class="dropdown-item" href="#"
+                                       onclick="changeSyntax('typescript')">TypeScript</a></li>
+                                <!-- Add more syntax highlighting options as needed -->
+                            </ul>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" name="update_theme" class="btn btn-secondary">Apply Changes</button>
-                </div>
-          </form>
-      </div>
+                    <div class="modal-footer">
+                        <button type="submit" name="update_theme" class="btn btn-secondary">Apply Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Modal for renaming file-->
@@ -384,7 +409,9 @@
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
             </div>
-            <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}" class="modal-body">
+            <form method="post" enctype="multipart/form-data"
+                  action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+                  class="modal-body">
                 {% csrf_token %}
                 <input type="text" name="new_file_name" value="{{ file_name }}"
                        class="form-control bg-dark text-light border-secondary mb-4">
@@ -396,7 +423,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -462,6 +488,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
 
 
+<!-- IDE js logic -->
 <script>
     // Store the collapse state in an object
     let collapseState = {};

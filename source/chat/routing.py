@@ -1,4 +1,3 @@
-# routing.py
 # Routing configuration for WebSocket
 from django.urls import re_path
 from . import consumers

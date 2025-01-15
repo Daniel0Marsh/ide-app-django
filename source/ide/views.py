@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django.shortcuts import redirect
 from .models import Project, Task
 from user_profile.views import add_activity_to_log
-from chat.models import ChatRoom
+from chat.models import ChatRoom, Message
 import docker
 import os
 import shutil
@@ -86,13 +86,22 @@ class ProjectView(LoginRequiredMixin, TemplateView):
             with open(readme_path, "r", encoding="utf-8") as readme_file:
                 readme_content = markdown.markdown(readme_file.read())
 
+        # Get a list of users the logged-in user is following and is being followed by
+        following_users = request.user.following.all()
+        followers_users = request.user.followers.all()
+
+        # required data for messages and chat logic
+        chat_rooms = ChatRoom.objects.filter(participants=request.user)
+
         # Pass the README content to the context
         context = {
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
             'tasks': current_project.tasks.all(),
-            'other_chats': ChatRoom.objects.filter(participants=request.user),
+            'recent_chats': ChatRoom.objects.filter(participants=request.user),
+            'all_users': (following_users | followers_users).distinct(),
+            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 
         return render(request, self.template_name, context)
@@ -329,6 +338,13 @@ class IdeView(LoginRequiredMixin, TemplateView):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'project_tree': project_tree})
 
+        # Get a list of users the logged-in user is following and is being followed by
+        following_users = request.user.following.all()
+        followers_users = request.user.followers.all()
+
+        # required data for messages and chat logic
+        chat_rooms = ChatRoom.objects.filter(participants=request.user)
+
         context = {
             'all_projects': all_projects,
             'current_project': current_project,
@@ -336,7 +352,10 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'file_name': 'README.md',
             'file_path': readme_path,
             'file_content': readme_content,
-            'tasks': current_project.tasks.all()
+            'tasks': current_project.tasks.all(),
+            'recent_chats': ChatRoom.objects.filter(participants=request.user),
+            'all_users': (following_users | followers_users).distinct(),
+            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 
         return render(request, self.template_name, context)
