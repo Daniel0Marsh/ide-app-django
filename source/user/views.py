@@ -1,13 +1,88 @@
 from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views import View
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .models import CustomUser, SenderEmailSettings
 from social_django.utils import psa
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.views.generic import TemplateView, View
+
+
+class SettingsView(TemplateView):
+    """Handle settings page where user can update their details and set password."""
+    template_name = 'settings.html'
+
+    def get(self, request, *args, **kwargs):
+        """Render settings form with user details and password input."""
+
+        context = {
+            'needs_password': not request.user.password or request.user.password == ' ',
+            'user': request.user,
+        }
+
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle actions such as updating user information.
+        """
+        action_map = {
+            'update_password': self.update_password,
+            'update_username': self.update_username,
+            'update_email': self.update_email,
+        }
+        action = next((key for key in action_map if key in request.POST), None)
+        if action:
+            return action_map[action](request)
+        return HttpResponse("Invalid action", status=400)
+
+    def update_password(self, request):
+        """Update the user's password."""
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect('settings')
+
+        user = request.user
+        user.set_password(new_password)
+        user.save()
+        update_session_auth_hash(request, user)  # Keep user logged in after password change
+        messages.success(request, "Your password has been updated.")
+        return redirect('settings')
+
+    def update_username(self, request):
+        """Update the user's username."""
+        new_username = request.POST.get('new_username')
+        user = request.user
+
+        if User.objects.filter(username=new_username).exists():
+            messages.error(request, "Username already taken.")
+            return redirect('settings')
+
+        user.username = new_username
+        user.save()
+        messages.success(request, "Your username has been updated.")
+        return redirect('settings')
+
+    def update_email(self, request):
+        """Update the user's email."""
+        new_email = request.POST.get('new_email')
+        user = request.user
+
+        if User.objects.filter(email=new_email).exists():
+            messages.error(request, "Email is already in use.")
+            return redirect('settings')
+
+        user.email = new_email
+        user.save()
+        messages.success(request, "Your email has been updated.")
+        return redirect('settings')
 
 
 class LoginView(View):
@@ -26,7 +101,11 @@ class LoginView(View):
         if user:
             login(request, user)
             messages.success(request, 'Login successful!')
-            return redirect(reverse_lazy('profile', kwargs={'username': username}))
+
+            if not user.password:
+                return redirect('settings', username=request.user.username)
+
+            return redirect('profile', username=request.user.username)
 
         messages.error(request, 'Invalid username or password')
         return redirect('login')
@@ -118,7 +197,8 @@ class PasswordResetView(View):
 
         if user:
             token = default_token_generator.make_token(user)
-            reset_link = request.build_absolute_uri(reverse_lazy('password_reset_confirm', kwargs={'uidb64': user.pk, 'token': token}))
+            reset_link = request.build_absolute_uri(
+                reverse_lazy('password_reset_confirm', kwargs={'uidb64': user.pk, 'token': token}))
 
             send_mail(
                 'Password Reset Request',

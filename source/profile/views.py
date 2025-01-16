@@ -1,3 +1,5 @@
+import zipfile
+import tarfile
 import os
 import subprocess
 from datetime import timedelta
@@ -147,16 +149,72 @@ class ProfileView(TemplateView):
         action_map = {
             'open_project': self.open_project,
             'create_project': self.create_project,
+            'clone_repo': self.clone_repo,
             'edit_profile': self.edit_profile,
             'edit_bio': self.edit_bio,
             'update_password': self.update_password,
             'follow_unfollow': self.follow_unfollow,
-            'clone_repo': self.clone_repo,
         }
         action = next((key for key in action_map if key in request.POST), None)
         if action:
             return action_map[action](request)
         return HttpResponse("Invalid action", status=400)
+
+
+    @staticmethod
+    def open_project(request):
+        """
+        Open a project by redirecting to the IDE view.
+        """
+        project_id = request.POST.get('project_id')
+        if not project_id:
+            return HttpResponse("Project ID not provided", status=400)
+
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("Project not found", status=404)
+
+        return redirect('ide', username=request.user.username, project_id=project.id)
+
+    @staticmethod
+    def create_project(request):
+        """
+        Create a new project, handle file upload (.zip), and redirect to the IDE view.
+        """
+        project_name = request.POST.get('project_name')
+        project_description = request.POST.get('project_description')
+        project_folder = request.FILES.get('project_folder')
+        project_path = os.path.join(request.user.project_dir, project_name)
+
+        os.makedirs(project_path, exist_ok=True)
+
+        if project_folder:
+            extracted_path = os.path.join(project_path, 'another')
+            os.makedirs(extracted_path, exist_ok=True)
+            with zipfile.ZipFile(project_folder, 'r') as zip_ref:
+                for file_info in zip_ref.namelist():
+                    target_path = os.path.join(extracted_path, file_info)
+                    if file_info.endswith(os.sep):
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        with zip_ref.open(file_info) as src, open(target_path, 'wb') as dest:
+                            dest.write(src.read())
+
+        project = Project.objects.create(
+            project_name=project_name,
+            project_description=project_description,
+            user=request.user,
+            project_path=project_path,
+        )
+
+        # Create README
+        with open(os.path.join(project_path, "README.md"), "w") as readme_file:
+            readme_file.write(f"# {project_name}\n\n{project_description or 'No description provided.'}")
+
+        add_activity_to_log(request.user, project.project_name, 'Created Project')
+
+        return redirect('project', username=request.user.username, project_id=project.id)
 
     @staticmethod
     def clone_repo(request):
@@ -188,55 +246,6 @@ class ProfileView(TemplateView):
         add_activity_to_log(request.user, project.project_name, action)
 
         return redirect('ide', username=request.user.username, project_id=project.id)
-
-    @staticmethod
-    def open_project(request):
-        """
-        Open a project by redirecting to the IDE view.
-        """
-        project_id = request.POST.get('project_id')
-        if not project_id:
-            return HttpResponse("Project ID not provided", status=400)
-
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            return HttpResponse("Project not found", status=404)
-
-        return redirect('ide', username=request.user.username, project_id=project.id)
-
-    @staticmethod
-    def create_project(request):
-        """
-        Create a new project and redirect to the IDE view.
-        """
-        project_name = request.POST.get('project_name')
-        project_description = request.POST.get('project_description')
-
-        try:
-            project_path = os.path.join(request.user.project_dir, project_name)
-            os.makedirs(project_path, exist_ok=True)
-
-            project = Project(
-                project_name=project_name,
-                project_description=project_description,
-                user=request.user,
-                project_path=project_path,
-            )
-            project.save()
-
-            readme_path = os.path.join(project.project_path, "README.md")
-            with open(readme_path, "w") as readme_file:
-                readme_content = f"# {project_name}\n\n{project_description or 'No description provided.'}"
-                readme_file.write(readme_content)
-
-        except Exception as e:
-            return HttpResponse(f"Error creating project: {e}", status=500)
-
-        action = 'Created Project'
-        add_activity_to_log(request.user, project.project_name, action)
-
-        return redirect('project', username=request.user, project_id=project.id)
 
     @staticmethod
     def edit_profile(request):

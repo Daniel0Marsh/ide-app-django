@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Update Your Settings</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Update Password -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Change Password</h5>
+            </div>
+            <div class="card-body">
+                {% if needs_password %}
+                    <div class="alert alert-warning" role="alert">
+                        You have not set a password yet. Please choose a strong one.
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                {% else %}
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password (Optional)</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password (Optional)</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        Your current password is already set. You can reset it if needed.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Update Username -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Change Username</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="new_username" class="form-label">New Username</label>
+                    <input type="text" class="form-control" id="new_username" name="new_username" value="{{ user.username }}" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Email -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">Change Email</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="new_email" class="form-label">New Email</label>
+                    <input type="email" class="form-control" id="new_email" name="new_email" value="{{ user.email }}" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<!-- Display error or success messages -->
+{% if messages %}
+    <div class="alert-container mt-3">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-3" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}
