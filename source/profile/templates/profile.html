@@ -147,6 +147,54 @@
     </div>
 </div>
 
+<!-- GitHub Repositories -->
+<div class="mb-4">
+    <div class="card shadow border-0">
+        <div class="card-header text-light d-flex justify-content-between align-items-center">
+            <h3 class="text-light">GitHub Repositories</h3>
+            <div>
+                <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#allReposModal">
+                    View All
+                </button>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for repo in github_repos|slice:":3" %}
+            <div class="col-md-4">
+                <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
+                    <div class="d-flex flex-wrap justify-content-start">
+                        <a href="{{ repo.html_url }}" target="_blank" class="card-title text-light">
+                            {{ repo.full_name }}
+                        </a>
+                        <!-- Public/Private Status -->
+                        <p class="text-light small ms-1">
+                            {% if repo.private %}
+                            <span class="badge bg-danger">Private</span>
+                            {% else %}
+                            <span class="badge bg-primary">Public</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <p class="card-text text-light">{{ repo.description }}</p>
+                    <p class="text-light small">
+                        Last updated: {{ repo.updated_at|date:"M d, Y" }}
+                    </p>
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="repo_url" value="{{ repo.html_url }}">
+                        <button type="submit" name="clone_repo" class="btn btn-primary btn-sm mt-2">
+                            Clone Repository
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-light p-3 m-3">No repositories available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 <!-- Activity Section -->
 <div class="mb-5">
     <div class="card shadow border-0">
@@ -178,6 +226,53 @@
                     <p class="text-light">Type: {{ activity.action }}</p>
                 </div>
                 {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Viewing All Repositories -->
+<div class="modal fade" id="allReposModal" tabindex="-1" aria-labelledby="allReposModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allReposModalLabel">All GitHub Repositories</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    {% for repo in github_repos %}
+                    <div class="col-md-4">
+                        <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
+                            <div class="d-flex flex-wrap justify-content-start">
+                                <a href="{{ repo.html_url }}" target="_blank" class="card-title text-light">
+                                    {{ repo.full_name }}
+                                </a>
+                                <!-- Public/Private Status -->
+                                <p class="text-light small ms-1">
+                                    {% if repo.private %}
+                                    <span class="badge bg-danger">Private</span>
+                                    {% else %}
+                                    <span class="badge bg-primary">Public</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <p class="card-text text-light">{{ repo.description }}</p>
+                            <p class="text-light small">
+                                Last updated: {{ repo.updated_at|date:"M d, Y" }}
+                            </p>
+                            <form method="POST" action="">
+                                {% csrf_token %}
+                                <button type="submit" name="clone_repo" class="btn btn-primary btn-sm mt-2">
+                                    Clone Repository
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-light p-3 m-3">No repositories available.</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

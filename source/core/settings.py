@@ -8,6 +8,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-21fnvr&bcdxqd=hbmchhhgt3y#4$%c!s08o8^ws)7emeg2dw6*'
 
+SOCIAL_AUTH_GITHUB_KEY = 'Ov23liYWi4MAuN2IPyUX'
+SOCIAL_AUTH_GITHUB_SECRET = '26d29678e21d62863470dd642ee2bc070746f854'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -37,8 +40,6 @@ ASGI_APPLICATION = 'core.asgi.application'
 # Redis settings for Django Channels
 CHANNEL_LAYERS = {
     'default': {
-       # 'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        # Use the following instead if you have Redis setup:
          'BACKEND': 'channels_redis.core.RedisChannelLayer',
          'CONFIG': {
              'hosts': [('127.0.0.1', 6379)],
@@ -97,9 +98,6 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',  # Default
 )
-
-SOCIAL_AUTH_GITHUB_KEY = 'your-github-client-id'
-SOCIAL_AUTH_GITHUB_SECRET = 'your-github-client-secret'
 
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 

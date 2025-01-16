@@ -1,5 +1,7 @@
 import os
+import subprocess
 from datetime import timedelta
+from github import Github
 
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -66,15 +68,16 @@ def user_activity(user_projects, user_profile):
 
 
 class ProfileView(TemplateView):
-    template_name = "profile.html"
+    template_name = 'profile.html'
 
     def get(self, request, *args, **kwargs):
         """
-        Render the profile page, which can either show the logged-in user's profile
-        or another user's profile based on the 'username' parameter.
+        Render the profile page, showing the logged-in user's profile or another user's profile.
+        Also, fetch the user's GitHub repositories with a clone button.
         """
         username = self.kwargs.get("username")
 
+        # Get the user profile
         if username:
             user_profile = get_object_or_404(CustomUser, username=username)
             owned_projects = Project.objects.filter(user=user_profile)
@@ -86,6 +89,7 @@ class ProfileView(TemplateView):
 
         user_projects = owned_projects | collaborating_projects
 
+        # Manage anonymous and logged-in users
         if isinstance(request.user, AnonymousUser):
             user_projects = user_projects.filter(is_public=True)
             is_following = False
@@ -110,6 +114,16 @@ class ProfileView(TemplateView):
         # Get user activity information
         activity_days, recent_activity = user_activity(user_projects, user_profile)
 
+        # Fetch GitHub repositories if it's the user's own profile
+        github_repos = []
+        if user_profile == request.user and not isinstance(request.user, AnonymousUser):
+            try:
+                access_token = request.user.social_auth.get(provider='github').extra_data['access_token']
+                github = Github(access_token)
+                github_repos = github.get_user().get_repos()
+            except Exception as e:
+                print(f"Error fetching GitHub repos: {e}")
+
         context = {
             'user_profile': user_profile,
             'user_projects': user_projects,
@@ -120,7 +134,8 @@ class ProfileView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': list(set(following_users) | set(followers_users)),
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'unread_notifications': unread_notifications
+            'unread_notifications': unread_notifications,
+            'github_repos': github_repos,
         }
 
         return self.render_to_response(context)
@@ -136,11 +151,43 @@ class ProfileView(TemplateView):
             'edit_bio': self.edit_bio,
             'update_password': self.update_password,
             'follow_unfollow': self.follow_unfollow,
+            'clone_repo': self.clone_repo,
         }
         action = next((key for key in action_map if key in request.POST), None)
         if action:
             return action_map[action](request)
         return HttpResponse("Invalid action", status=400)
+
+    @staticmethod
+    def clone_repo(request):
+        """
+        Create a new project using the repo name and clone the repo into the user's project directory.
+        """
+        repo_url = request.POST.get('repo_url')
+        repo_name = repo_url.split('/')[-1]
+
+        user_project_dir = request.user.project_dir
+
+        project_dir = os.path.join(user_project_dir, repo_name)
+        os.makedirs(project_dir, exist_ok=True)
+
+        project = Project.objects.create(
+            user=request.user,
+            project_name=repo_name,
+            project_path=project_dir,
+            project_description=f"Cloned from {repo_url}",
+        )
+
+        try:
+            subprocess.run(['git', 'clone', repo_url, project_dir], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error while cloning repository: {e}")
+            return HttpResponse("Error cloning repository", status=500)
+
+        action = 'Cloned Project'
+        add_activity_to_log(request.user, project.project_name, action)
+
+        return redirect('ide', username=request.user.username, project_id=project.id)
 
     @staticmethod
     def open_project(request):
@@ -156,7 +203,7 @@ class ProfileView(TemplateView):
         except Project.DoesNotExist:
             return HttpResponse("Project not found", status=404)
 
-        return redirect('ide', project_id=project.id)
+        return redirect('ide', username=request.user.username, project_id=project.id)
 
     @staticmethod
     def create_project(request):
@@ -170,15 +217,15 @@ class ProfileView(TemplateView):
             project_path = os.path.join(request.user.project_dir, project_name)
             os.makedirs(project_path, exist_ok=True)
 
-            current_project = Project(
+            project = Project(
                 project_name=project_name,
                 project_description=project_description,
                 user=request.user,
                 project_path=project_path,
             )
-            current_project.save()
+            project.save()
 
-            readme_path = os.path.join(current_project.project_path, "README.md")
+            readme_path = os.path.join(project.project_path, "README.md")
             with open(readme_path, "w") as readme_file:
                 readme_content = f"# {project_name}\n\n{project_description or 'No description provided.'}"
                 readme_file.write(readme_content)
@@ -186,11 +233,10 @@ class ProfileView(TemplateView):
         except Exception as e:
             return HttpResponse(f"Error creating project: {e}", status=500)
 
-        project_name = current_project.project_name
         action = 'Created Project'
-        add_activity_to_log(request.user, project_name, action)
+        add_activity_to_log(request.user, project.project_name, action)
 
-        return redirect('project', username=request.user, project_id=current_project.id)
+        return redirect('project', username=request.user, project_id=project.id)
 
     @staticmethod
     def edit_profile(request):
@@ -214,7 +260,7 @@ class ProfileView(TemplateView):
 
         user.save()
 
-        return redirect('personal_profile')
+        return redirect('profile', username=request.user)
 
     @staticmethod
     def edit_bio(request):
@@ -229,7 +275,7 @@ class ProfileView(TemplateView):
 
         user.save()
 
-        return redirect('personal_profile')
+        return redirect('profile', username=request.user)
 
     @staticmethod
     def update_password(request):
@@ -243,11 +289,11 @@ class ProfileView(TemplateView):
 
         if not check_password(current_password, user.password):
             messages.error(request, "The current password is incorrect.")
-            return redirect('personal_profile')
+            return redirect('profile', username=request.user)
 
         if new_password != confirm_new_password:
             messages.error(request, "The new passwords do not match.")
-            return redirect('personal_profile')
+            return redirect('profile', username=request.user)
 
         user.set_password(new_password)
         user.save()
@@ -255,7 +301,7 @@ class ProfileView(TemplateView):
         update_session_auth_hash(request, user)
 
         messages.success(request, "Your password has been updated successfully.")
-        return redirect('personal_profile')
+        return redirect('profile', username=request.user)
 
     @staticmethod
     def follow_unfollow(request):
@@ -267,7 +313,7 @@ class ProfileView(TemplateView):
         target_user = get_object_or_404(CustomUser, username=target_username)
 
         if user == target_user:
-            return redirect('personal_profile')
+            return redirect('profile', username=target_username)
 
         if user.is_following(target_user):
             user.unfollow(target_user)
@@ -280,7 +326,7 @@ class ProfileView(TemplateView):
                 message=f"{user.username} is now following you."
             )
 
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+        return redirect('profile', username=target_username)
 
 
 class SearchView(TemplateView):

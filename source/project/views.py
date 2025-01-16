@@ -248,7 +248,7 @@ class ProjectView(TemplateView):
         except Exception as e:
             return HttpResponse(f"Error deleting project: {e}", status=500)
 
-        return redirect('profile')
+        return redirect('profile', username=request.user.username)
 
 
 class IdeView(LoginRequiredMixin, TemplateView):

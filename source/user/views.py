@@ -58,14 +58,41 @@ class RegisterView(View):
 
 class GithubLoginView(View):
     """Handle GitHub login."""
+
     def get(self, request):
+        user = request.user
+        if user.is_authenticated:
+            # Check if user has a GitHub account linked
+            if user.social_auth.filter(provider='github').exists():
+                messages.success(request, 'You are already logged in with GitHub!')
+            else:
+                messages.info(request, 'You can link your GitHub account now!')
         return redirect('social:begin', args=['github'])
 
 
 class GithubRegisterView(View):
     """Handle GitHub registration."""
+
     def get(self, request):
         return redirect('social:begin', args=['github'])
+
+
+class GithubCompleteRedirectView(View):
+    """
+    Handles the redirect from GitHub authentication
+    """
+
+    def get(self, request):
+        user = request.user
+        if user.is_authenticated:
+            # Check if the GitHub account is already linked
+            if user.social_auth.filter(provider='github').exists():
+                messages.success(request, 'GitHub account is successfully linked to your profile!')
+            else:
+                messages.info(request, 'You can now link your GitHub account.')
+
+        # You can redirect to the desired profile or home page
+        return redirect('home')
 
 
 class LogoutView(View):
