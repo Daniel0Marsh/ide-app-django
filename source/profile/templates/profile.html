@@ -348,7 +348,7 @@
                         <div class="d-flex align-items-center">
                             <img src="{{ follower.profile_picture.url }}" alt="Profile" class="rounded-circle me-2"
                                  style="width: 40px; height: 40px;">
-                            <a href="{% url 'public_profile' follower.username %}" class="text-light">
+                            <a href="{% url 'profile' follower.username %}" class="text-light">
                                 {{follower.username }}</a>
                         </div>
                     </li>
@@ -380,7 +380,7 @@
                         <div class="d-flex align-items-center">
                             <img src="{{ following.profile_picture.url }}" alt="Profile" class="rounded-circle me-2"
                                  style="width: 40px; height: 40px;">
-                            <a href="{% url 'public_profile' following.username %}" class="text-light">
+                            <a href="{% url 'profile' following.username %}" class="text-light">
                                 {{following.username }}</a>
                         </div>
                     </li>
@@ -409,7 +409,7 @@
                 <ul class="list-group">
                     {% if user_profile.liked_projects.exists %}
                     {% for project in user_profile.liked_projects.all %}
-                    <li class="list-group-item text-light" style="background-color: rgba(255, 255, 255, 0.1);">
+                    <li class="list-group-item text-light">
                         <div class="d-flex flex-wrap justify-content-start">
                             <a href="{% url 'project' username=project.user.username project_id=project.id %}"
                                class="card-title">

@@ -5,19 +5,14 @@ import markdown
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
-from django.http import (
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseRedirect,
-    JsonResponse,
-    FileResponse
-)
+from django.http import (HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, FileResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
+from user.models import Notification
 from .models import Project, Task
 from .utils import ProjectContainerManager
 
@@ -100,6 +95,7 @@ class ProjectView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': all_users,
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
+            'unread_notifications': Notification.objects.filter(user=request.user, is_read=False)
         }
 
         return render(request, self.template_name, context)

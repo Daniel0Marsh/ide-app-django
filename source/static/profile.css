@@ -1,0 +1,95 @@
+
+.activity-calendar {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr); /* 52 weeks + 1 for labels */
+    grid-auto-rows: 1fr;
+    gap: 2px;
+}
+
+.day {
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    background-color: var(--btn-primary);
+    transition: background-color 0.3s ease;
+}
+
+.day[data-count="0"] {
+    background-color: rgba(255, 255, 255, 0.1) /* No activity */
+}
+
+.day[data-count="1"] {
+    background-color: var(--btn-secondary); /* Low activity, light accent */
+}
+
+.day[data-count="2"] {
+    background-color: rgba(0, 200, 255, 0.5); /* Medium activity */
+}
+
+.day[data-count="3"] {
+    background-color: rgba(0, 200, 255, 0.7); /* High activity */
+}
+
+.day[data-count="4"] {
+    background-color: var(--btn-primary); /* Very high activity, primary button color */
+}
+
+.day:hover {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* Style for the profile section */
+.profile-info {
+    text-align: center;
+    color: var(--bg-light);
+}
+
+.profile-info .profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info h5 {
+    font-size: 1.2rem;
+    margin: 10px 0;
+}
+
+.profile-info p {
+    font-size: 0.9rem;
+    margin: 5px 0;
+}
+
+/* Style for the followers and following section */
+.follow-info {
+    font-size: 1rem;
+    color: var(--text-accent);
+}
+
+.user-bio {
+    text-align: center;
+    color: var(--bg-light);
+}
+
+.user-bio p {
+    font-size: 0.9rem;
+}
+
+.projects {
+    text-align: center;
+    color: var(--bg-light);
+    margin: 20px;
+}
+
+.project-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
+

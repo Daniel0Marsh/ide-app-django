@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from user.models import Notification
 
 
 class ChatRoom(models.Model):
@@ -27,6 +28,17 @@ class Message(models.Model):
     )
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        """Override save to create a message notification for the recipient."""
+        if self.recipient:
+            Notification.objects.create(
+                user=self.recipient,
+                sender=self.sender,
+                notification_type='new_message',
+                message=f"You have a new message from {self.sender.username}: {self.content[:20]}"
+            )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.sender} to {self.recipient}: {self.content[:20]}"

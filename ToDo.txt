@@ -2,8 +2,7 @@
 1) forgot password emailing system
 2) integrate GitHub
 3) persistent shell docker containers
-4) notifications (tasks, messages, new followers)
-5)
+4)
 
 
 

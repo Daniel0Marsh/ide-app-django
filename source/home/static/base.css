@@ -92,6 +92,43 @@ body {
 .modal-content {
     background-color: var(--bg-darker);
     color: var(--text-light);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+    font-weight: bold;
+}
+
+.modal-body {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.list-group-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.toast {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.toast-header {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-weight: bold;
+}
+
+.toast-body {
+    color: var(--text-light);
 }
 
 .main-content {

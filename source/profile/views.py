@@ -15,7 +15,7 @@ from django.core.files.storage import FileSystemStorage
 
 from chat.models import ChatRoom, Message
 from project.models import Project
-from user.models import CustomUser
+from user.models import CustomUser, Notification
 
 
 def add_activity_to_log(user, project_name, action):
@@ -116,6 +116,7 @@ class ProfileView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': list(set(following_users) | set(followers_users)),
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
+            'unread_notifications': Notification.objects.filter(user=request.user, is_read=False)
         }
 
         return self.render_to_response(context)
@@ -268,6 +269,12 @@ class ProfileView(TemplateView):
             user.unfollow(target_user)
         else:
             user.follow(target_user)
+            Notification.objects.create(
+                user=target_user,
+                sender=user,
+                notification_type='new_follower',
+                message=f"{user.username} is now following you."
+            )
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
