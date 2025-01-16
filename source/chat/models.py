@@ -36,7 +36,9 @@ class Message(models.Model):
                 user=self.recipient,
                 sender=self.sender,
                 notification_type='new_message',
-                message=f"You have a new message from {self.sender.username}: {self.content[:20]}"
+                message='',
+                task=None,
+                project=None
             )
         super().save(*args, **kwargs)
 

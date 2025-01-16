@@ -6,6 +6,8 @@ from django.conf import settings
 import os
 from enum import Enum
 
+
+
 default_user_dir = os.path.join(settings.BASE_DIR, "UserDir")
 
 
@@ -70,14 +72,17 @@ class Notification(models.Model):
     """Represents a notification for a user."""
     NOTIFICATION_TYPES = [
         ('new_follower', 'New Follower'),
-        ('new_task', 'New Task Assigned'),
+        ('new_task', 'New Task'),
+        ('task_update', 'Task updated'),
         ('new_message', 'New Message'),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sent_notifications')
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    message = models.TextField()
+    task = models.ForeignKey('project.Task', null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
+    project = models.ForeignKey('project.Project', null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
+    message = models.TextField(null=True, blank=True,)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -45,14 +45,24 @@ def get_project_tree(project_path):
 
 def update_task(request, project):
     """
-    Update the task details for the specified project.
+    Update the task details for the specified project and notify users.
     """
     task = get_object_or_404(Task, id=request.POST.get('task_id'), project=project)
 
+    # Update task details
     task.title = request.POST.get('task_title')
     task.description = request.POST.get('task_description')
     task.status = request.POST.get('task_status')
     task.save()
+
+    Notification.objects.create(
+        user=task.assigned_to,
+        sender=request.user,
+        notification_type='task_update',
+        message=',',
+        task=task,
+        project=project,
+    )
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -81,11 +91,13 @@ class ProjectView(TemplateView):
 
         if isinstance(request.user, AnonymousUser):
             following_users = followers_users = chat_rooms = all_users = []
+            unread_notifications = None
         else:
             following_users = request.user.following.all()
             followers_users = request.user.followers.all()
             chat_rooms = ChatRoom.objects.filter(participants=request.user)
             all_users = (following_users | followers_users).distinct()
+            unread_notifications = Notification.objects.filter(user=request.user, is_read=False)
 
         context = {
             'current_project': current_project,
@@ -95,7 +107,7 @@ class ProjectView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': all_users,
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'unread_notifications': Notification.objects.filter(user=request.user, is_read=False)
+            'unread_notifications': unread_notifications
         }
 
         return render(request, self.template_name, context)

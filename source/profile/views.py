@@ -92,6 +92,7 @@ class ProfileView(TemplateView):
             following_users = []
             followers_users = []
             chat_rooms = []
+            unread_notifications = None
         else:
             if user_profile != request.user:
                 user_projects = user_projects.filter(
@@ -101,9 +102,12 @@ class ProfileView(TemplateView):
             following_users = request.user.following.all()
             followers_users = request.user.followers.all()
             chat_rooms = ChatRoom.objects.filter(participants=request.user)
+            unread_notifications = Notification.objects.filter(user=request.user, is_read=False)
 
+        # Ensure distinct and ordered user projects
         user_projects = user_projects.distinct().order_by('-modified_at')
 
+        # Get user activity information
         activity_days, recent_activity = user_activity(user_projects, user_profile)
 
         context = {
@@ -116,7 +120,7 @@ class ProfileView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': list(set(following_users) | set(followers_users)),
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'unread_notifications': Notification.objects.filter(user=request.user, is_read=False)
+            'unread_notifications': unread_notifications
         }
 
         return self.render_to_response(context)

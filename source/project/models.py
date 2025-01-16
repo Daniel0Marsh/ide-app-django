@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import TextField
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from user.models import Notification
 
 
@@ -72,15 +74,20 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        """Override save to create a task notification for the assigned user."""
-        if not self.pk:
-            Notification.objects.create(
-                user=self.assigned_to,
-                sender=self.assigned_by,
-                notification_type='new_task',
-                message=f"You have been assigned a new task: {self.title}."
-            )
         super().save(*args, **kwargs)
+
+
+@receiver(post_save, sender=Task)
+def create_task_notification(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            user=instance.assigned_to,
+            sender=instance.assigned_by,
+            notification_type='new_task',
+            message='',
+            task=instance,
+            project=instance.project
+        )
 
     def __str__(self):
         return f"{self.title}"
