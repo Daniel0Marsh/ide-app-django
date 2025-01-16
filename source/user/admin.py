@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, DockerSession, Notification
+from .models import CustomUser, DockerSession, Notification, SenderEmailSettings
 
 
 @admin.register(CustomUser)
@@ -24,9 +24,17 @@ class DockerSessionAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('user__username', 'container_id')
 
+
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
     """Admin configuration for the Notification model."""
     list_display = ('user', 'sender', 'notification_type', 'message', 'is_read', 'created_at')
     list_filter = ('notification_type', 'is_read', 'created_at')
     search_fields = ('user__username', 'sender__username', 'message')
+
+
+@admin.register(SenderEmailSettings)
+class SenderEmailSettingsAdmin(admin.ModelAdmin):
+    """Admin configuration for the SenderEmailSettings model."""
+    list_display = ('sender_email',)
+    search_fields = ('sender_email',)

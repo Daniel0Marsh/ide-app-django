@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'social_django',
     'chat',
     'home',
     'user',
@@ -90,6 +91,17 @@ LOGIN_REDIRECT_URL = 'dashboard/'
 LOGOUT_REDIRECT_URL = 'login/'
 
 AUTH_USER_MODEL = 'user.CustomUser'
+
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',  # Default
+)
+
+SOCIAL_AUTH_GITHUB_KEY = 'your-github-client-id'
+SOCIAL_AUTH_GITHUB_SECRET = 'your-github-client-secret'
+
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
 
 # Password validation

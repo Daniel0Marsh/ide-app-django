@@ -10,6 +10,7 @@ urlpatterns = [
     path('', include('user.urls')),
     path('', include('profile.urls')),
     path('', include('project.urls')),
+    path('auth/', include('social_django.urls', namespace='social')),
 ]
 
 if settings.DEBUG:

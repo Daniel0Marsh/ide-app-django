@@ -7,8 +7,18 @@ import os
 from enum import Enum
 
 
-
 default_user_dir = os.path.join(settings.BASE_DIR, "UserDir")
+
+
+class SenderEmailSettings(models.Model):
+    sender_email = models.EmailField(
+        max_length=255,
+        verbose_name="Sender Email Address",
+        help_text="The email address used as the sender for password reset and other emails."
+    )
+
+    def __str__(self):
+        return self.sender_email
 
 
 class DockerSessionStatus(Enum):

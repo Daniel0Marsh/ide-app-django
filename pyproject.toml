@@ -11,6 +11,7 @@ django = "^5.0.2"
 docker = "^7.0.0"
 pillow = "^11.0.0"
 markdown = "^3.7"
+social-auth-app-django = "^5.4.2"
 
 
 [build-system]

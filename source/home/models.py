@@ -11,13 +11,6 @@ class HomePage(models.Model):
     page_heading = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    send_from_email = models.EmailField(
-        max_length=254,
-        blank=True,
-        null=True,
-        help_text="This email address will be used as the 'from' address when sending automated emails (e.g., password reset)."
-    )
-
     def __str__(self):
         """
         String representation of the home page.

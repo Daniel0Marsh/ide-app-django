@@ -3,12 +3,11 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from .models import CustomUser
-from home.models import HomePage
+from .models import CustomUser, SenderEmailSettings
+from social_django.utils import psa
 
 
 class LoginView(View):
@@ -57,6 +56,18 @@ class RegisterView(View):
         return redirect('register')
 
 
+class GithubLoginView(View):
+    """Handle GitHub login."""
+    def get(self, request):
+        return redirect('social:begin', args=['github'])
+
+
+class GithubRegisterView(View):
+    """Handle GitHub registration."""
+    def get(self, request):
+        return redirect('social:begin', args=['github'])
+
+
 class LogoutView(View):
     """Handle user logout."""
 
@@ -85,7 +96,7 @@ class PasswordResetView(View):
             send_mail(
                 'Password Reset Request',
                 render_to_string('password_reset_email.html', {'user': user, 'reset_link': reset_link}),
-                HomePage.objects.first().send_from_email,
+                SenderEmailSettings.objects.first().sender_email,
                 [email]
             )
             messages.success(request, 'Password reset link has been sent to your email.')
@@ -111,7 +122,7 @@ class ForgotUsernameView(View):
             send_mail(
                 'Forgot Username Request',
                 render_to_string('username_reset_email.html', {'username': user.username}),
-                HomePage.objects.first().send_from_email or 'default@yourdomain.com',
+                SenderEmailSettings.objects.first().sender_email,
                 [email]
             )
             messages.success(request, 'Your username has been sent to your email.')
@@ -119,4 +130,3 @@ class ForgotUsernameView(View):
 
         messages.error(request, 'No user found with that email address.')
         return redirect('reset_username')
-
