@@ -16,11 +16,7 @@
             <div class="card-body text-center">
                 {% if user.is_authenticated %}
                 {% if is_own_profile %}
-                <button type="button" class="btn text-light p-0" data-bs-toggle="modal"
-                        data-bs-target="#editProfileModal">
-                    <i class="bi bi-pencil-square"></i>
-                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
-                </button>
+                <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-image mb-1">
                 {% else %}
                 <form method="post" action="">
                     {% csrf_token %}
@@ -383,81 +379,6 @@
                     <p class="text-center">No projects available.</p>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for Editing Profile -->
-<div class="modal fade" id="editProfileModal" data-bs-backdrop="static" tabindex="-1"
-     aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header text-light">
-                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-light">
-                <form method="POST" enctype="multipart/form-data" action="">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="profile_picture" class="form-label">Profile Picture</label>
-                        <input type="file" class="form-control bg-dark text-light" id="profile_picture"
-                               name="profile_picture">
-                    </div>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control bg-dark text-light" id="username" name="username"
-                               value="{{ user.username }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control bg-dark text-light" id="email" name="email"
-                               value="{{ user.email }}" required>
-                    </div>
-                    <button type="submit" name="edit_profile" class="btn btn-primary">Save changes</button>
-                </form>
-                <hr>
-                <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
-                        data-bs-target="#changePasswordModal">
-                    Change Password
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for Changing Password -->
-<div class="modal fade" id="changePasswordModal" data-bs-backdrop="static" tabindex="-1"
-     aria-labelledby="changePasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header text-light">
-                <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-light">
-                <form method="POST" action="">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="current_password" class="form-label">Current Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="current_password"
-                               name="current_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">New Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="new_password"
-                               name="new_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm_new_password" class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control bg-dark text-light" id="confirm_new_password"
-                               name="confirm_new_password" required>
-                    </div>
-                    <button type="submit" name="change_password" class="btn btn-primary">Update Password</button>
-                </form>
             </div>
         </div>
     </div>

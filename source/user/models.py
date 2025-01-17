@@ -44,7 +44,7 @@ class CustomUser(AbstractUser):
     """Custom user model extending the default user with additional fields."""
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
-    bio = models.TextField(null=True, blank=True)
+    bio = models.TextField(blank=True)
     activity_log = models.JSONField(default=dict, blank=True)
     project_dir = models.CharField(max_length=512, null=True, blank=True)
 
@@ -88,12 +88,16 @@ class Notification(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sent_notifications')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                               related_name='sent_notifications')
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    task = models.ForeignKey('project.Task', null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
-    project = models.ForeignKey('project.Project', null=True, blank=True, on_delete=models.SET_NULL, related_name='notifications')
-    message = models.TextField(null=True, blank=True,)
-    is_read = models.BooleanField(default=False)
+    notification_enabled = models.BooleanField(default=True,
+                                               help_text="Indicates whether this notification is enabled.")
+    task = models.ForeignKey('project.Task', null=True, blank=True, on_delete=models.SET_NULL,
+                             related_name='notifications')
+    project = models.ForeignKey('project.Project', null=True, blank=True, on_delete=models.SET_NULL,
+                                related_name='notifications')
+    message = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def mark_as_read(self):
@@ -107,7 +111,7 @@ class Notification(models.Model):
         self.save()
 
     def __str__(self):
-        return f"Notification for {self.user.username}: {self.message[:20]}"
+        return f"Notification for {self.user.username}"
 
 
 @receiver(post_save, sender=CustomUser)

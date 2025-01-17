@@ -28,8 +28,8 @@ class DockerSessionAdmin(admin.ModelAdmin):
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
     """Admin configuration for the Notification model."""
-    list_display = ('user', 'sender', 'notification_type', 'message', 'is_read', 'created_at')
-    list_filter = ('notification_type', 'is_read', 'created_at')
+    list_display = ('user', 'sender', 'notification_type', 'message', 'notification_enabled', 'created_at')
+    list_filter = ('notification_type', 'notification_enabled', 'created_at')
     search_fields = ('user__username', 'sender__username', 'message')
 
 

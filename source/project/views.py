@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
-from profile.views import add_activity_to_log
+from profile.views import add_activity_to_log, create_notification
 from user.models import Notification
 from .models import Project, Task
 from .utils import ProjectContainerManager
@@ -55,14 +55,16 @@ def update_task(request, project):
     task.status = request.POST.get('task_status')
     task.save()
 
-    Notification.objects.create(
+    create_notification(
         user=task.assigned_to,
-        sender=request.user,
         notification_type='task_update',
-        message=',',
+        sender=request.user,
         task=task,
         project=project,
+        message=''
     )
+
+    add_activity_to_log(request.user, project.project_name, f"updated {task.title}")
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -164,6 +166,7 @@ class ProjectView(TemplateView):
             description=request.POST.get('description', ''),
             status='not_started'
         )
+
         return redirect(request.META.get('HTTP_REFERER', '/'))
 
     @staticmethod

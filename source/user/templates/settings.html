@@ -1,87 +1,235 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Update Your Settings</h2>
 
-    <form method="post">
-        {% csrf_token %}
+<!-- User Settings -->
+<div class="container mb-5 py-4">
+    <h2 class="mb-4 text-center"> User Settings</h2>
 
-        <!-- Update Password -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title">Change Password</h5>
-            </div>
-            <div class="card-body">
-                {% if needs_password %}
-                    <div class="alert alert-warning" role="alert">
-                        You have not set a password yet. Please choose a strong one.
-                    </div>
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">New Password</label>
-                        <input type="password" class="form-control" id="new_password" name="new_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                    </div>
-                {% else %}
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">New Password (Optional)</label>
-                        <input type="password" class="form-control" id="new_password" name="new_password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirm Password (Optional)</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
-                    </div>
-                    <div class="alert alert-info" role="alert">
-                        Your current password is already set. You can reset it if needed.
-                    </div>
-                {% endif %}
-            </div>
+    <!-- Update User Info -->
+    <div class="card border border-primary shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">User Information</h5>
         </div>
-
-        <!-- Update Username -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title">Change Username</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="new_username" class="form-label">New Username</label>
-                    <input type="text" class="form-control" id="new_username" name="new_username" value="{{ user.username }}" required>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" action="">
+                {% csrf_token %}
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3"
+                         style="width: 60px; height: 60px; object-fit: cover;">
+                    <div>
+                        <label for="profile_picture" class="form-label text-light">Change Profile Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture">
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Update Email -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title">Change Email</h5>
-            </div>
-            <div class="card-body">
                 <div class="mb-3">
-                    <label for="new_email" class="form-label">New Email</label>
-                    <input type="email" class="form-control" id="new_email" name="new_email" value="{{ user.email }}" required>
+                    <label for="username" class="form-label text-light">Username</label>
+                    <input type="text" class="form-control" id="username" name="username"
+                           value="{{ user.username }}" required>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label text-light">Email</label>
+                    <input type="email" class="form-control" id="email" name="email"
+                           value="{{ user.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="bio" class="form-label text-light">Bio</label>
+                    <textarea class="form-control" id="bio" name="bio" rows="3">{{ user.bio }}</textarea>
+                </div>
+                <div class="text-end">
+                    <button type="submit" name="update_user_info" class="btn btn-secondary">Save Changes</button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- Submit Button -->
-        <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+    <!-- Notifications -->
+    <div class="card border border-primary shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Notification Preferences</h5>
         </div>
-    </form>
+        <div class="card-body">
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="new_follower_notifications" name="new_follower_notifications" {% if new_follower %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="new_follower_notifications">New Follower Notifications</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="task_notifications" name="task_notifications" {% if new_task %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="task_notifications">Task Notifications</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="message_notifications" name="message_notifications" {% if new_message %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="message_notifications">Message Notifications</label>
+                </div>
+                <div class="text-end">
+                    <button type="submit" name="update_notifications" class="btn btn-secondary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GitHub Account Integration -->
+    <div class="card border border-primary shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">GitHub Account</h5>
+        </div>
+        <div class="card-body">
+            {% if github_account %}
+                <!-- Show Linked Account Details -->
+                <p class="text-light">
+                    Your GitHub account is linked. Below are the details:
+                </p>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item m-1">
+                        <strong>Username:</strong> {{ github_account.extra_data.login }}
+                    </li>
+                    <li class="list-group-item m-1">
+                        <strong>Profile Link:</strong>
+                        <a href="https://github.com/{{ github_account.extra_data.login }}" target="_blank" class="btn btn-link text-light">
+                            View GitHub Profile
+                        </a>
+                    </li>
+                </ul>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <div class="text-end">
+                        <button type="submit" name="unlink_github" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Unlink GitHub Account
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <!-- Prompt to Link Account -->
+                <p class="text-light">
+                    Link your GitHub account to enable project synchronization, repository management, and other GitHub integration features.
+                </p>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <div class="text-end">
+                        <button type="submit" name="link_github" class="btn btn-secondary">
+                            <i class="bi bi-github"></i> Link GitHub Account
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Docker Settings -->
+    <div class="card border border-danger shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0 text-danger">Docker Settings</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="default_mem_limit" class="form-label text-light">Default Memory Limit</label>
+                    <input type="text"
+                           class="form-control"
+                           id="default_mem_limit"
+                           name="default_mem_limit"
+                           value="{{ user.default_mem_limit }}"
+                           {% if not user.is_admin %}disabled{% endif %}>
+                    <small class="form-text text-light">Set the maximum amount of memory (e.g., 512m, 2g) that a container can use by default.</small>
+                </div>
+                <div class="mb-3">
+                    <label for="default_memswap_limit" class="form-label text-light">Default Memory + Swap Limit</label>
+                    <input type="text"
+                           class="form-control"
+                           id="default_memswap_limit"
+                           name="default_memswap_limit"
+                           value="{{ user.default_memswap_limit }}"
+                           {% if not user.is_admin %}disabled{% endif %}>
+                    <small class="form-text text-light">Specify the total memory and swap limit (e.g., 1g, 4g) available to a container.</small>
+                </div>
+                <div class="mb-3">
+                    <label for="default_cpus" class="form-label text-light">Default CPUs</label>
+                    <input type="number"
+                           step="0.1"
+                           class="form-control"
+                           id="default_cpus"
+                           name="default_cpus"
+                           value="{{ user.default_cpus }}"
+                           {% if not user.is_admin %}disabled{% endif %}>
+                    <small class="form-text text-light">Define the number of CPU cores (e.g., 1.5) allocated to containers by default.</small>
+                </div>
+                <div class="mb-3">
+                    <label for="default_cpu_shares" class="form-label text-light">Default CPU Shares</label>
+                    <input type="number"
+                           class="form-control"
+                           id="default_cpu_shares"
+                           name="default_cpu_shares"
+                           value="{{ user.default_cpu_shares }}"
+                           {% if not user.is_admin %}disabled{% endif %}>
+                    <small class="form-text text-light">Set the relative CPU weight for containers (e.g., 1024 for default, higher for more priority).</small>
+                </div>
+                <div class="text-end">
+                    {% if not user.is_admin %}
+                        <p class="text-light">You are not permitted to change Docker settings.</p>
+                    {% else %}
+                        <button type="submit"
+                                name="update_docker_settings"
+                                class="btn btn-danger"
+                                {% if not user.is_admin %}disabled{% endif %}>
+                            Update Docker Settings
+                        </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Password -->
+    <div class="card border border-danger shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title text-danger mb-0">Update Password</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="current_password" class="form-label text-light">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_password" class="form-label text-light">New Password</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirm_new_password" class="form-label text-light">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                </div>
+                <div class="text-end">
+                    <button type="submit" name="update_password" class="btn btn-danger">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Account -->
+    <div class="card border border-danger shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title text-danger mb-0">Delete Account</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-danger fw-bold">
+                Warning: This action cannot be undone. Deleting your account will permanently remove all your saved data and projects.
+            </p>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="password" class="form-label text-light">Confirm Your Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="text-end">
+                    <button type="submit" name="delete_account" class="btn btn-danger">Delete Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<!-- Display error or success messages -->
-{% if messages %}
-    <div class="alert-container mt-3">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} mb-3" role="alert">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
 {% endblock %}

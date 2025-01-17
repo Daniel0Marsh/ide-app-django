@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.contrib.auth.tokens import default_token_generator
@@ -6,83 +8,192 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .models import CustomUser, SenderEmailSettings
 from social_django.utils import psa
+from social_django.models import UserSocialAuth
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.views.generic import TemplateView, View
+from .models import Notification
 
 
-class SettingsView(TemplateView):
-    """Handle settings page where user can update their details and set password."""
+class SettingsView(LoginRequiredMixin, TemplateView):
+    """Handle settings page where user can update their details and preferences."""
     template_name = 'settings.html'
+    login_url = 'login'
 
     def get(self, request, *args, **kwargs):
-        """Render settings form with user details and password input."""
+        """Render settings form with user details and preferences."""
+
+        try:
+            github_account = request.user.social_auth.get(provider='github')
+        except UserSocialAuth.DoesNotExist:
+            github_account = None
 
         context = {
             'needs_password': not request.user.password or request.user.password == ' ',
             'user': request.user,
+            'github_account': github_account,
+            'new_follower': request.user.notifications.filter(notification_type='new_follower', notification_enabled=True).first(),
+            'new_task': request.user.notifications.filter(notification_type='new_task', notification_enabled=True).first(),
+            'new_message': request.user.notifications.filter(notification_type='new_message', notification_enabled=True).first()
         }
 
         return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         """
-        Handle actions such as updating user information.
+        Handle actions such as updating user information, notifications, or account.
         """
         action_map = {
+            'update_user_info': self.update_user_info,
             'update_password': self.update_password,
-            'update_username': self.update_username,
-            'update_email': self.update_email,
+            'update_notifications': self.update_notifications,
+            'link_github': self.link_github,
+            'unlink_github': self.unlink_github,
+            'update_docker_settings': self.update_docker_settings,
+            'delete_account': self.delete_account,
         }
         action = next((key for key in action_map if key in request.POST), None)
         if action:
             return action_map[action](request)
         return HttpResponse("Invalid action", status=400)
 
-    def update_password(self, request):
+    @staticmethod
+    def update_user_info(request):
+        """Update user profile information."""
+        user = request.user
+        profile_picture = request.FILES.get('profile_picture', None)
+        if profile_picture:
+            fs = FileSystemStorage()
+            filename = fs.save(profile_picture.name, profile_picture)
+            user.profile_picture = fs.url(filename)
+
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        bio = request.POST.get('bio')
+
+        if username:
+            user.username = username
+        if email:
+            user.email = email
+        if bio is not None:
+            user.bio = bio
+
+        user.save()
+        messages.success(request, "Your profile has been updated.")
+        return redirect('settings', username=request.user.username)
+
+    @staticmethod
+    def update_password(request):
         """Update the user's password."""
+        current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
+        confirm_password = request.POST.get('confirm_new_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Incorrect current password.")
+            return redirect('settings', username=request.user.username)
 
         if new_password != confirm_password:
             messages.error(request, "Passwords do not match.")
-            return redirect('settings')
+            return redirect('settings', username=request.user.username)
 
         user = request.user
         user.set_password(new_password)
         user.save()
         update_session_auth_hash(request, user)  # Keep user logged in after password change
         messages.success(request, "Your password has been updated.")
-        return redirect('settings')
+        return redirect('settings', username=request.user.username)
 
-    def update_username(self, request):
-        """Update the user's username."""
-        new_username = request.POST.get('new_username')
+    @staticmethod
+    def update_notifications(request):
+        """Update notification preferences."""
         user = request.user
 
-        if User.objects.filter(username=new_username).exists():
-            messages.error(request, "Username already taken.")
-            return redirect('settings')
+        # Update or create the notification settings for each notification type
+        Notification.objects.update_or_create(
+            user=user,
+            notification_type='new_follower',
+            defaults={'notification_enabled': 'new_follower_notifications' in request.POST}
+        )
 
-        user.username = new_username
-        user.save()
-        messages.success(request, "Your username has been updated.")
-        return redirect('settings')
+        Notification.objects.update_or_create(
+            user=user,
+            notification_type='new_task',
+            defaults={'notification_enabled': 'task_notifications' in request.POST}
+        )
 
-    def update_email(self, request):
-        """Update the user's email."""
-        new_email = request.POST.get('new_email')
+        Notification.objects.update_or_create(
+            user=user,
+            notification_type='new_message',
+            defaults={'notification_enabled': 'message_notifications' in request.POST}
+        )
+
+        messages.success(request, "Notification preferences updated.")
+        return redirect('settings', username=request.user.username)
+
+    @staticmethod
+    def link_github(request):
+        """Handle linking the user's GitHub account."""
         user = request.user
+        if user.is_authenticated:
+            # Check if the user already has a linked GitHub account
+            if user.social_auth.filter(provider='github').exists():
+                messages.info(request, "Your GitHub account is already linked.")
+            else:
+                # You can trigger the GitHub login if the account is not linked
+                messages.info(request, "You will now be redirected to link your GitHub account.")
+                return redirect('social:begin', args=['github'])
+        else:
+            messages.error(request, "You must be logged in to link your GitHub account.")
 
-        if User.objects.filter(email=new_email).exists():
-            messages.error(request, "Email is already in use.")
-            return redirect('settings')
+        return redirect('settings', username=request.user.username)
 
-        user.email = new_email
+    @staticmethod
+    def unlink_github(request):
+        """Handle unlinking the user's GitHub account."""
+        user = request.user
+        if user.is_authenticated:
+            try:
+                # Check if the user has a linked GitHub account
+                github_account = user.social_auth.get(provider='github')
+                github_account.delete()
+                messages.success(request, "GitHub account unlinked successfully.")
+            except UserSocialAuth.DoesNotExist:
+                messages.info(request, "No linked GitHub account found.")
+        else:
+            messages.error(request, "You must be logged in to unlink your GitHub account.")
+
+        return redirect('settings', username=request.user.username)
+
+    @staticmethod
+    def update_docker_settings(request):
+        """Update Docker-related settings for the user (admin only)."""
+        user = request.user
+        if not user.is_admin:
+            messages.error(request, "You do not have permission to update Docker settings.")
+            return redirect('settings', username=request.user.username)
+
+        user.default_mem_limit = request.POST.get('default_mem_limit', user.default_mem_limit)
+        user.default_memswap_limit = request.POST.get('default_memswap_limit', user.default_memswap_limit)
+        user.default_cpus = request.POST.get('default_cpus', user.default_cpus)
+        user.default_cpu_shares = request.POST.get('default_cpu_shares', user.default_cpu_shares)
+
         user.save()
-        messages.success(request, "Your email has been updated.")
-        return redirect('settings')
+        messages.success(request, "Docker settings updated successfully.")
+        return redirect('settings', username=request.user.username)
+
+    @staticmethod
+    def delete_account(request):
+        """Delete the user's account."""
+        password = request.POST.get('password')
+        if not request.user.check_password(password):
+            messages.error(request, "Incorrect password.")
+            return redirect('settings', username=request.user.username)
+
+        request.user.delete()
+        messages.success(request, "Your account has been deleted.")
+        return redirect('home')
 
 
 class LoginView(View):
