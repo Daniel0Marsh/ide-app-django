@@ -40,6 +40,7 @@ class Project(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100)
+    repository = models.CharField(max_length=100, blank=True, null=True)
     project_description = TextField(blank=True, null=True)
     selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')

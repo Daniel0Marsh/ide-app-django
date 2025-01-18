@@ -1,6 +1,8 @@
 import os
 import shutil
 import markdown
+from github import Github
+from social_django.models import UserSocialAuth
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,27 +21,36 @@ from .utils import ProjectContainerManager
 
 def get_project_tree(project_path):
     """
-    Generates a hierarchical representation of a project's directory structure.
+    Generates a hierarchical representation of a project's directory structure,
+    excluding hidden files and folders (those starting with a dot).
     """
     project_tree = []
     root_dir = os.path.basename(project_path)
     for root, dirs, files in os.walk(project_path):
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+
         relative_path = os.path.relpath(root, project_path)
         if relative_path == '.':
             relative_path = ''
+
         node = {
             'name': root_dir if relative_path == '' else os.path.join(root_dir, relative_path),
             'type': 'directory',
             'children': []
         }
+
         for file in files:
-            file_path = os.path.join(root, file)
-            node['children'].append({
-                'name': file,
-                'type': 'file',
-                'path': file_path
-            })
+            # Skip hidden files
+            if not file.startswith('.'):
+                file_path = os.path.join(root, file)
+                node['children'].append({
+                    'name': file,
+                    'type': 'file',
+                    'path': file_path
+                })
+
         project_tree.append(node)
+
     return project_tree
 
 
@@ -82,25 +93,11 @@ class ProjectView(TemplateView):
             with open(readme_path, "r", encoding="utf-8") as readme_file:
                 readme_content = markdown.markdown(readme_file.read())
 
-        if isinstance(request.user, AnonymousUser):
-            following_users = followers_users = chat_rooms = all_users = []
-            enabled_notifications = None
-        else:
-            following_users = request.user.following.all()
-            followers_users = request.user.followers.all()
-            chat_rooms = ChatRoom.objects.filter(participants=request.user)
-            all_users = (following_users | followers_users).distinct()
-            enabled_notifications = ActivityLog.objects.filter(user=request.user, notification_enabled=False)
-
         context = {
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
             'tasks': current_project.tasks.all(),
-            'recent_chats': chat_rooms,
-            'all_users': all_users,
-            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'enabled_notifications': enabled_notifications
         }
 
         return render(request, self.template_name, context)
@@ -285,6 +282,69 @@ class IdeView(LoginRequiredMixin, TemplateView):
         followers_users = request.user.followers.all()
         chat_rooms = ChatRoom.objects.filter(participants=request.user)
 
+        # Check if the project has a valid repository
+        is_git_repo = current_project.repository if current_project.repository else None
+
+        # Initialize git_commits and uncommitted_files to empty lists
+        git_commits = []
+        uncommitted_files = []
+
+        if is_git_repo:
+            try:
+                github_account = request.user.social_auth.get(provider='github')
+                token = github_account.access_token  # Get the access token from the GitHub account
+
+                # Use the token to authenticate with the GitHub API
+                g = Github(token)
+
+                # Access the repository using the repo name (replace 'owner' with the GitHub repository owner)
+                repo = g.get_repo(current_project.repository)
+
+                # Fetch commits from GitHub repository
+                commits = repo.get_commits()
+
+                git_commits = [
+                    {
+                        'message': commit.commit.message,
+                        'date': commit.committer.date.strftime('%Y-%m-%d %H:%M:%S'),
+                        'author': commit.committer.name,
+                        'id': commit.sha,
+                        'files_changed': len(commit.files)
+                    } for commit in commits
+                ]
+
+                # Fetch files from the repository to compare with the local project files
+                contents = repo.get_contents("")  # Get all files in the root of the repository
+                repo_files = {content.path: content.sha for content in contents}
+
+                # Now, compare the local project files with the ones from the repository
+                local_files = []  # Assume this contains the list of local files (either from database or file system)
+
+                # Compare files
+                for local_file in local_files:
+                    if local_file not in repo_files:
+                        uncommitted_files.append({
+                            'file': local_file,
+                            'change_type': 'Untracked'
+                        })
+                    else:
+                        # Compare file content or modification date if needed
+                        # For simplicity, we'll assume the file is uncommitted if it doesn't match
+                        if local_file_sha != repo_files.get(local_file):
+                            uncommitted_files.append({
+                                'file': local_file,
+                                'change_type': 'Modified'
+                            })
+
+            except UserSocialAuth.DoesNotExist:
+                github_account = None
+                git_commits = []
+                uncommitted_files = []
+            except Exception as e:
+                # Handle any other exceptions, such as issues with accessing the repository
+                git_commits = []
+                uncommitted_files = []
+
         context = {
             'all_projects': Project.objects.all(),
             'current_project': current_project,
@@ -296,6 +356,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'recent_chats': chat_rooms,
             'all_users': (following_users | followers_users).distinct(),
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
+            'git_commits': git_commits,
+            'is_git_repo': is_git_repo,
+            'uncommitted_files': uncommitted_files,
         }
 
         return render(request, self.template_name, context)
@@ -317,6 +380,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'download_project': self.download_project,
             'update_theme': self.update_theme,
             'update_task': update_task,
+            'commit_project': self.commit_project,
+            'commit_push_project': self.commit_push_project
+
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -324,6 +390,57 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return action_map[action](request, project)
 
         return HttpResponse("Invalid action", status=400)
+
+    @staticmethod
+    def commit_project(request, project):
+        commit_message = request.POST.get('commit_message')
+
+        if not commit_message:
+            return HttpResponse("Commit message is required", status=400)
+
+        try:
+            github_account = request.user.social_auth.get(provider='github')
+            token = github_account.extra_data.get('access_token')
+
+            g = Github(token)
+            repo = g.get_repo(project.repository)
+
+            repo.create_git_commit(
+                commit_message,
+                repo.get_git_tree('main'),
+                [repo.get_git_ref('heads/main').object]
+            )
+        except Exception as e:
+            return HttpResponse(f"Error committing: {str(e)}", status=500)
+
+        return HttpResponse("Commit successful", status=200)
+
+    @staticmethod
+    def commit_push_project(request, project):
+        commit_message = request.POST.get('commit_message')
+        if not commit_message:
+            return HttpResponse("Commit message is required", status=400)
+
+        try:
+            github_account = request.user.social_auth.get(provider='github')
+            token = github_account.extra_data.get('access_token')
+
+            g = Github(token)
+            repo = g.get_repo(project.repository)
+
+            branch = repo.get_branch('main')
+            base_sha = branch.commit.sha
+            new_commit = repo.create_git_commit(
+                commit_message,
+                repo.get_git_tree(base_sha),
+                [repo.get_git_ref('heads/main').object]
+            )
+
+            repo.get_git_ref('heads/main').edit(new_commit.sha)
+        except Exception as e:
+            return HttpResponse(f"Error committing and pushing: {str(e)}", status=500)
+
+        return HttpResponse("Commit and push successful", status=200)
 
     @staticmethod
     def update_theme(request, project):

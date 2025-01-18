@@ -45,20 +45,16 @@ def user_activity(user_profile, selected_year=None):
     """
     current_year = now().year
     selected_year = selected_year or current_year
-
-    # Calculate the range of months for the selected year
     start_date = now().date().replace(year=int(selected_year), month=1, day=1)
     end_date = now().date().replace(year=int(selected_year), month=12, day=31)
     recent_activities = ActivityLog.objects.filter(user=user_profile).order_by('-created_at')[:5]
 
-    # Retrieve activities for the selected year
     activity_logs = ActivityLog.objects.filter(
         user=user_profile,
         created_at__gte=start_date,
         created_at__lte=end_date
     )
 
-    # Create a grid of activities by week
     activity_grid = [[0] * 52 for _ in range(7)]
 
     for log in activity_logs:
@@ -125,9 +121,15 @@ class ProfileView(TemplateView):
         activity_days, recent_activity, years = user_activity(user_profile)
 
         github_repos = []
-        if user_profile == request.user and not isinstance(request.user, AnonymousUser):
+        if not isinstance(request.user, AnonymousUser):
+            # Fetch the GitHub repositories for the viewed user (either their own or another user's)
             try:
-                access_token = request.user.social_auth.get(provider='github').extra_data['access_token']
+                if user_profile == request.user:
+                    access_token = request.user.social_auth.get(provider='github').extra_data['access_token']
+                else:
+                    # If it's another user's profile, fetch the GitHub repos for that user (assuming OAuth token is available)
+                    access_token = user_profile.social_auth.get(provider='github').extra_data['access_token']
+
                 github = Github(access_token)
                 github_repos = github.get_user().get_repos()
             except Exception as e:
@@ -169,6 +171,9 @@ class ProfileView(TemplateView):
     @staticmethod
     @csrf_exempt
     def user_activity_ajax(request, username):
+        """
+        method to handle changing years for activity calendar using ajax requests
+        """
         user_profile = get_object_or_404(CustomUser, username=username)
         selected_year = request.GET.get('year')
 
@@ -228,7 +233,7 @@ class ProfileView(TemplateView):
         with open(os.path.join(project_path, "README.md"), "w") as readme_file:
             readme_file.write(f"# {project_name}\n\n{project_description or 'No description provided.'}")
 
-        add_activity_to_log(request.user, activity_type=created_project, sender=None, task=None, project=project.project_name, message=None)
+        add_activity_to_log(request.user, activity_type='created_project', sender=None, task=None, project=project.project_name, message=None)
 
         return redirect('project', username=request.user.username, project_id=project.id)
 
@@ -249,6 +254,7 @@ class ProfileView(TemplateView):
             user=request.user,
             project_name=repo_name,
             project_path=project_dir,
+            repository=repo_url,
             project_description=f"Cloned from {repo_url}",
         )
 
@@ -258,8 +264,8 @@ class ProfileView(TemplateView):
             print(f"Error while cloning repository: {e}")
             return HttpResponse("Error cloning repository", status=500)
 
-        add_activity_to_log(request.user, activity_type=cloned_project, sender=None, task=None,
-                            project=project.project_name, message=None)
+        add_activity_to_log(request.user, activity_type='cloned_project', sender=None, task=None,
+                            project=project, message=None)
 
         return redirect('ide', username=request.user.username, project_id=project.id)
 
@@ -295,7 +301,7 @@ class ProfileView(TemplateView):
         else:
             user.follow(target_user)
 
-            add_activity_to_log(user=target_user, activity_type=new_follower, sender=user, task=None,
+            add_activity_to_log(user=target_user, activity_type='new_follower', sender=user, task=None,
                                 project=None, message=None)
 
         return redirect('profile', username=target_username)

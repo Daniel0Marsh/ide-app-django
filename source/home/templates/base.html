@@ -58,7 +58,7 @@
 
             <!-- Notifications Dropdown -->
             {% if user.is_authenticated %}
-            <div class="dropdown me-4">
+            <div class="dropdown me-4" data-bs-theme="dark">
                 <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
                         data-bs-target="#notificationsModal">
                     <i class="bi bi-bell-fill"></i>
@@ -66,7 +66,7 @@
             </div>
             {% endif %}
 
-            <div class="dropdown me-4">
+            <div class="dropdown me-4" data-bs-theme="dark">
                 {% if user.is_authenticated %}
                 <a href="{% url 'profile' username=user.username %}"
                    class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
@@ -92,7 +92,7 @@
                             {% csrf_token %}
                             <button type="submit" class="dropdown-item">
                                 Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-dark"></i>
+                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
                             </button>
                         </form>
                     </li>

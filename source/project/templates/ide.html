@@ -84,6 +84,10 @@
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    <button type="button" class="btn mx-auto btn-dark mb-4" id="gitSidebarCollapse" data-bs-toggle="tooltip"
+            title="Git Commits">
+        <i class="bi bi-git fs-5 text-light"></i>
+    </button>
     <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip"
             title="Tasks">
         <i class="bi bi-card-checklist fs-5 text-light"></i>
@@ -104,96 +108,226 @@
     </a>
 </div>
 
+<!-- Project Tree Form -->
+<form method="post" enctype="multipart/form-data"
+      action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+      class="sidebar shadow border-end border-dark" id="filesSidebar" style="height: 100vh; overflow-y: auto;">
+    {% csrf_token %}
+    <div class="px-3 py-2">
+        <h5 class="text-light">Project Files</h5>
+        <hr class="border-secondary">
+
+        <!-- Project Tree -->
+        <ul class="list-unstyled">
+            {% for node in project_tree %}
+            <li>
+                {% if node.type == 'directory' %}
+                <!-- Directory -->
+                <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#{{ node.name|slugify }}" aria-expanded="true"
+                        aria-controls="{{ node.name|slugify }}">
+                    <i class="bi bi-folder"></i><i class="bi bi-folder-minus d-none"></i> {{ node.name }}
+                </button>
+                <ul class="collapse show list-unstyled ms-4" id="{{ node.name|slugify }}">
+                    {% for child in node.children %}
+                    <li>
+                        {% if child.type == 'directory' %}
+                        <!-- Subdirectory -->
+                        <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#{{ child.name|slugify }}" aria-expanded="true"
+                                aria-controls="{{ child.name|slugify }}">
+                            <i class="bi bi-folder"></i><i class="bi bi-folder-minus d-none"></i> {{ child.name }}
+                        </button>
+                        <ul class="collapse show list-unstyled ms-4" id="{{ child.name|slugify }}">
+                            {% for grandchild in child.children %}
+                            {% if grandchild.type == 'file' %}
+                            <!-- File in Subdirectory -->
+                            <li>
+                                <button class="btn btn-sm file-item" type="submit" name="open_file"
+                                        value="{{ grandchild.path }}">
+                                    <i class="bi bi-file-earmark-code"></i> {{ grandchild.name }}
+                                </button>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                        {% elif child.type == 'file' %}
+                        <!-- File -->
+                        <button class="btn btn-sm file-item" type="submit" name="open_file"
+                                value="{{ child.path }}">
+                            <i class="bi bi-file-earmark-code"></i> {{ child.name }}
+                        </button>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% elif node.type == 'file' %}
+                <!-- Root-Level File -->
+                <button class="btn btn-sm file-item" type="submit" name="open_file"
+                        value="{{ node.path }}">
+                    <i class="bi bi-file-earmark-code"></i> {{ node.name }}
+                </button>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</form>
+
 <!-- Task Sidebar -->
-<div class="sidebar shadow-end border-end border-dark" id="tasksSidebar">
-    <h5 class="p-2">Project Tasks</h5>
-    {% if tasks %}
-    <ul class="list-group p-2">
-        {% for task in tasks %}
-        <li class="list-group-item" style="background-color: rgba(255, 255, 255, 0.1);">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <a href="#"
-                   class="text-light"
-                   data-bs-toggle="modal"
-                   data-bs-target="#updateTaskModal"
-                   data-task-id="{{ task.id }}"
-                   data-task-title="{{ task.title }}"
-                   data-task-description="{{ task.description }}"
-                   data-task-status="{{ task.status }}">
-                    <strong>{{ task.title }}</strong>
-                </a>
-                <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+<div class="sidebar shadow border-end border-dark" id="tasksSidebar" style="height: 100vh; overflow-y: auto;">
+    <div class="px-3 py-2">
+        <h5 class="text-light">Project Tasks</h5>
+        <hr class="border-secondary">
+
+        {% if tasks %}
+        <!-- Task List -->
+        <ul class="list-group list-group-flush">
+            {% for task in tasks %}
+            <li class="list-group-item bg-transparent border-secondary text-light">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <!-- Task Title -->
+                    <a href="#"
+                       class="text-decoration-none text-light fw-bold"
+                       data-bs-toggle="modal"
+                       data-bs-target="#updateTaskModal"
+                       data-task-id="{{ task.id }}"
+                       data-task-title="{{ task.title }}"
+                       data-task-description="{{ task.description }}"
+                       data-task-status="{{ task.status }}">
+                        {{ task.title }}
+                    </a>
+                    <!-- Task Status Badge -->
+                    <span class="badge bg-secondary">
+                        {{ task.get_status_display }}
+                    </span>
+                </div>
+                <!-- Task Details -->
+                <p class="mb-1">{{ task.description }}</p>
+                <div class="small">
+                    <span>Assigned to: <strong>{{ task.assigned_to.username }}</strong></span><br>
+                    <span>Assigned by: <strong>{{ task.assigned_by.username }}</strong></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <!-- No Tasks Message -->
+        <div class="text-center py-5">
+            <p class="text-light">No tasks have been assigned to this project yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Git Commits Sidebar -->
+<div class="sidebar shadow border-end border-dark" id="gitCommitsSidebar" style="height: 100vh; overflow-y: auto;">
+    {% if is_git_repo %}
+    <div class="px-3 py-2">
+        <h5 class="text-light">Git Commits</h5>
+        <hr class="border-secondary">
+
+        <!-- Git Commits Section -->
+        <div class="mb-4">
+            <div class="card btn-dark text-light border-secondary p-1">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#git-commits-section" aria-controls="git-commits-section">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <label for="select-all-commits" class="form-check-label text-light mb-0">
+                        <input type="checkbox" class="form-check-input" id="select-all-commits" checked>
+                        Git Commits
+                    </label>
+                </div>
             </div>
-            <p class="mb-1 text-light">{{ task.description }}</p>
-            <div class="small text-light">
-                Assigned to: {{ task.assigned_to.username }} <br>
-                Assigned by: {{ task.assigned_by.username }}
+            <div class="collapse show" id="git-commits-section">
+                <form id="commit-selection-form" method="POST" class="mt-2">
+                    <ul class="list-group">
+                        {% for commit in git_commits %}
+                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex flex-column">
+                            <div class="d-flex align-items-start">
+                                <input type="checkbox" class="form-check-input me-2" name="selected_commits" value="{{ commit.id }}" id="commit-{{ forloop.counter }}">
+                                <label class="form-check-label w-100" for="commit-{{ forloop.counter }}">
+                                    <strong>{{ commit.message }}</strong>
+                                    <small class="d-block text-muted">Author: {{ commit.author }}</small>
+                                </label>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">Commit ID: {{ commit.id }}</small>
+                                <span class="badge bg-secondary">{{ commit.date }}</span>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No Git commits available.</li>
+                        {% endfor %}
+                    </ul>
+                </form>
             </div>
-        </li>
-        {% endfor %}
-    </ul>
+        </div>
+
+        <!-- Uncommitted Files Section -->
+        <div class="mb-5">
+            <div class="card btn-dark text-light border-secondary p-1">
+                <div class="d-flex align-items-center text-light border-secondary">
+                    <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#uncommitted-files-section" aria-controls="uncommitted-files-section">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <label for="select-all-files" class="form-check-label text-light mb-0">
+                        <input type="checkbox" class="form-check-input" id="select-all-files" checked>
+                        Uncommitted Files
+                    </label>
+                </div>
+            </div>
+            <div class="collapse show" id="uncommitted-files-section">
+                <form id="uncommitted-files-form" method="POST" class="mt-2">
+                    <ul class="list-group">
+                        {% for file in uncommitted_files %}
+                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input me-2" name="selected_files" value="{{ file.file }}" id="file-{{ forloop.counter }}">
+                            <label class="form-check-label w-100" for="file-{{ forloop.counter }}">
+                                <strong>{{ file.file }}</strong>
+                                <span class="badge bg-danger ms-2">{{ file.change_type }}</span>
+                            </label>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No uncommitted files available.</li>
+                        {% endfor %}
+                    </ul>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Commit Message Input -->
+        <div class="mt-5">
+            <h6 class="text-light">New Commit</h6>
+            <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}">
+                {% csrf_token %}
+                <textarea class="form-control bg-dark text-light border-secondary mb-3" name="commit_message" rows="20" placeholder="Enter your commit message..." required></textarea>
+                <div class="d-flex">
+                    <button type="submit" name="commit_project" class="btn btn-secondary me-2">Commit</button>
+                    <button type="submit" name="commit_push_project" class="btn btn-outline-secondary">Commit & Push</button>
+                </div>
+            </form>
+        </div>
+    </div>
     {% else %}
-    <div class="text-center">
-        <p class="text-light">No tasks have been assigned to this project yet.</p>
+    <!-- Create Git Repository Section -->
+    <div class="px-3 py-2">
+        <h5 class="text-light">Create a Git Repository</h5>
+        <hr class="border-secondary">
+        <form method="post" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="repo_name" class="form-label text-light">Repository Name</label>
+                <input type="text" class="form-control bg-dark text-light border-secondary" id="repo_name" name="repo_name" required>
+            </div>
+            <button type="submit" name="create_git_repo" class="btn btn-secondary">Create Repository</button>
+        </form>
     </div>
     {% endif %}
 </div>
 
-<!-- Project Tree Form -->
-<form method="post" enctype="multipart/form-data"
-      action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
-      class="sidebar active shadow-end border-end border-dark" id="filesSidebar">
-    {% csrf_token %}
-    <h5 class="p-2">Project Files</h5>
-    <ul>
-        {% for node in project_tree %}
-        {% if node.type == 'directory' %}
-        <li>
-            <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#{{node.name|slugify}}" aria-expanded="true">
-                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{node.name}}
-            </button>
-            <ul class="collapse show" id="{{node.name|slugify}}">
-                {% for child in node.children %}
-                {% if child.type == 'directory' %}
-                <li>
-                    <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
-                            data-bs-target="#{{ child.name|slugify }}" aria-expanded="true">
-                        <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> {{child.name}}
-                    </button>
-                    <ul class="collapse show" id="{{ child.name|slugify }}">
-                        {% for grandchild in child.children %}
-                        {% if grandchild.type == 'file' %}
-                        <li>
-                            <button class="btn btn-sm file-item" type="submit" name="open_file"
-                                    value="{{grandchild.path}}">
-                                <i class="bi bi-file-earmark-code"></i> {{grandchild.name}}
-                            </button>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% elif child.type == 'file' %}
-                <li>
-                    <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{child.path}}">
-                        <i class="bi bi-file-earmark-code"></i> {{child.name}}
-                    </button>
-                </li>
-                {% endif %}
-                {% endfor %}
-            </ul>
-        </li>
-        {% elif node.type == 'file' %}
-        <li>
-            <button class="btn btn-sm file-item" type="submit" name="open_file" value="{{node.path}}">
-                <i class="bi bi-file-earmark-code"></i> {{node.name}}
-            </button>
-        </li>
-        {% endif %}
-        {% endfor %}
-    </ul>
-</form>
 
 <!--- This is the main CodeMirror IDE section including the nave buttons--->
 <form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
@@ -485,45 +619,37 @@
 
     // Function to update the project tree
     function updateProjectTree() {
-        // Before updating the tree, store the current state of collapse elements
         document.querySelectorAll('.collapse').forEach(collapseElement => {
             const id = collapseElement.id;
             collapseState[id] = collapseElement.classList.contains('show');
         });
 
-        // Save the scroll position of the filesSidebar to avoid shifting
         const filesSidebar = document.querySelector('#filesSidebar');
         const scrollPosition = filesSidebar.scrollTop;
 
         fetch(window.location.href, {
             method: 'GET',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest',  // This tells Django it's an AJAX request
+                'X-Requested-With': 'XMLHttpRequest',
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.project_tree) {
                 const treeContainer = document.querySelector('#filesSidebar ul');
-                treeContainer.innerHTML = ''; // Clear the existing tree
-
-                // Generate new tree HTML
+                treeContainer.innerHTML = '';
                 const treeHTML = generateTreeHTML(data.project_tree);
                 treeContainer.innerHTML = treeHTML;
 
-                // Reapply the saved collapse state
                 document.querySelectorAll('.collapse').forEach(collapseElement => {
                     const id = collapseElement.id;
                     if (collapseState[id]) {
-                        // If the state was 'expanded', reapply the 'show' class
                         collapseElement.classList.add('show');
                     } else {
-                        // Otherwise, collapse it
                         collapseElement.classList.remove('show');
                     }
                 });
 
-                // Reinitialize collapse buttons
                 document.querySelectorAll('.btn.folder-btn').forEach(button => {
                     const targetCollapse = document.querySelector(button.getAttribute('data-bs-target'));
                     if (targetCollapse && targetCollapse.classList.contains('show')) {
@@ -533,14 +659,12 @@
                     }
                 });
 
-                // Reapply the scroll position to prevent visual movement
                 filesSidebar.scrollTop = scrollPosition;
             }
         })
         .catch(error => console.error('Error fetching project tree:', error));
     }
 
-    // Function to generate tree HTML from the project tree structure
     function generateTreeHTML(nodes) {
         let html = '';
         nodes.forEach(node => {
@@ -548,10 +672,10 @@
                 html += `<li>
                             <button class="btn btn-sm folder-btn" type="button" data-bs-toggle="collapse"
                                     data-bs-target="#${slugify(node.name)}" aria-expanded="false">
-                                <i class="bi bi-folder-plus"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
+                                <i class="bi bi-folder"></i><i class="bi bi-folder-minus d-none"></i> ${node.name}
                             </button>
-                            <ul class="collapse" id="${slugify(node.name)}">
-                                ${generateTreeHTML(node.children)}  <!-- Recursive call -->
+                            <ul class="collapse list-unstyled ms-4" id="${slugify(node.name)}">
+                                ${generateTreeHTML(node.children)}
                             </ul>
                           </li>`;
             } else if (node.type === 'file') {
@@ -565,53 +689,66 @@
         return html;
     }
 
-    // Function to safely create slugs for the element IDs
     function slugify(text) {
         return text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
     }
+</script>
 
+<!-- Sidebar toggle js logic -->
+<script>
     document.addEventListener("DOMContentLoaded", () => {
         const sidebarCollapse = document.getElementById("sidebarCollapse");
         const taskSidebarCollapse = document.getElementById("taskSidebarCollapse");
+        const gitSidebarCollapse = document.getElementById("gitSidebarCollapse");
         const filesSidebar = document.getElementById("filesSidebar");
         const tasksSidebar = document.getElementById("tasksSidebar");
-        const body = document.body; // Used for applying layout classes
+        const gitCommitsSidebar = document.getElementById("gitCommitsSidebar");
+        const body = document.body;
 
         sidebarCollapse.addEventListener("click", () => {
             filesSidebar.classList.toggle("active");
-            tasksSidebar.classList.remove("active"); // Close the other sidebar
-
-            // Update body class for layout adjustments
+            tasksSidebar.classList.remove("active");
+            gitCommitsSidebar.classList.remove("active");
             updateLayoutClasses();
         });
 
         taskSidebarCollapse.addEventListener("click", () => {
             tasksSidebar.classList.toggle("active");
-            filesSidebar.classList.remove("active"); // Close the other sidebar
+            filesSidebar.classList.remove("active");
+            gitCommitsSidebar.classList.remove("active");
+            updateLayoutClasses();
+        });
 
-            // Update body class for layout adjustments
+        gitSidebarCollapse.addEventListener("click", () => {
+            gitCommitsSidebar.classList.toggle("active");
+            filesSidebar.classList.remove("active");
+            tasksSidebar.classList.remove("active");
             updateLayoutClasses();
         });
 
         function updateLayoutClasses() {
             const isFilesSidebarActive = filesSidebar.classList.contains("active");
             const isTasksSidebarActive = tasksSidebar.classList.contains("active");
+            const isGitCommitsSidebarActive = gitCommitsSidebar.classList.contains("active");
 
-            // Remove all sidebar-related classes
-            body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "both-sidebars-active");
+            body.classList.remove("files-sidebar-active", "tasks-sidebar-active", "git-commits-sidebar-active", "both-sidebars-active");
 
-            // Apply appropriate class based on active sidebars
-            if (isFilesSidebarActive && isTasksSidebarActive) {
+            if (isFilesSidebarActive && isTasksSidebarActive && isGitCommitsSidebarActive) {
                 body.classList.add("both-sidebars-active");
             } else if (isFilesSidebarActive) {
                 body.classList.add("files-sidebar-active");
             } else if (isTasksSidebarActive) {
                 body.classList.add("tasks-sidebar-active");
+            } else if (isGitCommitsSidebarActive) {
+                body.classList.add("git-commits-sidebar-active");
             }
         }
     });
+</script>
 
-    // JavaScript to Populate Modal
+<!-- task model js logic -->
+<script>
+    // Populate Modal with task details
     document.addEventListener('DOMContentLoaded', () => {
         const updateTaskModal = document.getElementById('updateTaskModal');
         updateTaskModal.addEventListener('show.bs.modal', (event) => {
@@ -621,19 +758,22 @@
             const taskDescription = button.getAttribute('data-task-description');
             const taskStatus = button.getAttribute('data-task-status');
 
-            // Populate the modal fields
             document.getElementById('task_id').value = taskId;
             document.getElementById('task_title').value = taskTitle;
             document.getElementById('task_description').value = taskDescription;
             document.getElementById('task_status').value = taskStatus;
         });
     });
+</script>
 
+<script>
     // Update the project tree every 3 seconds
     setInterval(updateProjectTree, 3000);
+</script>
 
+<!-- update CodeMirror theme js logic -->
+<script>
     var editor;
-
     function changeTheme(theme) {
         editor.setOption("theme", theme);
         document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
@@ -666,23 +806,11 @@
             changeSyntax(initialSyntax);
         }
     });
+</script>
 
-    document.getElementById("sidebarCollapse").addEventListener("click", function () {
-        document.getElementById("sidebar").classList.toggle("active");
-    });
-
-    document.querySelectorAll('.collapse').forEach(function(collapse) {
-        collapse.addEventListener('show.bs.collapse', function() {
-            this.previousElementSibling.querySelector('.bi-folder-plus').classList.add('d-none');
-            this.previousElementSibling.querySelector('.bi-folder-minus').classList.remove('d-none');
-        });
-
-        collapse.addEventListener('hide.bs.collapse', function() {
-            this.previousElementSibling.querySelector('.bi-folder-plus').classList.remove('d-none');
-            this.previousElementSibling.querySelector('.bi-folder-minus').classList.add('d-none');
-        });
-    });
-
+<!-- terminal expand collapse js logic -->
+<script>
+    // Toggle offcanvas height between 50% and 100%
     function toggleOffcanvasHeight() {
         const offcanvasElement = document.getElementById('offcanvasBottom');
         if (offcanvasElement.classList.contains('h-50')) {
@@ -693,83 +821,73 @@
             offcanvasElement.classList.add('h-50');
         }
     }
-
 </script>
 
+<!-- terminal websocket js logic -->
 <script>
-        let socket; // Declare the WebSocket connection
+    // WebSocket logic for terminal interaction
+    let socket;
     let commandHistory = [];
     let historyIndex = -1;
 
-    // Function to initialize WebSocket connection
     function initWebSocket(username, projectId) {
         const socketUrl = `ws://127.0.0.1:8000/ws/ide/${username}/${projectId}/`;
         socket = new WebSocket(socketUrl);
 
-        // When the WebSocket connection is established
         socket.onopen = function() {
             console.log("WebSocket connection established.");
         };
 
-        // When a message is received from the WebSocket server
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
 
-            // Handle terminal output response
             if (data.type === 'terminal_output') {
                 const terminalDiv = document.getElementById('terminal');
                 const formattedResponse = data.output
-                    .split('\n')  // Split response by newlines
-                    .map(line => `<div><span class="output">${line}</span></div>`) // Wrap each line in a div
+                    .split('\n')
+                    .map(line => `<div><span class="output">${line}</span></div>`)
                     .join('');
 
                 terminalDiv.innerHTML += formattedResponse;
-                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+                terminalDiv.scrollTop = terminalDiv.scrollHeight;
             }
 
-            // Handle terminal error if any
             if (data.type === 'terminal_error') {
                 const terminalDiv = document.getElementById('terminal');
                 const errorResponse = `<div><span class="error">${data.error}</span></div>`;
                 terminalDiv.innerHTML += errorResponse;
-                terminalDiv.scrollTop = terminalDiv.scrollHeight; // Scroll to the bottom
+                terminalDiv.scrollTop = terminalDiv.scrollHeight;
             }
         };
 
-        // Handle WebSocket errors
         socket.onerror = function(error) {
             console.error("WebSocket Error:", error);
         };
 
-        // Handle WebSocket connection closure
         socket.onclose = function(event) {
             console.log("WebSocket connection closed:", event);
         };
     }
 
-    // Function to send the terminal prompt via WebSocket
     function sendPrompt() {
         const promptValue = document.querySelector('.terminal-input').value.trim();
         if (!promptValue) return;
 
-        // Add the command to history and reset index
         commandHistory.push(promptValue);
         historyIndex = commandHistory.length;
 
         const terminalDiv = document.getElementById('terminal');
 
-        // Append the user's command in terminal-like format
         terminalDiv.innerHTML += `<div>
             <span class="username">user@Ubuntu</span>:<span class="path">~/{{user}}/{{ current_project.project_name }}</span>$ ${promptValue}
         </div>`;
 
         if (promptValue.toLowerCase() === 'clear') {
-            terminalDiv.innerHTML = ''; // Clear the terminal
-            document.querySelector('.terminal-input').value = ''; // Clear the input field
-            return; // Exit the function
+            terminalDiv.innerHTML = '';
+            document.querySelector('.terminal-input').value = '';
+            return;
         }
 
-        // Send the command via WebSocket
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
                 'command': promptValue
@@ -778,34 +896,29 @@
             console.error("WebSocket is not open.");
         }
 
-        // Clear the input field after sending
         document.querySelector('.terminal-input').value = '';
     }
 
-    // Handle keydown event on terminal input field
     document.querySelector('.terminal-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Prevent the default behavior (typing a new line)
-            sendPrompt(); // Call the function to send the prompt
+            e.preventDefault();
+            sendPrompt();
         } else if (e.key === 'ArrowUp') {
-            // Navigate up the history
             if (historyIndex > 0) historyIndex--;
             e.target.value = commandHistory[historyIndex] || '';
-            e.preventDefault(); // Prevent default cursor movement
+            e.preventDefault();
         } else if (e.key === 'ArrowDown') {
-            // Navigate down the history
             if (historyIndex < commandHistory.length - 1) historyIndex++;
             e.target.value = commandHistory[historyIndex] || '';
             e.preventDefault();
         }
     });
 
-    // Call initWebSocket with the username and project_id when the page loads
     document.addEventListener('DOMContentLoaded', function() {
-        const username = document.getElementById('username').value;  // Assume the username is in a hidden input
-        const projectId = document.getElementById('project-id').value;  // Assume project_id is also passed in a hidden input
-        initWebSocket(username, projectId);  // Initialize WebSocket connection
+        const username = document.getElementById('username').value;
+        const projectId = document.getElementById('project-id').value;
+        initWebSocket(username, projectId);
     });
-
 </script>
+
 </html>

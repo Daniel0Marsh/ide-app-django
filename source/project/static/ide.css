@@ -24,6 +24,7 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-light);
     font-family: 'Arial', sans-serif;
+    overflow: hidden;
 }
 
 .btn-primary {
@@ -99,6 +100,7 @@ body {
     margin: 0 auto;
     max-width: 1200px;
     margin-top: 20px
+    overflow: hidden;
 }
 
 .navbar {
@@ -129,9 +131,9 @@ body {
 .sidebar {
     position: fixed;
     top: 56px;
-    left: -300px;
+    left: -350px;
     height: 100vh;
-    width: 250px;
+    width: 300px;
     z-index: 800;
     background-color: var(--bg-dark);
     padding-top: 1rem;
@@ -144,19 +146,19 @@ body {
 }
 
 .sidebar.active + .ide-card {
-    margin-left: 300px;
+    margin-left: 350px;
 }
 
 .files-sidebar-active .ide-content {
-    margin-left: 300px;
+    margin-left: 350px;
+}
+
+.git-commits-sidebar-active .ide-content {
+    margin-left: 350px;
 }
 
 .tasks-sidebar-active .ide-content {
-    margin-left: 300px;
-}
-
-.both-sidebars-active .ide-content {
-    margin-left: 300px;
+    margin-left: 350px;
 }
 
 .sidebar ul.components {
