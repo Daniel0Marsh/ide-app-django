@@ -132,9 +132,8 @@ body {
 }
 
 .main-content {
-    margin: 0 auto;
+    margin: auto;
     max-width: 1200px;
-    margin-top: 20px
 }
 
 /* Chat styles....................................................................................................... */

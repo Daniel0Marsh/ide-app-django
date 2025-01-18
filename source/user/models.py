@@ -45,7 +45,6 @@ class CustomUser(AbstractUser):
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
     bio = models.TextField(blank=True)
-    activity_log = models.JSONField(default=dict, blank=True)
     project_dir = models.CharField(max_length=512, null=True, blank=True)
 
     default_mem_limit = models.CharField(max_length=10, default='512m',
@@ -78,37 +77,27 @@ class CustomUser(AbstractUser):
         return self.followers.filter(id=user.id).exists()
 
 
-class Notification(models.Model):
-    """Represents a notification for a user."""
+class ActivityLog(models.Model):
+    """Represents an activity entry for a user."""
     NOTIFICATION_TYPES = [
         ('new_follower', 'New Follower'),
-        ('new_task', 'New Task'),
-        ('task_update', 'Task updated'),
         ('new_message', 'New Message'),
+        ('task', 'Task'),
+        ('project', 'Project'),
     ]
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activity')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-                               related_name='sent_notifications')
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+                               related_name='sent_activity')
+    activity_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     notification_enabled = models.BooleanField(default=True,
                                                help_text="Indicates whether this notification is enabled.")
     task = models.ForeignKey('project.Task', null=True, blank=True, on_delete=models.SET_NULL,
-                             related_name='notifications')
+                             related_name='activity')
     project = models.ForeignKey('project.Project', null=True, blank=True, on_delete=models.SET_NULL,
-                                related_name='notifications')
+                                related_name='activity')
     message = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def mark_as_read(self):
-        """Mark the notification as read."""
-        self.is_read = True
-        self.save()
-
-    def mark_as_unread(self):
-        """Mark the notification as unread."""
-        self.is_read = False
-        self.save()
 
     def __str__(self):
         return f"Notification for {self.user.username}"

@@ -4,81 +4,82 @@ import subprocess
 from datetime import timedelta
 from github import Github
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
 from project.models import Project
-from user.models import CustomUser, Notification
+from user.models import CustomUser, ActivityLog
 
 
-def create_notification(user, notification_type, sender=None, task=None, project=None, message=None):
+def add_activity_to_log(user, activity_type, sender=None, task=None, project=None, message=None):
     """
     Create a notification for a user if the notification type is enabled for the user.
     """
-    notification = Notification.objects.filter(user=user, notification_type=notification_type).first()
 
-    if notification and notification.notification_enabled:
-        new_notification = Notification(
-            user=user,
-            sender=sender,
-            notification_type=notification_type,
-            task=task,
-            project=project,
-            message=message,
-        )
-        new_notification.save()
-        return new_notification
-    else:
-        return None
+    new_activity = ActivityLog(
+        user=user,
+        sender=sender,
+        activity_type=activity_type,
+        task=task,
+        project=project,
+        message=message,
+    )
+    new_activity.save()
+    return new_activity
 
 
-def add_activity_to_log(user, project_name, action):
+def user_activity(user_profile, selected_year=None):
     """
-    Add a new activity entry to the user's activity log.
+    Retrieve the 5 most recent activities and the activity data for the selected year
+    or the current year by default.
     """
-    new_activity = {
-        'project_name': project_name,
-        'date_time': now().strftime('%Y-%m-%d %H:%M:%S'),
-        'action': action,
-    }
+    current_year = now().year
+    selected_year = selected_year or current_year
 
-    if isinstance(user.activity_log, list):
-        user.activity_log.append(new_activity)
-    else:
-        user.activity_log = [new_activity]
+    # Calculate the range of months for the selected year
+    start_date = now().date().replace(year=int(selected_year), month=1, day=1)
+    end_date = now().date().replace(year=int(selected_year), month=12, day=31)
+    recent_activities = ActivityLog.objects.filter(user=user_profile).order_by('-created_at')[:5]
 
-    user.save()
+    # Retrieve activities for the selected year
+    activity_logs = ActivityLog.objects.filter(
+        user=user_profile,
+        created_at__gte=start_date,
+        created_at__lte=end_date
+    )
 
+    # Create a grid of activities by week
+    activity_grid = [[0] * 52 for _ in range(7)]
 
-def user_activity(user_projects, user_profile):
-    """
-    Retrieve the 5 most recent activities and the activity data for the past year
-    based on the activity_log field of the user.
-    """
-    recent_activity = user_profile.activity_log
-
-    start_date = now() - timedelta(days=365)
-    end_date = now()
-
-    activity_data = {}
-    for entry in user_profile.activity_log:
-        entry_date = now().strptime(entry['date_time'], '%Y-%m-%d %H:%M:%S').date()
-        if start_date.date() <= entry_date <= end_date.date():
-            activity_data[entry_date] = activity_data.get(entry_date, 0) + 1
+    for log in activity_logs:
+        log_date = log.created_at.date()
+        day_of_week = log_date.weekday()
+        week_number = min((log_date - start_date).days // 7, 51)
+        activity_grid[day_of_week][week_number] += 1
 
     activity_days = [
-        {'date': current_date, 'count': activity_data.get(current_date.date(), 0)}
-        for current_date in (start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1))
+        {
+            'day_of_week': day,
+            'week': week,
+            'count': activity_grid[day][week],
+            'date': (start_date + timedelta(days=week * 7 + day)).strftime("%B %d, %Y")
+        }
+        for day in range(7) for week in range(52)
     ]
 
-    return activity_days, recent_activity
+    years = list(range(current_year - 4, current_year + 1))
+
+    return activity_days, recent_activities, years
 
 
 class ProfileView(TemplateView):
@@ -117,11 +118,11 @@ class ProfileView(TemplateView):
             following_users = request.user.following.all()
             followers_users = request.user.followers.all()
             chat_rooms = ChatRoom.objects.filter(participants=request.user)
-            enabled_notifications = Notification.objects.filter(user=request.user, notification_enabled=True)
+            enabled_notifications = ActivityLog.objects.filter(user=request.user, notification_enabled=True)
 
         user_projects = user_projects.distinct().order_by('-modified_at')
 
-        activity_days, recent_activity = user_activity(user_projects, user_profile)
+        activity_days, recent_activity, years = user_activity(user_profile)
 
         github_repos = []
         if user_profile == request.user and not isinstance(request.user, AnonymousUser):
@@ -144,6 +145,7 @@ class ProfileView(TemplateView):
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
             'enabled_notifications': enabled_notifications,
             'github_repos': github_repos,
+            'years': years,
         }
 
         return self.render_to_response(context)
@@ -163,6 +165,17 @@ class ProfileView(TemplateView):
         if action:
             return action_map[action](request)
         return HttpResponse("Invalid action", status=400)
+
+    @staticmethod
+    @csrf_exempt
+    def user_activity_ajax(request, username):
+        user_profile = get_object_or_404(CustomUser, username=username)
+        selected_year = request.GET.get('year')
+
+        activity_days, _, _ = user_activity(user_profile, selected_year)
+        return JsonResponse({
+            'activity_days': activity_days,
+        })
 
     @staticmethod
     def open_project(request):
@@ -215,7 +228,7 @@ class ProfileView(TemplateView):
         with open(os.path.join(project_path, "README.md"), "w") as readme_file:
             readme_file.write(f"# {project_name}\n\n{project_description or 'No description provided.'}")
 
-        add_activity_to_log(request.user, project.project_name, 'Created Project')
+        add_activity_to_log(request.user, activity_type=created_project, sender=None, task=None, project=project.project_name, message=None)
 
         return redirect('project', username=request.user.username, project_id=project.id)
 
@@ -245,8 +258,8 @@ class ProfileView(TemplateView):
             print(f"Error while cloning repository: {e}")
             return HttpResponse("Error cloning repository", status=500)
 
-        action = 'Cloned Project'
-        add_activity_to_log(request.user, project.project_name, action)
+        add_activity_to_log(request.user, activity_type=cloned_project, sender=None, task=None,
+                            project=project.project_name, message=None)
 
         return redirect('ide', username=request.user.username, project_id=project.id)
 
@@ -282,14 +295,8 @@ class ProfileView(TemplateView):
         else:
             user.follow(target_user)
 
-            create_notification(
-                user=target_user,
-                notification_type='new_follower',
-                sender=user,
-                task=None,
-                project=None,
-                message=f"{user.username} is now following you."
-            )
+            add_activity_to_log(user=target_user, activity_type=new_follower, sender=user, task=None,
+                                project=None, message=None)
 
         return redirect('profile', username=target_username)
 

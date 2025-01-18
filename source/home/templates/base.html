@@ -20,7 +20,7 @@
 
 <!-- Display messages -->
 {% if messages %}
-    <div class="mt-4">
+    <div class="mt-4 m-5">
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                 {{ message }}
@@ -29,7 +29,6 @@
         {% endfor %}
     </div>
 {% endif %}
-
 
 <!-- Navbar -->
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
@@ -119,85 +118,48 @@
             </div>
             <div class="modal-body">
                 <ul class="list-group">
-                    {% for notification in user.notifications.all %}
-                        <li class="list-group-item text-light m-1">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <strong>{{ notification.get_notification_type_display }}</strong>:
-                                    {% if notification.notification_type == 'new_follower' %}
-                                        {% if notification.sender.username %}
-                                            <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
-                                                {{ notification.sender.username }}</a>
-                                        {% else %}
-                                            {{ notification.sender.username }}
-                                        {% endif %}
-                                        started following you.
-
-                                    {% elif notification.notification_type == 'new_message' %}
-                                        You have a new message from:
-                                        {% if notification.sender.username %}
-                                            <a href="{% url 'profile' notification.sender.username %}" class="text-light">
-                                                {{ notification.sender.username }}</a>
-                                        {% else %}
-                                            {{ notification.sender.username }}
-                                        {% endif %}
-
-                                    {% elif notification.notification_type == 'new_task' %}
-                                        A new task titled:
-                                        {% if notification.project.id %}
-                                            <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">{{ notification.task.title }}</a>
-                                        {% else %}
-                                            {{ notification.task.title }}
-                                        {% endif %}
-                                        has been assigned to you on the project:
-                                        {% if notification.project.id %}
-                                            <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}"
-                                               class="text-light">{{ notification.project.project_name }}</a>
-                                        {% else %}
-                                            {{ notification.project.project_name }}
-                                        {% endif %}
-                                        by:
-                                        {% if notification.sender.username %}
-                                            <a href="{% url 'profile' username=notification.sender.username %}"
-                                               class="text-light">{{ notification.sender.username }}</a>
-                                        {% else %}
-                                            {{ notification.sender.username }}
-                                        {% endif %}
-
-                                    {% elif notification.notification_type == 'task_update' %}
-                                        The task titled:
-                                        {% if notification.project.id %}
-                                            <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">{{ notification.task.title }}</a>
-                                        {% else %}
-                                            {{ notification.task.title }}
-                                        {% endif %}
-                                        in the project:
-                                        {% if notification.project.id %}
-                                            <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}"
-                                               class="text-light">{{ notification.project.project_name }}</a>
-                                        {% else %}
-                                            {{ notification.project.project_name }}
-                                        {% endif %}
-                                        has been updated by:
-                                        {% if notification.sender.username %}
-                                            <a href="{% url 'profile' username=notification.sender.username %}"
-                                               class="text-light">{{ notification.sender.username }}</a>
-                                        {% else %}
-                                            {{ notification.sender.username }}
-                                        {% endif %}
-
-                                    {% else %}
-                                        {{ notification.message }}
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-light">Received on: {{ notification.created_at }}</small>
-                                </div>
+                    {% for notification in enabled_notifications %}
+                    <li class="list-group-item text-light m-1">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ notification.get_activity_type_display }}</strong>:
+                                {% if notification.activity_type == 'new_follower' %}
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                    started following you.
+                                {% elif notification.activity_type == 'new_message' %}
+                                    You have a new message from:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                {% elif notification.activity_type == 'task' %}
+                                    A new task titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.task.title }}</a>
+                                    has been assigned to you on the project:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                {% elif notification.activity_type == 'project' %}
+                                    The project:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    has updates by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                {% else %}
+                                    {{ notification.message }}
+                                {% endif %}
+                                <br>
+                                <small class="text-light">Received on: {{ notification.created_at }}</small>
                             </div>
-                        </li>
+                        </div>
+                    </li>
                     {% empty %}
-                        <li class="list-group-item bg-dark text-light text-center">
-                            <strong>You have no new notifications.</strong>
-                        </li>
+                    <li class="list-group-item bg-dark text-light text-center">
+                        <strong>You have no new activities.</strong>
+                    </li>
                     {% endfor %}
 
                 </ul>
@@ -208,7 +170,7 @@
 
 {% block ide %}{% endblock %}
 <!-- Main Content -->
-<main class="main-content pt-5">
+<main class="main-content p-2 pb-5 pt-5">
     {% block content %}{% endblock %}
 </main>
 
@@ -538,7 +500,7 @@
 <!-- JavaScript to trigger the alert for notifications -->
 <script>
     // Show alert when there are unread notifications
-    {% if unread_notifications %}
+    {% if enabled_notifications %}
         {% for message in messages %}
             // Trigger alert for each unread message
             var message = '{{ message }}';

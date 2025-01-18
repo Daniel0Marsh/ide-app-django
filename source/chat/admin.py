@@ -1,6 +1,5 @@
 from django.contrib import admin
 from .models import ChatRoom, Message
-from user.models import Notification
 
 
 # Inline admin for Message model

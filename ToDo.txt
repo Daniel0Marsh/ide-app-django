@@ -1,8 +1,8 @@
 
 1) integrate GitHub
 2) persistent shell docker containers
-3) complete settings page
-4)
+3) test settings page
+4) complete notification settings
 
 
 integrate GitHub

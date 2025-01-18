@@ -11,8 +11,8 @@ from django.utils.timezone import now
 from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
-from profile.views import add_activity_to_log, create_notification
-from user.models import Notification
+from profile.views import add_activity_to_log
+from user.models import ActivityLog
 from .models import Project, Task
 from .utils import ProjectContainerManager
 
@@ -55,16 +55,7 @@ def update_task(request, project):
     task.status = request.POST.get('task_status')
     task.save()
 
-    create_notification(
-        user=task.assigned_to,
-        notification_type='task_update',
-        sender=request.user,
-        task=task,
-        project=project,
-        message=''
-    )
-
-    add_activity_to_log(request.user, project.project_name, f"updated {task.title}")
+    add_activity_to_log(user=task.assigned_to, activity_type='task', sender=request.user, task=task, project=project, message=f"{request.user.username} updated task {task.title}")
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -93,13 +84,13 @@ class ProjectView(TemplateView):
 
         if isinstance(request.user, AnonymousUser):
             following_users = followers_users = chat_rooms = all_users = []
-            unread_notifications = None
+            enabled_notifications = None
         else:
             following_users = request.user.following.all()
             followers_users = request.user.followers.all()
             chat_rooms = ChatRoom.objects.filter(participants=request.user)
             all_users = (following_users | followers_users).distinct()
-            unread_notifications = Notification.objects.filter(user=request.user, is_read=False)
+            enabled_notifications = ActivityLog.objects.filter(user=request.user, notification_enabled=False)
 
         context = {
             'current_project': current_project,
@@ -109,7 +100,7 @@ class ProjectView(TemplateView):
             'recent_chats': chat_rooms,
             'all_users': all_users,
             'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'unread_notifications': unread_notifications
+            'enabled_notifications': enabled_notifications
         }
 
         return render(request, self.template_name, context)
@@ -181,7 +172,10 @@ class ProjectView(TemplateView):
             return JsonResponse({'error': 'User not found'}, status=400)
 
         project.collaborators.add(collaborator)
-        add_activity_to_log(request.user, project.project_name, f"Added {collaborator_username} as a collaborator")
+
+        add_activity_to_log(user=collaborator, activity_type='project', sender=request.user, task=None,
+                            project=project,
+                            message=f"{request.user.username} added {collaborator.username} to project {project.project_name}")
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -198,8 +192,9 @@ class ProjectView(TemplateView):
 
         if collaborator in project.collaborators.all():
             project.collaborators.remove(collaborator)
-            add_activity_to_log(request.user, project.project_name,
-                                f"Removed {collaborator.username} from the collaborators")
+            add_activity_to_log(user=collaborator, activity_type='project', sender=request.user, task=None,
+                                project=project, message=f"{request.user.username} removed {collaborator.username} from project {project.project_name}")
+
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         return JsonResponse({'error': 'User is not a collaborator'}, status=400)
@@ -216,16 +211,16 @@ class ProjectView(TemplateView):
             return HttpResponseBadRequest("Name and description cannot be empty")
 
         try:
-            action = ''
             if project.project_name != new_name:
                 os.rename(project.project_path, os.path.join(request.user.project_dir, new_name))
                 project.project_path = os.path.join(request.user.project_dir, new_name)
-                action = f"Renamed project from {project.project_name} to {new_name}"
 
             project.project_name, project.project_description, project.is_public = new_name, new_description, is_public
             project.save()
 
-            add_activity_to_log(request.user, project.project_name, action or f"Updated project details for {new_name}")
+            add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
+                                project=project, message=f"{request.user.username} updated project: {project.project_name}'s details")
+
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         except Project.DoesNotExist:
@@ -243,7 +238,8 @@ class ProjectView(TemplateView):
             container_manager.delete_container()
             shutil.rmtree(project.project_path)
 
-            add_activity_to_log(request.user, project.project_name, 'Deleted Project')
+            add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
+                                project=project, message=f"{request.user.username} Deleted Project {project.project_name}")
             project.delete()
 
         except Project.DoesNotExist:
@@ -381,7 +377,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
         except OSError as e:
             action = f"Failed to delete file {file_path}: {e}"
 
-        add_activity_to_log(request.user, project.project_name, action)
+        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
+                            project=project, message=action)
+
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     def save_file(self, request, project):
@@ -417,7 +415,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             return HttpResponse(f"Error saving file: {e}", status=500)
 
-        add_activity_to_log(user, project_name, action)
+        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
+                            project=project, message=action)
 
         context = {
             'all_projects': Project.objects.all(),
@@ -451,6 +450,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             if os.path.exists(zip_file_path):
                 os.remove(zip_file_path)
 
-        add_activity_to_log(request.user, project_name, f"Downloaded the project {project_name}")
+        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
+                            project=project, message=f"Downloaded the project {project_name}")
 
         return response

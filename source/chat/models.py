@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from user.models import Notification
+from user.models import ActivityLog
 
 
 class ChatRoom(models.Model):
@@ -32,7 +32,7 @@ class Message(models.Model):
     def save(self, *args, **kwargs):
         """Override save to create a message notification for the recipient."""
         if self.recipient:
-            Notification.objects.create(
+            ActivityLog.objects.create(
                 user=self.recipient,
                 sender=self.sender,
                 notification_type='new_message',

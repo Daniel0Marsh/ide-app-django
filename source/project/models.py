@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models import TextField
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from user.models import Notification
+from user.models import ActivityLog
 
 
 class Project(models.Model):
@@ -80,11 +80,11 @@ class Task(models.Model):
 @receiver(post_save, sender=Task)
 def create_task_notification(sender, instance, created, **kwargs):
     if created:
-        Notification.objects.create(
+        ActivityLog.objects.create(
             user=instance.assigned_to,
             sender=instance.assigned_by,
-            notification_type='new_task',
-            message='',
+            notification_type='task',
+            message=f"{instance.assigned_by} Created task {instance.title}",
             task=instance,
             project=instance.project
         )

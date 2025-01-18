@@ -13,7 +13,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.views.generic import TemplateView, View
-from .models import Notification
+from .models import ActivityLog
 
 
 class SettingsView(LoginRequiredMixin, TemplateView):
@@ -31,11 +31,12 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
         context = {
             'needs_password': not request.user.password or request.user.password == ' ',
-            'user': request.user,
             'github_account': github_account,
-            'new_follower': request.user.notifications.filter(notification_type='new_follower', notification_enabled=True).first(),
-            'new_task': request.user.notifications.filter(notification_type='new_task', notification_enabled=True).first(),
-            'new_message': request.user.notifications.filter(notification_type='new_message', notification_enabled=True).first()
+            'enabled_notifications': ActivityLog.objects.filter(user=request.user, notification_enabled=True),
+            'new_follower': ActivityLog.objects.filter(user=request.user, activity_type='new_follower', notification_enabled=True).first(),
+            'task': ActivityLog.objects.filter(user=request.user, activity_type='task', notification_enabled=True).first(),
+            'new_message': ActivityLog.objects.filter(user=request.user, activity_type='new_message', notification_enabled=True).first(),
+            'project': ActivityLog.objects.filter(user=request.user, activity_type='project', notification_enabled=True).first()
         }
 
         return self.render_to_response(context)
@@ -108,28 +109,27 @@ class SettingsView(LoginRequiredMixin, TemplateView):
     @staticmethod
     def update_notifications(request):
         """Update notification preferences."""
-        user = request.user
 
-        # Update or create the notification settings for each notification type
-        Notification.objects.update_or_create(
-            user=user,
-            notification_type='new_follower',
-            defaults={'notification_enabled': 'new_follower_notifications' in request.POST}
+        ActivityLog.objects.filter(user=request.user, activity_type='new_follower').update(
+            notification_enabled='new_follower_notifications' in request.POST
+        )
+        ActivityLog.objects.filter(user=request.user, activity_type='new_task').update(
+            notification_enabled='task_notifications' in request.POST
+        )
+        ActivityLog.objects.filter(user=request.user, activity_type='new_message').update(
+            notification_enabled='message_notifications' in request.POST
+        )
+        ActivityLog.objects.filter(user=request.user, activity_type='project').update(
+            notification_enabled='project_notifications' in request.POST
         )
 
-        Notification.objects.update_or_create(
-            user=user,
-            notification_type='new_task',
-            defaults={'notification_enabled': 'task_notifications' in request.POST}
-        )
+        return redirect('settings', username=request.user.username)
 
-        Notification.objects.update_or_create(
-            user=user,
-            notification_type='new_message',
-            defaults={'notification_enabled': 'message_notifications' in request.POST}
-        )
-
-        messages.success(request, "Notification preferences updated.")
+    @staticmethod
+    def clear_notifications(request):
+        """Delete all notifications for the user."""
+        ActivityLog.objects.filter(user=request.user).delete()
+        messages.success(request, "All notifications and user activity has been deleted.")
         return redirect('settings', username=request.user.username)
 
     @staticmethod

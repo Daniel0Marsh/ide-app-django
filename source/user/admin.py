@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, DockerSession, Notification, SenderEmailSettings
+from .models import CustomUser, DockerSession, SenderEmailSettings, ActivityLog
 
 
 @admin.register(CustomUser)
@@ -9,7 +9,7 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Custom Fields', {
             'fields': (
-                'profile_picture', 'following', 'activity_log', 'project_dir',
+                'profile_picture', 'following', 'project_dir',
                 'default_mem_limit', 'default_memswap_limit', 'default_cpus', 'default_cpu_shares'
             ),
         }),
@@ -25,11 +25,11 @@ class DockerSessionAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'container_id')
 
 
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    """Admin configuration for the Notification model."""
-    list_display = ('user', 'sender', 'notification_type', 'message', 'notification_enabled', 'created_at')
-    list_filter = ('notification_type', 'notification_enabled', 'created_at')
+@admin.register(ActivityLog)
+class ActivityLogAdmin(admin.ModelAdmin):
+    """Admin configuration for the activity model."""
+    list_display = ('user', 'sender', 'activity_type', 'message', 'notification_enabled', 'created_at')
+    list_filter = ('activity_type', 'notification_enabled', 'created_at')
     search_fields = ('user__username', 'sender__username', 'message')
 
 
