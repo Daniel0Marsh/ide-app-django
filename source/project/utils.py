@@ -1,9 +1,9 @@
 import hashlib
-import traceback
 from threading import Timer
 import docker
 import os
 import re
+import base64
 from github import Github
 from github import InputGitTreeElement
 
@@ -26,7 +26,7 @@ class ProjectContainerManager:
         self.project = project
         self.user = user
         self.container_name = f"{self.user.username}_{self.user.id}"
-        self.project_path = user.project_dir
+        self.project_path = project.project_path  # change to: user.project_dir this once docker container is made persistent!
         self.client = docker.from_env()
         self.timeout_timer = None
 
@@ -186,12 +186,18 @@ class GitHubUtils:
 
     @staticmethod
     def get_repo(request, project):
+        """
+        gets the GitHub token key for the repository
+        """
         git_token, _ = GitHubUtils.get_github_account(request)
         repo_name = re.search(r"github\.com/([^/]+/[^/]+)", project.repository).group(1)
         return git_token.get_repo(repo_name)
 
     @staticmethod
     def get_current_branch(request, project):
+        """
+        gets the current branch for the project
+        """
         try:
             repo = GitHubUtils.get_repo(request, project)
             branch = repo.get_branch(repo.default_branch)
@@ -201,6 +207,9 @@ class GitHubUtils:
 
     @staticmethod
     def _redirect_with_error(request, message):
+        """
+        redirect to previous page with an error message
+        """
         messages.error(request, message)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -337,8 +346,13 @@ class GitHubUtils:
                     github_file = repo.get_contents(file_path, ref=current_branch)
                     if github_file:
                         file_path_full = os.path.join(project.project_path, file_path)
-                        with open(file_path_full, 'wb') as f:
-                            f.write(github_file.content.encode('utf-8'))
+
+                        # Decode base64 content if it's not already decoded
+                        file_content = base64.b64decode(github_file.content).decode('utf-8')
+
+                        # Write the decoded content to the local file
+                        with open(file_path_full, 'w', encoding='utf-8') as f:
+                            f.write(file_content)
                         file_info['change_type'] = 'updated'
                 except Exception as e:
                     messages.error(request, f"Error pulling {file_path}: {e}")
@@ -348,4 +362,66 @@ class GitHubUtils:
         except Exception as e:
             messages.error(request, f"Error updating project files: {e}")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def manage_branch(request, project):
+        branch_name = request.POST.get('branch_name')
+
+        if 'create_new' in request.POST:
+            GitHubUtils.switch_or_create_branch(request, project, branch_name, create_new=True)
+        elif 'set_remote' in request.POST:
+            GitHubUtils.set_remote_branch(request, project, branch_name)
+        else:
+            GitHubUtils.switch_or_create_branch(request, project, branch_name, create_new=False)
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def switch_or_create_branch(request, project, branch_name, create_new=False):
+        """
+        Switch to an existing branch or create a new one.
+        """
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            branch_exists = lambda: repo.get_branch(branch_name)
+
+            if create_new:
+                try:
+                    branch_exists()
+                    return GitHubUtils._redirect_with_error(
+                        request, f"Branch '{branch_name}' already exists."
+                    )
+                except Exception:  # Branch doesn't exist, proceed to create it
+                    repo.create_git_ref(
+                        ref=f"refs/heads/{branch_name}",
+                        sha=repo.get_branch(repo.default_branch).commit.sha
+                    )
+                    messages.success(request, f"Branch '{branch_name}' created successfully.")
+            else:
+                if branch_exists():
+                    messages.success(request, f"Switched to branch '{branch_name}'.")
+                else:
+                    return GitHubUtils._redirect_with_error(
+                        request, f"Branch '{branch_name}' does not exist. Please create it first."
+                    )
+        except Exception as e:
+            messages.error(request, f"Error switching or creating branch: {e}")
+
+    @staticmethod
+    def set_remote_branch(request, project, branch_name):
+        """
+        Set or update the remote branch reference for the repository.
+        """
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            repo.get_branch(branch_name)
+
+            # Set the remote reference
+            branch_sha = repo.get_branch(branch_name).commit.sha
+            repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=branch_sha)
+
+            messages.success(request, f"Remote branch '{branch_name}' set successfully.")
+
+        except Exception as e:
+            messages.error(request, f"Error setting remote branch: {e}")
 

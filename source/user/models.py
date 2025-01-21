@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
+from django.utils import timezone
 import os
 from enum import Enum
 
@@ -98,6 +99,11 @@ class ActivityLog(models.Model):
                                 related_name='activity')
     message = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.created_at:
+            self.created_at = timezone.now()
+        super(ActivityLog, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"Notification for {self.user.username}"

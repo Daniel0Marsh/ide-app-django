@@ -1,5 +1,0 @@
-
-1) persistent shell docker containers
-2) pull/update repo logic
-3) Manage Branch model logic
-

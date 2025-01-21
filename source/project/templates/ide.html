@@ -491,30 +491,29 @@
         <h5 class="modal-title" id="branchModalLabel">Manage Branch</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <!-- Form to select/create a branch -->
         <form>
-          <div class="mb-3">
-            <label for="branchName" class="form-label">Branch Name</label>
-            <input type="text" class="form-control bg-dark text-light" id="branchName" placeholder="Enter branch name">
+          <div class="modal-body">
+              <div class="mb-3">
+                <label for="branchName" class="form-label">Branch Name</label>
+                <input type="text" class="form-control bg-dark text-light" id="branchName" placeholder="Enter branch name">
+              </div>
+              <div class="mb-3">
+                <label for="actionSelect" class="form-label">Action</label>
+                <select class="form-select bg-dark text-light" id="actionSelect">
+                  <option selected>Create New Branch</option>
+                  <option>Switch to Existing Branch</option>
+                  <option>Set Remote Branch</option>
+                </select>
+              </div>
+              <div class="mb-3" id="remoteBranchDiv" style="display: none;">
+                <label for="remoteBranch" class="form-label">Remote Branch</label>
+                <input type="text" class="form-control bg-dark text-light" id="remoteBranch" placeholder="Enter remote branch">
+              </div>
+              </div>
+          <div class="modal-footer">
+            <button type="submit" name="manage_branch" class="btn btn-secondary" >Update</button>
           </div>
-          <div class="mb-3">
-            <label for="actionSelect" class="form-label">Action</label>
-            <select class="form-select bg-dark text-light" id="actionSelect">
-              <option selected>Create New Branch</option>
-              <option>Switch to Existing Branch</option>
-              <option>Set Remote Branch</option>
-            </select>
-          </div>
-          <div class="mb-3" id="remoteBranchDiv" style="display: none;">
-            <label for="remoteBranch" class="form-label">Remote Branch</label>
-            <input type="text" class="form-control bg-dark text-light" id="remoteBranch" placeholder="Enter remote branch">
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="submitAction">Update</button>
-      </div>
+    </form>
     </div>
   </div>
 </div>

@@ -1,43 +1,86 @@
 from django.contrib import admin
-from .models import Favicon, Logo, Background, HomePage, ErrorImage, ImageOne
+from .models import (
+    HomePage,
+    Logo,
+    Favicon,
+    ErrorImage,
+    ImageOne,
+    ImageTwo,
+    ImageThree,
+    ImageFour,
+    Background,
+)
 
 
-# Inline admin classes
-class FaviconInline(admin.StackedInline):
-    """Inline admin for the Favicon model."""
-    model = Favicon
+class SingleInstanceInline(admin.TabularInline):
+    """
+    Base class for single-instance inlines.
+    """
+    extra = 0
+    max_num = 1
+    can_delete = True
 
 
-class LogoInline(admin.StackedInline):
-    """Inline admin for the Logo model."""
+class LogoInline(SingleInstanceInline):
     model = Logo
 
 
-class ErrorImageInline(admin.StackedInline):
-    """Inline admin for the ErrorImage model."""
+class FaviconInline(SingleInstanceInline):
+    model = Favicon
+
+
+class ErrorImageInline(SingleInstanceInline):
     model = ErrorImage
 
 
-class ImageOneInline(admin.StackedInline):
-    """Inline admin for the ImageOne model."""
+class ImageOneInline(SingleInstanceInline):
     model = ImageOne
 
 
-class BackgroundInline(admin.StackedInline):
-    """Inline admin for the Background model."""
+class ImageTwoInline(SingleInstanceInline):
+    model = ImageTwo
+
+
+class ImageThreeInline(SingleInstanceInline):
+    model = ImageThree
+
+
+class ImageFourInline(SingleInstanceInline):
+    model = ImageFour
+
+
+class BackgroundInline(SingleInstanceInline):
     model = Background
 
 
-# Admin class for the HomePage model
+@admin.register(HomePage)
 class HomePageAdmin(admin.ModelAdmin):
-    """Admin interface for the HomePage model with inlines."""
-    list_display = ('website_title', 'page_title', 'updated_at')
-    search_fields = ('website_title', 'page_title')
-    inlines = [FaviconInline, LogoInline, ErrorImageInline, ImageOneInline, BackgroundInline]
+    """
+    Admin interface for the HomePage model.
+    """
+    list_display = ("website_title", "updated_at")
+    search_fields = ("website_title",)
+    inlines = [
+        LogoInline,
+        FaviconInline,
+        ErrorImageInline,
+        ImageOneInline,
+        ImageTwoInline,
+        ImageThreeInline,
+        ImageFourInline,
+        BackgroundInline,
+    ]
 
-    ordering = ('-updated_at',)
-    list_filter = ('updated_at',)
+    def has_add_permission(self, request):
+        """
+        Allow adding only one instance of HomePage.
+        """
+        if HomePage.objects.exists():
+            return False
+        return super().has_add_permission(request)
 
-
-# Register HomePage model with its admin class
-admin.site.register(HomePage, HomePageAdmin)
+    def has_delete_permission(self, request, obj=None):
+        """
+        Disallow deletion of the HomePage instance.
+        """
+        return False

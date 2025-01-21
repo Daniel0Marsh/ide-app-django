@@ -7,15 +7,13 @@ class HomePage(models.Model):
     """
 
     website_title = models.CharField(max_length=100, blank=True, null=True)
-    page_title = models.CharField(max_length=100, blank=True, null=True)
-    page_heading = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """
         String representation of the home page.
         """
-        return self.page_title or "Untitled Home Page"
+        return self.website_title or "Untitled Home Page"
 
     class Meta:
         verbose_name = "Home Page"
@@ -80,6 +78,51 @@ class ImageOne(models.Model):
         String representation of the image.
         """
         return self.image_one.name
+
+
+class ImageTwo(models.Model):
+    """
+    Model representing an image for the home page.
+    """
+
+    home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
+    image_two = models.ImageField(upload_to='')
+
+    def __str__(self):
+        """
+        String representation of the image.
+        """
+        return self.image_two.name
+
+
+class ImageThree(models.Model):
+    """
+    Model representing an image for the home page.
+    """
+
+    home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
+    image_three = models.ImageField(upload_to='')
+
+    def __str__(self):
+        """
+        String representation of the image.
+        """
+        return self.image_three.name
+
+
+class ImageFour(models.Model):
+    """
+    Model representing an image for the home page.
+    """
+
+    home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
+    image_four = models.ImageField(upload_to='')
+
+    def __str__(self):
+        """
+        String representation of the image.
+        """
+        return self.image_four.name
 
 
 class Background(models.Model):

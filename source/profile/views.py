@@ -122,18 +122,16 @@ class ProfileView(TemplateView):
 
         github_repos = []
         if not isinstance(request.user, AnonymousUser):
-            # Fetch the GitHub repositories for the viewed user (either their own or another user's)
             try:
                 if user_profile == request.user:
                     access_token = request.user.social_auth.get(provider='github').extra_data['access_token']
                 else:
-                    # If it's another user's profile, fetch the GitHub repos for that user (assuming OAuth token is available)
                     access_token = user_profile.social_auth.get(provider='github').extra_data['access_token']
 
                 github = Github(access_token)
                 github_repos = github.get_user().get_repos()
-            except Exception as e:
-                print(f"Error fetching GitHub repos: {e}")
+            except Exception:
+                messages.warning(request, "Error fetching GitHub repos. Please go to settings and connect your GitHub account.")
 
         context = {
             'user_profile': user_profile,
@@ -231,9 +229,9 @@ class ProfileView(TemplateView):
 
         # Create README
         with open(os.path.join(project_path, "README.md"), "w") as readme_file:
-            readme_file.write(f"# {project_name}\n\n{project_description or 'No description provided.'}")
+            readme_file.write(f"# Welcome to your {project_name}!\n\nThis is the README.md file for your project.\n\n{project_description or 'No description provided.'}")
 
-        add_activity_to_log(request.user, activity_type='created_project', sender=None, task=None, project=project, message=None)
+        add_activity_to_log(request.user, activity_type='project', sender=None, task=None, project=project, message='You created a new project')
 
         return redirect('project', username=request.user.username, project_id=project.id)
 
@@ -264,8 +262,8 @@ class ProfileView(TemplateView):
             print(f"Error while cloning repository: {e}")
             return HttpResponse("Error cloning repository", status=500)
 
-        add_activity_to_log(request.user, activity_type='cloned_project', sender=None, task=None,
-                            project=project, message=None)
+        add_activity_to_log(request.user, activity_type='project', sender=None, task=None, project=project,
+                            message='You cloned a repository')
 
         return redirect('ide', username=request.user.username, project_id=project.id)
 

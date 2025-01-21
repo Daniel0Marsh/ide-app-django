@@ -1,21 +1,21 @@
 import os
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-21fnvr&bcdxqd=hbmchhhgt3y#4$%c!s08o8^ws)7emeg2dw6*'
+SECRET_KEY = config('SECRET_KEY')
 
-SOCIAL_AUTH_GITHUB_KEY = 'Ov23liYWi4MAuN2IPyUX'
-SOCIAL_AUTH_GITHUB_SECRET = '26d29678e21d62863470dd642ee2bc070746f854'
+SOCIAL_AUTH_GITHUB_KEY = config('SOCIAL_AUTH_GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = config('SOCIAL_AUTH_GITHUB_SECRET')
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'public_repo']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     'project',
 ]
 
-
 # ASGI Configuration
 ASGI_APPLICATION = 'core.asgi.application'
 
@@ -47,7 +46,6 @@ CHANNEL_LAYERS = {
          },
     },
 }
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -79,7 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
 # Database
 DATABASES = {
     'default': {
@@ -94,14 +91,12 @@ LOGOUT_REDIRECT_URL = 'login/'
 
 AUTH_USER_MODEL = 'user.CustomUser'
 
-
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',
-    'django.contrib.auth.backends.ModelBackend',  # Default
+    'django.contrib.auth.backends.ModelBackend',
 )
 
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -119,7 +114,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 
@@ -129,13 +123,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,26 +1,17 @@
-import hashlib
 import os
-import re
 import shutil
-import subprocess
-import requests
-
 import markdown
-from github import Github
-from social_django.models import UserSocialAuth
 
-from django.contrib.auth import get_user_model
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import AnonymousUser
-from django.http import (HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, FileResponse)
+from django.http import (HttpResponse, HttpResponseRedirect, JsonResponse, FileResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
-from user.models import ActivityLog
 from .models import Project, Task
 from .utils import ProjectContainerManager, GitHubUtils
 
@@ -46,7 +37,6 @@ def get_project_tree(project_path):
         }
 
         for file in files:
-            # Skip hidden files
             if not file.startswith('.'):
                 file_path = os.path.join(root, file)
                 node['children'].append({
@@ -198,9 +188,7 @@ class ProjectView(TemplateView):
             add_activity_to_log(user=collaborator, activity_type='project', sender=request.user, task=None,
                                 project=project, message=f"{request.user.username} removed {collaborator.username} from project {project.project_name}")
 
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-        return JsonResponse({'error': 'User is not a collaborator'}, status=400)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     @staticmethod
     def edit_project_details(request, project):
@@ -209,9 +197,6 @@ class ProjectView(TemplateView):
         """
         new_name, new_description = request.POST.get('name'), request.POST.get('description')
         is_public = 'is_public' in request.POST
-
-        if not new_name or not new_description:
-            return HttpResponseBadRequest("Name and description cannot be empty")
 
         try:
             if project.project_name != new_name:
@@ -227,9 +212,11 @@ class ProjectView(TemplateView):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         except Project.DoesNotExist:
-            return HttpResponseBadRequest("Project not found")
+            messages.warning(request, "Project not found")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         except Exception as e:
-            return HttpResponseBadRequest(f"Error updating project: {e}")
+            messages.warning(request, f"Error updating project: {e}")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     @staticmethod
     def delete_project(request, project):
@@ -246,9 +233,11 @@ class ProjectView(TemplateView):
             project.delete()
 
         except Project.DoesNotExist:
-            return HttpResponse("Project not found", status=404)
+            messages.warning(request, "Project not found")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         except Exception as e:
-            return HttpResponse(f"Error deleting project: {e}", status=500)
+            messages.warning(request, f"Error deleting project: {e}")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         return redirect('profile', username=request.user.username)
 
@@ -265,7 +254,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
         if not project:
             return redirect('personal_profile')
 
-        readme_path, readme_content = self.handle_readme(project.project_path)
+        readme_path, readme_content = self.handle_readme(project)
 
         project_tree = get_project_tree(project.project_path)
 
@@ -290,13 +279,13 @@ class IdeView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name, context)
 
     @staticmethod
-    def handle_readme(project_path):
+    def handle_readme(project):
         """Ensure the README.md file exists and return its path and content."""
-        readme_path = os.path.join(project_path, 'README.md')
+        readme_path = os.path.join(project.project_path, 'README.md')
 
         if not os.path.exists(readme_path):
             with open(readme_path, 'w', encoding='utf-8') as file:
-                file.write("# Welcome to your project\n\nThis is the README.md file for your project.")
+                file.write(f"# Welcome to your {project.project_name}!\n\nThis is the README.md file for your project.\n\n{project.project_description or 'No description provided.'}")
 
         try:
             with open(readme_path, 'r', encoding='utf-8') as file:
@@ -354,14 +343,15 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         file_path = request.POST.get('open_file')
         if not file_path or not os.path.exists(file_path):
-            print(file_path)
-            return HttpResponse("File not found", status=404)
+            messages.warning(request, "File Not Found!")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 file_content = file.read()
-        except Exception as e:
-            return HttpResponse(f"Error reading file: {e}", status=500)
+        except Exception:
+            messages.warning(request, "Error Reading File!")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         context = {
             'current_project': project,
@@ -382,16 +372,13 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         file_path = request.POST.get('file_path')
 
-        if not file_path or not os.path.exists(file_path):
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
         try:
             os.remove(file_path)
             action = f"Deleted file {os.path.basename(file_path)}"
         except OSError as e:
             action = f"Failed to delete file {file_path}: {e}"
 
-        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
+        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
                             project=project, message=action)
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
@@ -400,8 +387,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         Save, rename, or create a new file in the project and update project settings.
         """
-        user = request.user
-        project_name = project.project_name
 
         file_name = request.POST.get('file_name')
         file_content = request.POST.get('file_contents', '')
@@ -427,14 +412,14 @@ class IdeView(LoginRequiredMixin, TemplateView):
             normalized_content = file_content.replace('\r\n', '\n').replace('\r', '\n')
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(normalized_content)
-        except Exception as e:
-            return HttpResponse(f"Error saving file: {e}", status=500)
+        except Exception:
+            messages.warning(request, "Error Saving File")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
+        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
                             project=project, message=action)
 
         context = {
-            'all_projects': Project.objects.all(),
             'current_project': project,
             'file_name': file_name,
             'file_path': file_path,
@@ -461,13 +446,14 @@ class IdeView(LoginRequiredMixin, TemplateView):
             with open(zip_file_path, 'rb') as zip_file:
                 response = FileResponse(zip_file, as_attachment=True)
                 response['Content-Disposition'] = f'attachment; filename="{os.path.basename(project_path)}.zip"'
-        except Exception as e:
-            return HttpResponse(f"Error creating zip file: {e}", status=500)
+        except Exception:
+            messages.warning(request, "Unable to Download project at this time!")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         finally:
             if os.path.exists(zip_file_path):
                 os.remove(zip_file_path)
 
-        add_activity_to_log(user=request.user, activity_type='update_project', sender=None, task=None,
-                            project=project, message=f"Downloaded the project {project_name}")
+        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
+                            project=project, message=f"Downloaded the project: {project_name}")
 
         return response
