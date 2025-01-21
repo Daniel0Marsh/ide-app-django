@@ -10,6 +10,7 @@ SECRET_KEY = 'django-insecure-21fnvr&bcdxqd=hbmchhhgt3y#4$%c!s08o8^ws)7emeg2dw6*
 
 SOCIAL_AUTH_GITHUB_KEY = 'Ov23liYWi4MAuN2IPyUX'
 SOCIAL_AUTH_GITHUB_SECRET = '26d29678e21d62863470dd642ee2bc070746f854'
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'public_repo']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

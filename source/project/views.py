@@ -1,10 +1,16 @@
+import hashlib
 import os
+import re
 import shutil
+import subprocess
+import requests
+
 import markdown
 from github import Github
 from social_django.models import UserSocialAuth
 
 from django.contrib.auth import get_user_model
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.http import (HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, FileResponse)
@@ -16,7 +22,7 @@ from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
 from user.models import ActivityLog
 from .models import Project, Task
-from .utils import ProjectContainerManager
+from .utils import ProjectContainerManager, GitHubUtils
 
 
 def get_project_tree(project_path):
@@ -255,14 +261,38 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         Handle GET requests for the IDE view.
         """
-        project_id = kwargs.get('project_id')
-        current_project = Project.objects.filter(id=project_id).first() if project_id else Project.objects.order_by(
-            '-modified_at').first()
-
-        if not current_project:
+        project = Project.objects.filter(id=kwargs.get('project_id')).first()
+        if not project:
             return redirect('personal_profile')
 
-        readme_path = os.path.join(current_project.project_path, 'README.md')
+        readme_path, readme_content = self.handle_readme(project.project_path)
+
+        project_tree = get_project_tree(project.project_path)
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'project_tree': project_tree})
+
+        context = {
+            'current_project': project,
+            'project_tree': project_tree,
+            'file_name': 'README.md',
+            'file_path': readme_path,
+            'file_content': readme_content,
+            'tasks': project.tasks.all(),
+            'recent_chats': ChatRoom.objects.filter(participants=request.user),
+            'all_users': (request.user.following.all() | request.user.followers.all()).distinct(),
+            'all_messages': Message.objects.filter(room__participants=request.user).order_by('timestamp'),
+            'is_git_repo': bool(project.repository),
+            'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
+        }
+
+        return render(request, self.template_name, context)
+
+    @staticmethod
+    def handle_readme(project_path):
+        """Ensure the README.md file exists and return its path and content."""
+        readme_path = os.path.join(project_path, 'README.md')
+
         if not os.path.exists(readme_path):
             with open(readme_path, 'w', encoding='utf-8') as file:
                 file.write("# Welcome to your project\n\nThis is the README.md file for your project.")
@@ -271,97 +301,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             with open(readme_path, 'r', encoding='utf-8') as file:
                 readme_content = file.read()
         except Exception as e:
-            return HttpResponse(f"Error reading README.md: {e}", status=500)
+            raise IOError(f"Error reading README.md: {e}")
 
-        project_tree = get_project_tree(current_project.project_path)
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'project_tree': project_tree})
-
-        following_users = request.user.following.all()
-        followers_users = request.user.followers.all()
-        chat_rooms = ChatRoom.objects.filter(participants=request.user)
-
-        # Check if the project has a valid repository
-        is_git_repo = current_project.repository if current_project.repository else None
-
-        # Initialize git_commits and uncommitted_files to empty lists
-        git_commits = []
-        uncommitted_files = []
-
-        if is_git_repo:
-            try:
-                github_account = request.user.social_auth.get(provider='github')
-                token = github_account.access_token  # Get the access token from the GitHub account
-
-                # Use the token to authenticate with the GitHub API
-                g = Github(token)
-
-                # Access the repository using the repo name (replace 'owner' with the GitHub repository owner)
-                repo = g.get_repo(current_project.repository)
-
-                # Fetch commits from GitHub repository
-                commits = repo.get_commits()
-
-                git_commits = [
-                    {
-                        'message': commit.commit.message,
-                        'date': commit.committer.date.strftime('%Y-%m-%d %H:%M:%S'),
-                        'author': commit.committer.name,
-                        'id': commit.sha,
-                        'files_changed': len(commit.files)
-                    } for commit in commits
-                ]
-
-                # Fetch files from the repository to compare with the local project files
-                contents = repo.get_contents("")  # Get all files in the root of the repository
-                repo_files = {content.path: content.sha for content in contents}
-
-                # Now, compare the local project files with the ones from the repository
-                local_files = []  # Assume this contains the list of local files (either from database or file system)
-
-                # Compare files
-                for local_file in local_files:
-                    if local_file not in repo_files:
-                        uncommitted_files.append({
-                            'file': local_file,
-                            'change_type': 'Untracked'
-                        })
-                    else:
-                        # Compare file content or modification date if needed
-                        # For simplicity, we'll assume the file is uncommitted if it doesn't match
-                        if local_file_sha != repo_files.get(local_file):
-                            uncommitted_files.append({
-                                'file': local_file,
-                                'change_type': 'Modified'
-                            })
-
-            except UserSocialAuth.DoesNotExist:
-                github_account = None
-                git_commits = []
-                uncommitted_files = []
-            except Exception as e:
-                # Handle any other exceptions, such as issues with accessing the repository
-                git_commits = []
-                uncommitted_files = []
-
-        context = {
-            'all_projects': Project.objects.all(),
-            'current_project': current_project,
-            'project_tree': project_tree,
-            'file_name': 'README.md',
-            'file_path': readme_path,
-            'file_content': readme_content,
-            'tasks': current_project.tasks.all(),
-            'recent_chats': chat_rooms,
-            'all_users': (following_users | followers_users).distinct(),
-            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
-            'git_commits': git_commits,
-            'is_git_repo': is_git_repo,
-            'uncommitted_files': uncommitted_files,
-        }
-
-        return render(request, self.template_name, context)
+        return readme_path, readme_content
 
     def post(self, request, *args, **kwargs):
         """
@@ -380,9 +322,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'download_project': self.download_project,
             'update_theme': self.update_theme,
             'update_task': update_task,
-            'commit_project': self.commit_project,
-            'commit_push_project': self.commit_push_project
-
+            'create_git_repo': GitHubUtils.create_git_repo,
+            'commit_files': GitHubUtils.commit_files,
+            'commit_push_files': GitHubUtils.commit_files,
         }
 
         action = next((key for key in action_map if key in request.POST), None)
@@ -390,57 +332,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return action_map[action](request, project)
 
         return HttpResponse("Invalid action", status=400)
-
-    @staticmethod
-    def commit_project(request, project):
-        commit_message = request.POST.get('commit_message')
-
-        if not commit_message:
-            return HttpResponse("Commit message is required", status=400)
-
-        try:
-            github_account = request.user.social_auth.get(provider='github')
-            token = github_account.extra_data.get('access_token')
-
-            g = Github(token)
-            repo = g.get_repo(project.repository)
-
-            repo.create_git_commit(
-                commit_message,
-                repo.get_git_tree('main'),
-                [repo.get_git_ref('heads/main').object]
-            )
-        except Exception as e:
-            return HttpResponse(f"Error committing: {str(e)}", status=500)
-
-        return HttpResponse("Commit successful", status=200)
-
-    @staticmethod
-    def commit_push_project(request, project):
-        commit_message = request.POST.get('commit_message')
-        if not commit_message:
-            return HttpResponse("Commit message is required", status=400)
-
-        try:
-            github_account = request.user.social_auth.get(provider='github')
-            token = github_account.extra_data.get('access_token')
-
-            g = Github(token)
-            repo = g.get_repo(project.repository)
-
-            branch = repo.get_branch('main')
-            base_sha = branch.commit.sha
-            new_commit = repo.create_git_commit(
-                commit_message,
-                repo.get_git_tree(base_sha),
-                [repo.get_git_ref('heads/main').object]
-            )
-
-            repo.get_git_ref('heads/main').edit(new_commit.sha)
-        except Exception as e:
-            return HttpResponse(f"Error committing and pushing: {str(e)}", status=500)
-
-        return HttpResponse("Commit and push successful", status=200)
 
     @staticmethod
     def update_theme(request, project):
@@ -460,6 +351,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         file_path = request.POST.get('open_file')
         if not file_path or not os.path.exists(file_path):
+            print(file_path)
             return HttpResponse("File not found", status=404)
 
         try:
@@ -474,6 +366,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'file_path': file_path,
             'file_content': file_content,
             'project_tree': get_project_tree(project.project_path),
+            'is_git_repo': bool(project.repository),
+            'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
         }
 
         return render(request, self.template_name, context)
@@ -527,8 +421,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             action = f"Created a new file {file_name}"
 
         try:
+            normalized_content = file_content.replace('\r\n', '\n').replace('\r', '\n')
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(file_content)
+                f.write(normalized_content)
         except Exception as e:
             return HttpResponse(f"Error saving file: {e}", status=500)
 
@@ -542,6 +437,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'file_path': file_path,
             'file_content': file_content,
             'project_tree': get_project_tree(project_path),
+            'is_git_repo': bool(project.repository),
+            'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
         }
 
         return render(request, self.template_name, context)

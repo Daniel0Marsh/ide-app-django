@@ -21,10 +21,13 @@
         <a class="navbar-brand" href="{% url 'home' %}">
             CodeBlock
         </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                 aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+            <span class="navbar-toggler-icon m-2"></span>
         </button>
+
+        <!-- Navbar content -->
         <div class="collapse navbar-collapse" id="navbarContent">
             <div class="ms-auto">
                 <form class="d-flex me-4 m-2" action="{% url 'search' %}" method="get">
@@ -38,39 +41,50 @@
                 </form>
             </div>
 
-            <div class="dropdown me-4">
+            <!-- Notifications Dropdown -->
+            {% if user.is_authenticated %}
+            <div class="dropdown me-4" data-bs-theme="dark">
+                <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
+                        data-bs-target="#notificationsModal">
+                    <i class="bi bi-bell-fill"></i>
+                </button>
+            </div>
+            {% endif %}
+
+            <div class="dropdown me-4" data-bs-theme="dark">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'profile' username=user.username %}"
-                       class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
-                       aria-expanded="false">
-                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                             class="rounded-circle">
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li>
+                <a href="{% url 'profile' username=user.username %}"
+                   class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="40" height="40"
+                         class="rounded-circle">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li>
                             <span class="dropdown-item-text fw-bold">
                                 <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
                                      class="rounded-circle">
                                 @{{ user.username }}
                             </span>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
-                        <li>
-                            <form method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item">
-                                    Logout
-                                    <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'settings' username=user.username %}">Settings</a></li>
+                    <li>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item">
+                                Logout
+                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
-                    <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
                 {% endif %}
             </div>
         </div>
@@ -223,94 +237,97 @@
 <!-- Git Commits Sidebar -->
 <div class="sidebar shadow border-end border-dark" id="gitCommitsSidebar" style="height: 100vh; overflow-y: auto;">
     {% if is_git_repo %}
-    <div class="px-3 py-2">
-        <h5 class="text-light">Git Commits</h5>
-        <hr class="border-secondary">
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="px-3 py-2">
+            <h5 class="text-light">Git Commits</h5>
+            <hr class="border-secondary">
 
-        <!-- Git Commits Section -->
-        <div class="mb-4">
-            <div class="card btn-dark text-light border-secondary p-1">
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#git-commits-section" aria-controls="git-commits-section">
-                        <i class="bi bi-chevron-down"></i>
-                    </button>
-                    <label for="select-all-commits" class="form-check-label text-light mb-0">
-                        <input type="checkbox" class="form-check-input" id="select-all-commits" checked>
-                        Git Commits
-                    </label>
-                </div>
-            </div>
-            <div class="collapse show" id="git-commits-section">
-                <form id="commit-selection-form" method="POST" class="mt-2">
-                    <ul class="list-group">
-                        {% for commit in git_commits %}
-                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex flex-column">
-                            <div class="d-flex align-items-start">
-                                <input type="checkbox" class="form-check-input me-2" name="selected_commits" value="{{ commit.id }}" id="commit-{{ forloop.counter }}">
-                                <label class="form-check-label w-100" for="commit-{{ forloop.counter }}">
-                                    <strong>{{ commit.message }}</strong>
-                                    <small class="d-block text-muted">Author: {{ commit.author }}</small>
-                                </label>
-                            </div>
-                            <div class="d-flex justify-content-between mt-2">
-                                <small class="text-muted">Commit ID: {{ commit.id }}</small>
-                                <span class="badge bg-secondary">{{ commit.date }}</span>
-                            </div>
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No Git commits available.</li>
-                        {% endfor %}
-                    </ul>
-                </form>
-            </div>
-        </div>
-
-        <!-- Uncommitted Files Section -->
-        <div class="mb-5">
-            <div class="card btn-dark text-light border-secondary p-1">
-                <div class="d-flex align-items-center text-light border-secondary">
-                    <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#uncommitted-files-section" aria-controls="uncommitted-files-section">
-                        <i class="bi bi-chevron-down"></i>
-                    </button>
-                    <label for="select-all-files" class="form-check-label text-light mb-0">
-                        <input type="checkbox" class="form-check-input" id="select-all-files" checked>
-                        Uncommitted Files
-                    </label>
-                </div>
-            </div>
-            <div class="collapse show" id="uncommitted-files-section">
-                <form id="uncommitted-files-form" method="POST" class="mt-2">
-                    <ul class="list-group">
-                        {% for file in uncommitted_files %}
-                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex align-items-center">
-                            <input type="checkbox" class="form-check-input me-2" name="selected_files" value="{{ file.file }}" id="file-{{ forloop.counter }}">
-                            <label class="form-check-label w-100" for="file-{{ forloop.counter }}">
-                                <strong>{{ file.file }}</strong>
-                                <span class="badge bg-danger ms-2">{{ file.change_type }}</span>
+            <div class="mb-0 d-flex flex-column">
+                <div class="mb-5">
+                    <!-- Uncommitted (UNTRACKED) Files Section -->
+                    <div class="card btn-dark text-light border-secondary p-1">
+                        <div class="d-flex align-items-center text-light border-secondary">
+                            <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#uncommitted-files-untracked-section" aria-controls="uncommitted-files-untracked-section">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <label for="select-all-files-untracked" class="form-check-label text-light mb-0">
+                                <input type="checkbox" class="form-check-input" id="select-all-files-untracked" checked>
+                                Untracked Files
                             </label>
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No uncommitted files available.</li>
-                        {% endfor %}
-                    </ul>
-                </form>
+                        </div>
+                    </div>
+                    <div class="collapse show" id="uncommitted-files-untracked-section">
+                        <ul class="list-group">
+                            {% for file in uncommitted_files %}
+                                {% if file.change_type == 'Untracked' %}
+                                <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex align-items-center">
+                                    <input type="checkbox" class="form-check-input me-2" name="selected_files" value="{{ file.file }}" id="file-untracked-{{ forloop.counter }}" checked>
+                                    <form method="POST" action="" class="form-inline mb-0 d-flex align-items-center">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm file-item" for="file-untracked-{{ forloop.counter }}" type="submit" name="open_file" value="{{current_project.project_path}}/{{ file.file }}">
+                                            <strong title="{{ file.file }}">{{ file.file }}</strong>
+                                            <span class="badge bg-danger ms-2">{{ file.change_type }}</span>
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            {% empty %}
+                            <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No uncommitted files available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Uncommitted (TRACKED) Files Section -->
+                <div class="mb-5">
+                    <div class="card btn-dark text-light border-secondary p-1">
+                        <div class="d-flex align-items-center text-light border-secondary">
+                            <button class="btn btn-dark text-light p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#uncommitted-files-tracked-section" aria-controls="uncommitted-files-tracked-section">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <label for="select-all-files-tracked" class="form-check-label text-light mb-0">
+                                <input type="checkbox" class="form-check-input" id="select-all-files-tracked" checked>
+                                Changes
+                            </label>
+                        </div>
+                    </div>
+                    <div class="collapse show" id="uncommitted-files-tracked-section">
+                        <ul class="list-group">
+                            {% for file in uncommitted_files %}
+                                {% if file.change_type != 'Untracked' %}
+                                <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3 d-flex align-items-center">
+                                    <input type="checkbox" class="form-check-input me-2" name="selected_files" value="{{ file.file }}" id="file-tracked-{{ forloop.counter }}" checked>
+                                    <form method="POST" action="" class="form-inline mb-0 d-flex align-items-center">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm file-item" for="file-tracked-{{ forloop.counter }}" type="submit" name="open_file" value="{{current_project.project_path}}/{{ file.file }}">
+                                            <strong title="{{ file.file }}">{{ file.file }}</strong>
+                                            <span class="badge bg-danger ms-2">{{ file.change_type }}</span>
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            {% empty %}
+                            <li class="list-group-item bg-transparent border-0 text-light p-0 ms-3">No Changes</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Commit Message Input -->
+                <div class="mt-5">
+                    <h6 class="text-light">New Commit</h6>
+                        {% csrf_token %}
+                        <textarea class="form-control bg-dark text-light border-secondary mb-3" name="commit_message" rows="20" required></textarea>
+                        <div class="d-flex">
+                            <button type="submit" name="commit_files" value="commit_files" class="btn btn-secondary me-2">Commit</button>
+                            <button type="submit" name="commit_push_files" value="commit_push_files" class="btn btn-outline-secondary">Commit & Push</button>
+                        </div>
+                </div>
             </div>
         </div>
+</form>
 
-
-        <!-- Commit Message Input -->
-        <div class="mt-5">
-            <h6 class="text-light">New Commit</h6>
-            <form method="post" enctype="multipart/form-data" action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}">
-                {% csrf_token %}
-                <textarea class="form-control bg-dark text-light border-secondary mb-3" name="commit_message" rows="20" placeholder="Enter your commit message..." required></textarea>
-                <div class="d-flex">
-                    <button type="submit" name="commit_project" class="btn btn-secondary me-2">Commit</button>
-                    <button type="submit" name="commit_push_project" class="btn btn-outline-secondary">Commit & Push</button>
-                </div>
-            </form>
-        </div>
-    </div>
     {% else %}
     <!-- Create Git Repository Section -->
     <div class="px-3 py-2">
@@ -320,13 +337,43 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label for="repo_name" class="form-label text-light">Repository Name</label>
-                <input type="text" class="form-control bg-dark text-light border-secondary" id="repo_name" name="repo_name" required>
+                <input type="text" class="form-control bg-dark text-light border-secondary" id="repo_name" name="repo_name" value="{{ current_project.project_name }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="repo_description" class="form-label text-light">Repository Description</label>
+                <textarea class="form-control bg-dark text-light border-secondary" id="repo_description" name="repo_description" rows="3">{{ current_project.project_description }}</textarea>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="repo_public" name="repo_public" {% if current_project.is_public %}checked {% endif %}>
+                <label class="form-check-label text-light" for="repo_public">
+                    Public Repository
+                </label>
             </div>
             <button type="submit" name="create_git_repo" class="btn btn-secondary">Create Repository</button>
         </form>
     </div>
     {% endif %}
 </div>
+
+<script>
+    // Function to toggle checkboxes based on "select-all" checkbox
+    function toggleCheckboxes(sectionId, selectAllCheckboxId) {
+        const selectAllCheckbox = document.getElementById(selectAllCheckboxId);
+        const checkboxes = document.querySelectorAll(`#${sectionId} input[type="checkbox"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    document.getElementById('select-all-files-untracked').addEventListener('change', function() {
+        toggleCheckboxes('uncommitted-files-untracked-section', 'select-all-files-untracked');
+    });
+
+    document.getElementById('select-all-files-tracked').addEventListener('change', function() {
+        toggleCheckboxes('uncommitted-files-tracked-section', 'select-all-files-tracked');
+    });
+</script>
+
 
 
 <!--- This is the main CodeMirror IDE section including the nave buttons--->

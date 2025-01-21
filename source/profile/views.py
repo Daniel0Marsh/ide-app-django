@@ -233,7 +233,7 @@ class ProfileView(TemplateView):
         with open(os.path.join(project_path, "README.md"), "w") as readme_file:
             readme_file.write(f"# {project_name}\n\n{project_description or 'No description provided.'}")
 
-        add_activity_to_log(request.user, activity_type='created_project', sender=None, task=None, project=project.project_name, message=None)
+        add_activity_to_log(request.user, activity_type='created_project', sender=None, task=None, project=project, message=None)
 
         return redirect('project', username=request.user.username, project_id=project.id)
 

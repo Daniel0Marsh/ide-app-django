@@ -1,6 +1,14 @@
+import hashlib
+import traceback
 from threading import Timer
 import docker
 import os
+import re
+from github import Github
+from github import InputGitTreeElement
+
+from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from user.models import DockerSession
 
@@ -161,3 +169,143 @@ class ProjectContainerManager:
 
         if self.timeout_timer:
             self.timeout_timer.cancel()
+
+
+class GitHubUtils:
+
+    @staticmethod
+    def get_github_account(request):
+        """Retrieve GitHub account and token."""
+        github_account = request.user.social_auth.filter(provider='github').first()
+        if not github_account:
+            return GitHubUtils._redirect_with_error(request, "GitHub account is not connected. Please link your account.")
+        token = github_account.extra_data.get('access_token')
+        if not token:
+            return GitHubUtils._redirect_with_error(request, "GitHub access token is missing. Please authorize the app.")
+        return Github(token), Github(token).get_user()
+
+    @staticmethod
+    def get_repo(request, project):
+        git_token, _ = GitHubUtils.get_github_account(request)
+        repo_name = re.search(r"github\.com/([^/]+/[^/]+)", project.repository).group(1)
+        return git_token.get_repo(repo_name)
+
+    @staticmethod
+    def _redirect_with_error(request, message):
+        messages.error(request, message)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def get_local_files(project_path):
+        """Retrieve a list of local files excluding dot files."""
+        return [
+            {'change_type': 'new', 'file': os.path.relpath(os.path.join(root, file), project_path)}
+            for root, dirs, files in os.walk(project_path)
+            for file in files if
+            not file.startswith('.') and not dirs[:][:].append(d for d in dirs if not d.startswith('.'))
+        ]
+
+    @staticmethod
+    def get_uncommitted_files(request, project):
+        """Fetch uncommitted files by comparing local files with GitHub repository."""
+        local_files = GitHubUtils.get_local_files(project.project_path)
+        local_files_dict = {file['file']: file for file in local_files}
+
+        try:
+            github_client, _ = GitHubUtils.get_github_account(request)
+            repo = GitHubUtils.get_repo(request, project)
+            github_contents = {content.path: content.sha for content in repo.get_contents("")}
+
+            uncommitted_files = [
+                                    {'file': file, 'change_type': 'Untracked'}
+                                    for file in local_files_dict if file not in github_contents
+                                ] + [
+                                    {'file': file, 'change_type': 'Modified'}
+                                    for file, content in local_files_dict.items()
+                                    if hashlib.sha1(
+                    f"blob {os.path.getsize(os.path.join(project.project_path, file))}\0".encode() + open(
+                        os.path.join(project.project_path, file), 'rb').read()).hexdigest() != github_contents.get(file,
+                                                                                                                   '')
+                                ]
+
+            deleted_files = set(github_contents) - set(local_files_dict)
+            uncommitted_files.extend({'file': file, 'change_type': 'Deleted'} for file in deleted_files)
+
+            return uncommitted_files
+        except Exception as e:
+            messages.error(request, f"Something went wrong while fetching your project files: {e}")
+
+    @staticmethod
+    def create_git_repo(request, project):
+        """Create and initialize a GitHub repository with a README file."""
+        try:
+            git_token, git_user = GitHubUtils.get_github_account(request)
+            repo = git_user.create_repo(
+                name=request.POST['repo_name'],
+                description=request.POST['repo_description'],
+                private=not bool(request.POST.get('repo_public', False)),
+                auto_init=False
+            )
+            with open(os.path.join(project.project_path, "README.md")) as f:
+                repo.create_file("README.md", "Initial commit", f.read(), branch="main")
+
+            project.repository, project.project_description, project.is_public = repo.html_url, repo.description, repo.private
+            project.save()
+            messages.success(request, "Your GitHub repository has been created successfully!")
+        except Exception as e:
+            messages.error(request, f"Oops! There was an issue creating your GitHub repository: {e}")
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def commit_files(request, project, commit_push=True):
+        """Commit multiple files to a GitHub repository."""
+        commit_message = request.POST.get('commit_message')
+        selected_files = request.POST.getlist('selected_files')
+        commit_push_files = request.POST.get('commit_push_files')
+
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            latest_commit = repo.get_git_commit(repo.get_git_ref("heads/main").object.sha)
+            base_tree = latest_commit.tree
+
+            # Create new tree with the files
+            elements = [
+                InputGitTreeElement(
+                    path=file_path,
+                    mode="100644",
+                    type="blob",
+                    sha=repo.create_git_blob(open(os.path.join(project.project_path, file_path), "r").read(), "utf-8").sha
+                ) for file_path in selected_files
+            ]
+
+            new_tree = repo.create_git_tree(elements, base_tree)
+            new_commit = repo.create_git_commit(commit_message, new_tree, [latest_commit])
+            repo.get_git_ref("heads/main").edit(new_commit.sha)
+
+            if commit_push_files:
+                GitHubUtils.push_all_commits(request, project)
+
+            messages.success(request, "Your changes have been committed successfully!")
+
+        except Exception as e:
+            messages.error(request, f"Something went wrong while committing your files: {e}")
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    @staticmethod
+    def push_all_commits(request, project, branch="main"):
+        """Push all local commits to the specified branch on GitHub."""
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            latest_commit = repo.get_git_commit(repo.get_git_ref(f"heads/{branch}").object.sha)
+            repo.get_git_ref(f"heads/{branch}").edit(latest_commit.sha)
+
+            messages.success(request, f"Your changes have been successfully pushed to the {branch} branch!")
+
+        except Exception as e:
+            messages.error(request, f"Failed to push your changes: {e}")
+
+        return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+

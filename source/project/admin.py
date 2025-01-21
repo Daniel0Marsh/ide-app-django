@@ -7,7 +7,7 @@ class ProjectAdmin(admin.ModelAdmin):
     """Admin configuration for the Project model."""
     fieldsets = (
         (None, {
-            'fields': ('project_name', 'project_description', 'user', 'project_path', 'selected_theme', 'selected_syntax', 'is_public')
+            'fields': ('project_name', 'project_description', 'user', 'project_path', 'repository', 'selected_theme', 'selected_syntax', 'is_public')
         }),
         ('Relationships', {
             'fields': ('likes', 'liked_by', 'collaborators')
