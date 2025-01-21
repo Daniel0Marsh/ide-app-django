@@ -241,24 +241,37 @@
     </div>
 </div>
 
-    <!-- Recent Activity -->
+<!-- Recent Activity -->
 <div class="mb-4">
-    <div class="card shadow border-0 mb-4">
-        <div class="card-header text-light">Recent Activity</div>
-        <div id="recent-activity-list" style="max-height: 250px; overflow-y: auto; padding-right: 10px;">
-            {% for activity in recent_activity %}
-                <div class="card border m-3">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <h5 class="card-title">{{ activity.get_activity_type_display }}</h5>
-                        <small class="text-light ms-3"><i class="bi bi-clock"></i> {{ activity.created_at|date:"F j, Y, g:i a" }}</small>
+    {% if recent_activity %}
+        <div class="card shadow border-0 mb-4">
+            <div class="card-header text-light">Recent Activity</div>
+            <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                {% for activity in recent_activity %}
+                    <div class="card border m-3">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <h5 class="card-title">{{ activity.get_activity_type_display }}</h5>
+                            <small class="text-light ms-3"><i class="bi bi-clock"></i> {{ activity.created_at|date:"F j, Y, g:i a" }}</small>
+                        </div>
+                            {% if activity.project.project_name %}
+                                <p class="card-text text-light ms-3 mb-3"><strong>Project:</strong> {{ activity.project.project_name }}</p>
+                            {% elif activity.task.title %}
+                                <p class="card-text text-light ms-3 mb-3"><strong>Task:</strong> {{ activity.task.title }}</p>
+                            {% endif %}
+                        {% if activity.message %}
+                        <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> {{ activity.message }}</p>
+                        {% else %}
+                            <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> No Description available</p>
+                        {% endif %}
                     </div>
-                    <p class="card-text text-light ms-3 mb-3"><strong>Project:</strong> {{ activity.project.project_name }}</p>
-                    <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> {{ activity.message }}</p>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    {% else %}
+        <p class="text-light p-3 m-3">No recent activity available.</p>
+    {% endif %}
 </div>
+
 
 <!-- Modal for Viewing All Repositories -->
 <div class="modal fade" id="allReposModal" tabindex="-1" aria-labelledby="allReposModalLabel" aria-hidden="true">

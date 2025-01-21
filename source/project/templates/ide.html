@@ -1,5 +1,6 @@
 <html lang="en">
 <head>
+    <link rel="icon" type="image/png" href="{{ favicon.favicon.url }}" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} {{current_project.project_name}}/{{file_name}} {% endblock %}</title>
@@ -19,7 +20,7 @@
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="{% url 'home' %}">
-            CodeBlock
+            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="width: 200px;">
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"

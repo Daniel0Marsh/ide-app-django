@@ -13,6 +13,7 @@ from django.views.generic import TemplateView
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
 from .models import Project, Task
+from home.models import HomePage
 from .utils import ProjectContainerManager, GitHubUtils
 
 
@@ -90,6 +91,7 @@ class ProjectView(TemplateView):
                 readme_content = markdown.markdown(readme_file.read())
 
         context = {
+            'home': HomePage.objects.first(),
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
@@ -262,6 +264,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return JsonResponse({'project_tree': project_tree})
 
         context = {
+            'home': HomePage.objects.first(),
             'current_project': project,
             'project_tree': project_tree,
             'file_name': 'README.md',
@@ -354,6 +357,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         context = {
+            'home': HomePage.objects.first(),
             'current_project': project,
             'file_name': os.path.basename(file_path),
             'file_path': file_path,
@@ -420,6 +424,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
                             project=project, message=action)
 
         context = {
+            'home': HomePage.objects.first(),
             'current_project': project,
             'file_name': file_name,
             'file_path': file_path,

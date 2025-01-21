@@ -19,6 +19,7 @@ from django.views.generic import TemplateView
 from chat.models import ChatRoom, Message
 from project.models import Project
 from user.models import CustomUser, ActivityLog
+from home.models import HomePage
 
 
 def add_activity_to_log(user, activity_type, sender=None, task=None, project=None, message=None):
@@ -134,6 +135,7 @@ class ProfileView(TemplateView):
                 messages.warning(request, "Error fetching GitHub repos. Please go to settings and connect your GitHub account.")
 
         context = {
+            'home': HomePage.objects.first(),
             'user_profile': user_profile,
             'user_projects': user_projects,
             'activity_days': activity_days,
@@ -325,6 +327,7 @@ class SearchView(TemplateView):
             ).filter(is_public=True)
 
         context = {
+            'home': HomePage.objects.first(),
             'query': query,
             'user_results': user_results,
             'project_results': project_results,
