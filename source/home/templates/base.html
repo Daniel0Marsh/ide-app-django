@@ -144,7 +144,7 @@
                                         {{ notification.sender.username }}</a>
                                 {% elif notification.activity_type == 'project' %}
                                     The project:
-                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                    <a href="" class="text-light">
                                         {{ notification.project.project_name }}</a>
                                     has updates by:
                                     <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
