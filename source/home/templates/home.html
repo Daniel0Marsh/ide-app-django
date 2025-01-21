@@ -25,10 +25,10 @@
 </div>
 
 <!-- Navbar -->
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+<nav class="navbar fixed-top navbar-expand-md navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand text-primary" href="{% url 'home' %}">
-            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="width: 200px;">
+            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="max-width: 200px;">
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                 aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@
         <div class="container">
             <div class="card hero-card p-3 pb-0 overflow-hidden">
                 <div class="card hero-card overflow-hidden">
-                    <img src="{{ home.imageone.image_one.url }}">
+                    <img src="{{ home.imageone.image_one.url }}" class="img-fluid">
                 </div>
             </div>
         </div>
@@ -75,188 +75,59 @@
         <div class="hero-section text-center">
 
             <div class="container mb-5 text-center my-5">
-                <h2 class="title-text mb-4">Code, Collaborate, and Share Anywhere</h2>
+                <h2 class="title-text mb-4 fs-3 fs-md-1">Code, Collaborate, and Share Anywhere</h2>
                 <div class="row">
-                    <div class="col-md-3 mb-4">
+                    <div class="col-12 col-md-3 mb-4">
                         <i class="bi bi-code-slash display-2"></i>
                         <div class="main-text">Code- with ease using our intuitive editor.</div>
                     </div>
-                    <div class="col-md-3 mb-4">
+                    <div class="col-12 col-md-3 mb-4">
                         <i class="bi bi-person-check display-2"></i>
                         <div class="main-text">Collaborate- in real time, no matter where you are.</div>
                     </div>
-                    <div class="col-md-3 mb-4">
+                    <div class="col-12 col-md-3 mb-4">
                         <i class="bi bi-share display-2"></i>
                         <div class="main-text">Share- your projects with your team or community.</div>
                     </div>
-                    <div class="col-md-3 mb-4">
+                    <div class="col-12 col-md-3 mb-4">
                         <i class="bi bi-cloud display-2"></i>
                         <div class="main-text">Access- your projects from any device, anywhere.</div>
                     </div>
                 </div>
             </div>
-
-            <div class=" border border-secondary m-5"></div>
-
-            <!-- collaborate on projects -->
-            <section class="py-5" style="max-height: 800px; overflow: hidden;">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-5">
-                        <h2 class="title-text mb-5">How You Can Collaborate on Projects</h2>
-                        <h4 class="main-text mt-3">
-                            Work together seamlessly on projects with teammates, sharing ideas and progress in
-                            real-time. Whether you're across the room or across the globe, stay connected and productive
-                            with effortless collaboration.
-                        </h4>
-                    </div>
-                    <div class="col-md-6">
-                        <img src="{{ home.imageone.image_one.url }}" alt="Collaboration Image"
-                             class="img-fluid rounded shadow">
-                    </div>
-                </div>
-            </section>
-
-            <div class="border border-secondary m-5"></div>
-
-            <!-- share your projects -->
-            <section class="py-5 m-5" style="max-height: 800px; overflow: hidden;">
-                <h2 class="title-text mb-5">Share Your Projects With The World</h2>
-                <h4 class="main-text mt-3">
-                    Share your projects with friends and the community, allowing others to join in and collaborate in
-                    real-time. Whether you're working alongside teammates or connecting with global contributors, stay
-                    engaged and make progress together with ease.
-                </h4>
-            </section>
-
-            <div class="border border-secondary m-5"></div>
-
-            <!-- task management & direct messaging -->
-            <section class="py-5" style="max-height: overflow: hidden;">
-                <div class="container">
-                    <div class="card hero-card p-3 pb-0 overflow-hidden">
-                        <div class="card hero-card overflow-hidden">
-                            <img src="{{ home.imageone.image_one.url }}" class="img-fluid rounded shadow">
-                        </div>
-                    </div>
-                </div>
-                <div class="card-group">
-                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title title-text">Task Management</h5>
-                            <p class="card-text main-text">Efficiently assign tasks to collaborators, track progress,
-                                and ensure the success of your projects with streamlined task management tools.</p>
-                        </div>
-                    </div>
-                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title title-text">Direct Messaging</h5>
-                            <p class="card-text main-text">Engage in seamless communication with friends and
-                                collaborators, share ideas, and work together on projects in real-time.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Live Code Execution -->
-            <section class="py-5" style="max-height: overflow: hidden;">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-5">
-                        <h2 class="title-text mb-5">Live Code Execution</h2>
-                        <h4 class="main-text mt-3">
-                            Effortlessly execute your project code with our integrated Docker containers — streamlining
-                            your development workflow.
-                        </h4>
-                    </div>
-                    <div class="col-md-6">
-                        <img src="{{ home.imageone.image_one.url }}" alt="Live Code Execution Image"
-                             class="img-fluid rounded shadow">
-                    </div>
-                </div>
-
-                <div class="card-group">
-                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title title-text">Docker Containers</h5>
-                            <p class="card-text main-text mb-3">With our built-in Docker containers, you can run your
-                                project code in isolated environments, offering flexibility and control.</p>
-                            <ul class="main-text">
-                                <li>Execute code in a fully isolated environment</li>
-                                <li>Manage files and directories seamlessly</li>
-                                <li>Install and configure packages</li>
-                                <li>Test and run your applications</li>
-                                <li>Scalable solution for running multiple projects simultaneously</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="border border-secondary m-5"></div>
-
-            <!-- GitHub Integration & Version Control -->
-            <section class="py-5" style="max-height: overflow: hidden;">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-5">
-                        <h2 class="title-text mb-5">GitHub Integration & Version Control</h2>
-                        <h4 class="main-text mt-3">
-                            Seamlessly integrate with GitHub for version control, manage your codebase, track changes,
-                            and collaborate efficiently. Keep your projects organized and ensure a smooth development
-                            process with powerful version control tools.
-                        </h4>
-                    </div>
-                    <div class="col-md-6">
-                        <img src="{{ home.imageone.image_one.url }}" alt="GitHub Integration Image"
-                             class="img-fluid rounded shadow">
-                    </div>
-                </div>
-                <div class="card-group">
-                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title title-text">GitHub Integration</h5>
-                            <p class="card-text main-text">Easily connect your project with GitHub to keep your code
-                                synchronized, collaborate on changes, and streamline your development workflow.</p>
-                        </div>
-                    </div>
-                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
-                        <div class="card-body">
-                            <h5 class="card-title title-text">Version Control</h5>
-                            <p class="card-text main-text">Track and manage every change made to your codebase with
-                                built-in version control tools, allowing for seamless collaboration and rollback
-                                options.</p>
-                            <ul class="main-text">
-                                <li>Sync your project with GitHub to maintain version history</li>
-                                <li>Collaborate on code changes in real time with teammates</li>
-                                <li>Easily resolve merge conflicts and maintain code integrity</li>
-                                <li>Review code changes, track bugs, and fix issues quickly</li>
-                                <li>Rollback to previous versions when needed, ensuring stability</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
         </div>
-    </div>
 
+        <div class="border border-secondary m-5"></div>
+
+        <!-- Section Example for Smaller Screens -->
+        <section class="py-5" style="max-height: 800px; overflow: hidden;">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-6 mb-5">
+                    <h2 class="title-text mb-5 fs-3">How You Can Collaborate on Projects</h2>
+                    <h4 class="main-text mt-3">Work together seamlessly on projects with teammates, sharing ideas and progress in real-time.</h4>
+                </div>
+                <div class="col-12 col-md-6">
+                    <img src="{{ home.imageone.image_one.url }}" alt="Collaboration Image" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </section>
+
+    </div>
 </main>
 
 <script>
     const greeting = document.querySelector('.greeting');
-
     window.addEventListener('scroll', function() {
         const scrollPosition = window.scrollY;
-        const fadeStart = 200; // Scroll position to start fading
-        const fadeEnd = 700; // Scroll position to fully fade
+        const fadeStart = 200;
+        const fadeEnd = 700;
 
-        // Calculate opacity based on scroll position
         let opacity = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart);
-        opacity = Math.max(opacity, 0); // Prevent opacity from going below 0
+        opacity = Math.max(opacity, 0);
 
-        // Calculate scale based on scroll position (shrinks slightly as you scroll)
         let scale = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart) / 4;
-        scale = Math.max(scale, 0.9); // Only shrink a little (not more than 90% of original size)
+        scale = Math.max(scale, 0.9);
 
-        // Apply both opacity and scale changes
         greeting.style.opacity = opacity;
         greeting.style.transform = `scale(${scale})`;
     });
@@ -264,7 +135,5 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
 </body>
 </html>

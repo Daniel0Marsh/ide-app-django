@@ -70,6 +70,15 @@ python manage.py runserver
 ```bash
 daphne -p 8000 core.asgi:application
 ```
+#### or to run without local host: 
+```bash
+daphne -b 0.0.0.0 -p 8000 core.asgi:application
+```
+#### or to run without local host and prevent server timeouts etc: 
+```bash
+nohup daphne -b 0.0.0.0 -p 8000 core.asgi:application &
+```
+
 
 ### 7. Navigate to the IDE app's URL in your browser to access the IDE.
    `http:127.0.0.1:8000`
