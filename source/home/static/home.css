@@ -80,6 +80,12 @@ body {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+@media (max-width: 768px) {
+    .greeting {
+        top: 10%;
+    }
+}
+
 .main-content {
     position: relative;
     z-index: 1;
