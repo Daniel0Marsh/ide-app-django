@@ -91,6 +91,12 @@ body {
     max-width: 100%;
 }
 
+@media (max-width: 768px) {
+    .section {
+        margin-top: 60%; /* Adjust as needed for small screens */
+    }
+}
+
 .hero-section {
     background: linear-gradient(to bottom, #6c63ff 0.01%, #1e1e2f 0.5%);
     color: #fff;

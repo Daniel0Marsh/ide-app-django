@@ -86,9 +86,15 @@ body {
 }
 
 .section {
-    margin-top: 100%;
+    margin-top: 45%;
     margin-bottom: 0;
     max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .section {
+        margin-top: 60%; /* Adjust as needed for small screens */
+    }
 }
 
 .hero-section {
