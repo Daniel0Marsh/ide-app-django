@@ -284,6 +284,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'all_messages': Message.objects.filter(room__participants=request.user).order_by('timestamp'),
             'is_git_repo': bool(project.repository),
             'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
+            'branch': GitHubUtils.get_current_branch(request, project),
         }
 
         return render(request, self.template_name, context)
@@ -324,7 +325,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'update_task': update_task,
             'create_git_repo': GitHubUtils.create_git_repo,
             'commit_files': GitHubUtils.commit_files,
+            'push_all_commits': GitHubUtils.push_all_commits,
             'commit_push_files': GitHubUtils.commit_files,
+            'pull_and_update_files': GitHubUtils.pull_and_update_files,
         }
 
         action = next((key for key in action_map if key in request.POST), None)

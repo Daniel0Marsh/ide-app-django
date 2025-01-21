@@ -237,11 +237,12 @@
 <!-- Git Commits Sidebar -->
 <div class="sidebar shadow border-end border-dark" id="gitCommitsSidebar" style="height: 100vh; overflow-y: auto;">
     {% if is_git_repo %}
-    <form method="POST" action="">
-        {% csrf_token %}
-        <div class="px-3 py-2">
-            <h5 class="text-light">Git Commits</h5>
-            <hr class="border-secondary">
+    <div class="px-3 py-2">
+        <h5 class="text-light">Git Commits</h5>
+        <hr class="border-secondary">
+
+        <form method="POST" action="">
+            {% csrf_token %}
 
             <div class="mb-0 d-flex flex-column">
                 <div class="mb-5">
@@ -325,8 +326,8 @@
                         </div>
                 </div>
             </div>
-        </div>
-</form>
+        </form>
+    </div>
 
     {% else %}
     <!-- Create Git Repository Section -->
@@ -411,9 +412,40 @@
                 </button>
                 {% endif %}
             </div>
+            <!-- Git Branch Dropdown (aligned to the right) -->
+            {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+            <div class="dropdown p-0 m-0 ms-auto" data-bs-theme="dark">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-signpost-split"></i> {{branch}}
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
+                    <li>
+                        <button class="dropdown-item" type="submit" name="pull_and_update_files">
+                            <i class="bi bi-arrow-repeat"></i> Pull
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" type="submit" name="push_all_commits">
+                            <i class="bi bi-arrow-90deg-up"></i> Push
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" type="submit" name="commit_files">
+                            <i class="bi bi-file-earmark-text"></i> Commit
+                        </button>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#branchModal">
+                            <i class="bi bi-shift"></i> Switch Branch
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
         </div>
     </div>
-    <textarea name='file_contents' id="myTextarea" style="display: none;">{{file_content}}</textarea>
+    <!-- Ensure the text area is visible below the dropdown section -->
+    <textarea name='file_contents' id="myTextarea" class="form-control">{{file_content}}</textarea>
 </form>
 </body>
 
@@ -449,6 +481,42 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- switching branch Modal -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="branchModalLabel">Manage Branch</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Form to select/create a branch -->
+        <form>
+          <div class="mb-3">
+            <label for="branchName" class="form-label">Branch Name</label>
+            <input type="text" class="form-control bg-dark text-light" id="branchName" placeholder="Enter branch name">
+          </div>
+          <div class="mb-3">
+            <label for="actionSelect" class="form-label">Action</label>
+            <select class="form-select bg-dark text-light" id="actionSelect">
+              <option selected>Create New Branch</option>
+              <option>Switch to Existing Branch</option>
+              <option>Set Remote Branch</option>
+            </select>
+          </div>
+          <div class="mb-3" id="remoteBranchDiv" style="display: none;">
+            <label for="remoteBranch" class="form-label">Remote Branch</label>
+            <input type="text" class="form-control bg-dark text-light" id="remoteBranch" placeholder="Enter remote branch">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="submitAction">Update</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- update task modal -->
@@ -595,6 +663,24 @@
     </div>
 </div>
 
+
+<!-- Toast container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast align-items-center text-bg-dark border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- CodeMirror js and css -->
@@ -658,6 +744,15 @@
 <!-- Monokai -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
 
+
+<!-- Toast JS -->
+<script>
+    var toastElements = document.querySelectorAll('.toast');
+    toastElements.forEach(function(toastElement) {
+        var toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    });
+</script>
 
 <!-- IDE js logic -->
 <script>

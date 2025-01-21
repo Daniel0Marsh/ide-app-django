@@ -191,6 +191,15 @@ class GitHubUtils:
         return git_token.get_repo(repo_name)
 
     @staticmethod
+    def get_current_branch(request, project):
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            branch = repo.get_branch(repo.default_branch)
+            return branch.name
+        except Exception as e:
+            messages.error(request, f"Error fetching branch: {e}")
+
+    @staticmethod
     def _redirect_with_error(request, message):
         messages.error(request, message)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
@@ -264,6 +273,10 @@ class GitHubUtils:
         selected_files = request.POST.getlist('selected_files')
         commit_push_files = request.POST.get('commit_push_files')
 
+        if not selected_files:
+            messages.error(request, f"You have not selected any files to commit!")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
         try:
             repo = GitHubUtils.get_repo(request, project)
             latest_commit = repo.get_git_commit(repo.get_git_ref("heads/main").object.sha)
@@ -294,8 +307,10 @@ class GitHubUtils:
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     @staticmethod
-    def push_all_commits(request, project, branch="main"):
+    def push_all_commits(request, project):
         """Push all local commits to the specified branch on GitHub."""
+
+        branch = GitHubUtils.get_current_branch(request, project)
         try:
             repo = GitHubUtils.get_repo(request, project)
             latest_commit = repo.get_git_commit(repo.get_git_ref(f"heads/{branch}").object.sha)
@@ -308,4 +323,29 @@ class GitHubUtils:
 
         return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
+    @staticmethod
+    def pull_and_update_files(request, project):
+        """Pull and update project files from GitHub."""
+        try:
+            repo = GitHubUtils.get_repo(request, project)
+            current_branch = GitHubUtils.get_current_branch(request, project)
+            local_files = GitHubUtils.get_local_files(project.project_path)
+
+            for file_info in local_files:
+                file_path = file_info['file']
+                try:
+                    github_file = repo.get_contents(file_path, ref=current_branch)
+                    if github_file:
+                        file_path_full = os.path.join(project.project_path, file_path)
+                        with open(file_path_full, 'wb') as f:
+                            f.write(github_file.content.encode('utf-8'))
+                        file_info['change_type'] = 'updated'
+                except Exception as e:
+                    messages.error(request, f"Error pulling {file_path}: {e}")
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+            messages.success(request, "Project files updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating project files: {e}")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 

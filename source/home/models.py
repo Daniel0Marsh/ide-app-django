@@ -52,6 +52,21 @@ class Favicon(models.Model):
         return self.favicon.name
 
 
+class ErrorImage(models.Model):
+    """
+    Model representing an image for the home page.
+    """
+
+    home_page = models.OneToOneField(HomePage, on_delete=models.CASCADE)
+    error_image = models.ImageField(upload_to='')
+
+    def __str__(self):
+        """
+        String representation of the image.
+        """
+        return self.error_image.name
+
+
 class ImageOne(models.Model):
     """
     Model representing an image for the home page.
