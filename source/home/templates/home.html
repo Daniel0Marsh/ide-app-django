@@ -25,10 +25,10 @@
 </div>
 
 <!-- Navbar -->
-<nav class="navbar fixed-top navbar-expand-md navbar-dark">
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand text-primary" href="{% url 'home' %}">
-            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="max-width: 200px;">
+            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="width: 200px;">
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                 aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,7 @@
         <div class="hero-section text-center">
 
             <div class="container mb-5 text-center my-5">
-                <h2 class="title-text mb-4 fs-3 fs-md-1">Code, Collaborate, and Share Anywhere</h2>
+                <h2 class="title-text mb-4">Code, Collaborate, and Share Anywhere</h2>
                 <div class="row">
                     <div class="col-12 col-md-3 mb-4">
                         <i class="bi bi-code-slash display-2"></i>
@@ -96,21 +96,106 @@
                 </div>
             </div>
 
-        <div class="border border-secondary m-5"></div>
-
-        <!-- Section Example for Smaller Screens -->
-        <section class="py-5" style="max-height: 800px; overflow: hidden;">
-            <div class="row align-items-center">
-                <div class="col-12 col-md-6 mb-5">
-                    <h2 class="title-text mb-5 fs-3">How You Can Collaborate on Projects</h2>
-                    <h4 class="main-text mt-3">Work together seamlessly on projects with teammates, sharing ideas and progress in real-time.</h4>
+            <!-- collaborate on projects -->
+            <section class="py-5" style="max-height: 800px; overflow: hidden;">
+                <div class="row align-items-center">
+                    <div class="col-12 col-md-6 mb-5">
+                        <h2 class="title-text mb-5">How You Can Collaborate on Projects</h2>
+                        <h4 class="main-text mt-3">
+                            Work together seamlessly on projects with teammates, sharing ideas and progress in
+                            real-time. Whether you're across the room or across the globe, stay connected and productive
+                            with effortless collaboration.
+                        </h4>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <img src="{{ home.imageone.image_one.url }}" alt="Collaboration Image"
+                             class="img-fluid rounded shadow">
+                    </div>
                 </div>
-                <div class="col-12 col-md-6">
-                    <img src="{{ home.imageone.image_one.url }}" alt="Collaboration Image" class="img-fluid rounded shadow">
-                </div>
-            </div>
-        </section>
+            </section>
 
+            <!-- share your projects -->
+            <section class="py-5 m-5" style="max-height: 800px; overflow: hidden;">
+                <h2 class="title-text mb-5">Share Your Projects With The World</h2>
+                <h4 class="main-text mt-3">
+                    Share your projects with friends and the community, allowing others to join in and collaborate in
+                    real-time. Whether you're working alongside teammates or connecting with global contributors, stay
+                    engaged and make progress together with ease.
+                </h4>
+            </section>
+
+            <!-- task management & direct messaging -->
+            <section class="py-5" style="max-height: overflow: hidden;">
+                <div class="container">
+                    <div class="card hero-card p-3 pb-0 overflow-hidden">
+                        <div class="card hero-card overflow-hidden">
+                            <img src="{{ home.imageone.image_one.url }}" class="img-fluid rounded shadow">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-group">
+                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
+                        <div class="card-body">
+                            <h5 class="card-title title-text">Task Management</h5>
+                            <p class="card-text main-text">Efficiently assign tasks to collaborators, track progress,
+                                and ensure the success of your projects with streamlined task management tools.</p>
+                        </div>
+                    </div>
+                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
+                        <div class="card-body">
+                            <h5 class="card-title title-text">Direct Messaging</h5>
+                            <p class="card-text main-text">Engage in seamless communication with friends and
+                                collaborators, share ideas, and work together on projects in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Live Code Execution -->
+            <section class="py-5" style="max-height: overflow: hidden;">
+                <div class="row align-items-center">
+                    <div class="col-12 col-md-6 mb-5">
+                        <h2 class="title-text mb-5">Live Code Execution</h2>
+                        <h4 class="main-text mt-3">
+                            Effortlessly execute your project code with our integrated Docker containers — streamlining
+                            your development workflow.
+                        </h4>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <img src="{{ home.imageone.image_one.url }}" alt="Live Code Execution Image"
+                             class="img-fluid rounded shadow">
+                    </div>
+                </div>
+
+                <div class="card-group">
+                    <div class="card bg-transparent text-light border border-secondary shadow-lg rounded-lg">
+                        <div class="card-body">
+                            <h5 class="card-title title-text">Docker Containers</h5>
+                            <p class="card-text main-text mb-3">With our built-in Docker containers, you can run your
+                                project code in isolated environments, offering flexibility and control.</p>
+                            <ul class="main-text">
+                                <li>Execute code in a fully isolated environment</li>
+                                <li>Manage files and directories seamlessly</li>
+                                <li>Install and configure packages</li>
+                                <li>Test and run your applications</li>
+                                <li>Scalable solution for running multiple projects simultaneously</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GitHub Integration & Version Control -->
+            <section class="py-5" style="max-height: overflow: hidden;">
+                <div class="container">
+                    <h2 class="title-text mb-5">GitHub Integration & Version Control</h2>
+                    <h4 class="main-text mt-3">
+                        Integrate your projects with GitHub and utilize version control for all your development needs.
+                        Manage repositories, track changes, and collaborate with other developers with ease.
+                    </h4>
+                </div>
+            </section>
+        </div>
     </div>
 </main>
 
