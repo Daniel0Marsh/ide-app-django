@@ -93,7 +93,7 @@ body {
 
 @media (max-width: 768px) {
     .section {
-        margin-top: 100%; /* Adjust as needed for small screens */
+        margin-top: 10%; /* Adjust as needed for small screens */
     }
 }
 
