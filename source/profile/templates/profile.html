@@ -94,9 +94,9 @@
 <!-- Recent Projects -->
 <div class="mb-4">
     <div class="card shadow border-0">
-        <div class="card-header text-light d-flex justify-content-between align-items-center">
-            <h3 class="text-light">Recent Projects</h3>
-            <div>
+        <div class="card-header text-light d-flex flex-column flex-sm-row justify-content-between align-items-center">
+            <h3 class="text-light mb-2 mb-sm-0">Recent Projects</h3>
+            <div class="d-flex flex-column flex-sm-row align-items-center gap-2">
                 {% if is_own_profile %}
                 <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#CreateProjectModal">
                     New Project
@@ -243,33 +243,31 @@
 
 <!-- Recent Activity -->
 <div class="mb-4">
-    {% if recent_activity %}
-        <div class="card shadow border-0 mb-4">
-            <div class="card-header text-light">Recent Activity</div>
-            <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
-                {% for activity in recent_activity %}
-                    <div class="card border m-3">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <h5 class="card-title">{{ activity.get_activity_type_display }}</h5>
-                            <small class="text-light ms-3"><i class="bi bi-clock"></i> {{ activity.created_at|date:"F j, Y, g:i a" }}</small>
-                        </div>
-                            {% if activity.project.project_name %}
-                                <p class="card-text text-light ms-3 mb-3"><strong>Project:</strong> {{ activity.project.project_name }}</p>
-                            {% elif activity.task.title %}
-                                <p class="card-text text-light ms-3 mb-3"><strong>Task:</strong> {{ activity.task.title }}</p>
-                            {% endif %}
-                        {% if activity.message %}
-                        <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> {{ activity.message }}</p>
-                        {% else %}
-                            <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> No Description available</p>
-                        {% endif %}
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header text-light">Recent Activity</div>
+        <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+            {% for activity in recent_activity %}
+                <div class="card border m-3">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">{{ activity.get_activity_type_display }}</h5>
+                        <small class="text-light ms-3"><i class="bi bi-clock"></i> {{ activity.created_at|date:"F j, Y, g:i a" }}</small>
                     </div>
-                {% endfor %}
-            </div>
+                        {% if activity.project.project_name %}
+                            <p class="card-text text-light ms-3 mb-3"><strong>Project:</strong> {{ activity.project.project_name }}</p>
+                        {% elif activity.task.title %}
+                            <p class="card-text text-light ms-3 mb-3"><strong>Task:</strong> {{ activity.task.title }}</p>
+                        {% endif %}
+                    {% if activity.message %}
+                    <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> {{ activity.message }}</p>
+                    {% else %}
+                        <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> No Description available</p>
+                    {% endif %}
+                </div>
+            {% empty %}
+            <p class="text-light p-3 m-3">No recent activity available.</p>
+            {% endfor %}
         </div>
-    {% else %}
-        <p class="text-light p-3 m-3">No recent activity available.</p>
-    {% endif %}
+    </div>
 </div>
 
 
