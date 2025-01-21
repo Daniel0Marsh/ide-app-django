@@ -199,21 +199,25 @@
 </main>
 
 <script>
-    const greeting = document.querySelector('.greeting');
-    window.addEventListener('scroll', function() {
-        const scrollPosition = window.scrollY;
-        const fadeStart = 200;
-        const fadeEnd = 700;
+const greeting = document.querySelector('.greeting');
+window.addEventListener('scroll', function() {
+    const scrollPosition = window.scrollY;
+    const fadeStart = 200;
+    const fadeEnd = 700;
 
-        let opacity = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart);
-        opacity = Math.max(opacity, 0);
+    let opacity = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart);
+    opacity = Math.max(opacity, 0);
 
-        let scale = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart) / 4;
-        scale = Math.max(scale, 0.9);
+    let scale = 1 - (scrollPosition - fadeStart) / (fadeEnd - fadeStart) / 4;
+    scale = Math.max(scale, 0.9); // Prevent scale from going below 0.9
 
-        greeting.style.opacity = opacity;
-        greeting.style.transform = `scale(${scale})`;
-    });
+    // Prevent the greeting from growing too large. Cap the scale at a maximum value
+    const maxScale = 1.2; // Set the maximum scale value
+    scale = Math.min(scale, maxScale);
+
+    greeting.style.opacity = opacity;
+    greeting.style.transform = `scale(${scale})`;
+});
 </script>
 
 <!-- Bootstrap JS -->
