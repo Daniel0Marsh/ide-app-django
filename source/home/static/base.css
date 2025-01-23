@@ -159,13 +159,17 @@ body {
 }
 
 .chat-card-body {
-    height: 35vh;
+    height: 50vh;
     overflow-y: scroll;
 }
 
 .chat-card-body-main {
-    height: 70vh;
+    height: 100vh;
     overflow-y: scroll;
+}
+
+#mainChatCard:not(.collapsed) {
+    height: 100vh;
 }
 
 
@@ -180,16 +184,6 @@ body {
 
     #chatCard {
         padding: 10px;
-    }
-
-    .chat-card-body {
-        height: 35vh;
-        overflow-y: scroll;
-    }
-
-    .chat-card-body-main {
-        height: 70vh;
-        overflow-y: scroll;
     }
 }
 
