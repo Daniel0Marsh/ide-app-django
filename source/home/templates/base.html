@@ -57,16 +57,6 @@
                 </form>
             </div>
 
-            <!-- Notifications Dropdown -->
-            {% if user.is_authenticated %}
-            <div class="dropdown me-4" data-bs-theme="dark">
-                <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
-                        data-bs-target="#notificationsModal">
-                    <i class="bi bi-bell-fill"></i>
-                </button>
-            </div>
-            {% endif %}
-
             <div class="dropdown me-4" data-bs-theme="dark">
                 {% if user.is_authenticated %}
                 <a href="{% url 'profile' username=user.username %}"
@@ -77,11 +67,20 @@
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="userDropdown">
                     <li>
-                            <span class="dropdown-item-text fw-bold">
-                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                                     class="rounded-circle">
-                                @{{ user.username }}
-                            </span>
+                        <span class="dropdown-item-text fw-bold">
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
+                                 class="rounded-circle">
+                            @{{ user.username }}
+                        </span>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
+                                data-bs-target="#notificationsModal">
+                            <i class="bi bi-bell-fill"></i>
+                        </button>
                     </li>
                     <li>
                         <hr class="dropdown-divider">
