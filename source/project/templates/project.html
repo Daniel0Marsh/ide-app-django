@@ -164,7 +164,7 @@
 
 <!-- Project Tasks Section -->
 <div class="accordion mb-4" id="tasksAccordion">
-    <div class="accordion-item bg-transparent border-0">
+    <div class="accordion-item border-0">
         <h2 class="accordion-header" id="headingTasks">
             <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="true" aria-controls="collapseTasks">
                 Project Tasks
@@ -208,17 +208,22 @@
 </div>
 
 
-<!-- Project Description -->
-<div class="mb-4">
-    <div class="card shadow border-0">
-        <div class="card-header text-light">
-            Project Description
-        </div>
-        <div class="card-body text-light">
-            <p class="mb-0">{{ current_project.project_description }}</p>
+<!-- Project Description Section -->
+<div class="accordion mb-4" id="descriptionAccordion">
+    <div class="accordion-item border-0">
+        <h2 class="card-header" id="headingDescription">
+            <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
+                Project Description
+            </button>
+        </h2>
+        <div id="collapseDescription" class="accordion-collapse collapse show" aria-labelledby="headingDescription" data-bs-parent="#descriptionAccordion">
+            <div class="card-body">
+                <p class="mb-0">{{ current_project.project_description }}</p>
+            </div>
         </div>
     </div>
 </div>
+
 
 <!-- Project README.md -->
 <div class="mb-4">
