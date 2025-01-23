@@ -113,7 +113,7 @@
 </div>
 
 <!-- Collaborators Section -->
-<div class="accordion rounded mb-4" id="collaboratorsAccordion">
+<div class="accordion rounded mb-2" id="collaboratorsAccordion">
     <div class="accordion-item rounded border-0">
         <h2 class="accordion-header rounded" id="headingCollaborators">
             <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollaborators" aria-expanded="false" aria-controls="collapseCollaborators">
@@ -161,9 +161,9 @@
 </div>
 
 <!-- Project Tasks Section -->
-<div class="accordion mb-4" id="tasksAccordion">
-    <div class="accordion-item border-0">
-        <h2 class="accordion-header" id="headingTasks">
+<div class="accordion rounded mb-2" id="tasksAccordion">
+    <div class="accordion-item rounded border-0">
+        <h2 class="accordion-header rounded" id="headingTasks">
             <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="false" aria-controls="collapseTasks">
                 Project Tasks
             </button>
@@ -206,13 +206,19 @@
 </div>
 
 <!-- Project README.md -->
-<div class="mb-4">
-    <div class="card shadow border-0">
-        <div class="card-header text-light">
-            README.md
-        </div>
-        <div class="card-body text-light">
-            <p class="mb-0">{{ readme_content|safe }}</p>
+<div class="mb-2">
+    <div class="accordion rounded mb-4" id="readmeAccordion">
+        <div class="accordion-item rounded border-0">
+            <h2 class="accordion-header rounded" id="readmeHeading">
+                <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReadme" aria-expanded="true" aria-controls="collapseReadme">
+                    README.md
+                </button>
+            </h2>
+            <div id="collapseReadme" class="accordion-collapse collapse show" aria-labelledby="readmeHeading" data-bs-parent="#readmeAccordion">
+                <div class="accordion-body">
+                    <p class="mb-0">{{ readme_content|safe }}</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
