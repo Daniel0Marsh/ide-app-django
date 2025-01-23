@@ -112,90 +112,101 @@
 </div>
 
 <!-- Collaborators Section -->
-<div class="mb-4">
-    <div class="card shadow border-0">
-        <div class="card-header text-light">
-            Collaborators
-        </div>
-        <div class="card-body text-light">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item bg-transparent text-light d-flex align-items-center">
-                    <img src="{{ current_project.user.profile_picture.url }}" alt="Profile"
-                         class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
-                    <div class="d-flex justify-content-between w-100">
-                        <a href="{% url 'profile' current_project.user.username %}"
-                           class="card-title text-decoration-none text-light fs-5">
-                            {{ current_project.user.username }}
-                        </a>
-                        <span class="text-light ms-2">(Owner)</span>
-                    </div>
-                </li>
-                {% for collaborator in current_project.collaborators.all %}
-
-                <li class="list-group-item bg-transparent text-light d-flex align-items-center">
-                    <img src="{{ collaborator.profile_picture.url }}" alt="Profile"
-                         class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
-                    <div class="d-flex justify-content-between w-100">
-                        <a href="{% url 'public_profile' collaborator.username %}"
-                           class="card-title text-decoration-none text-light fs-5">
-                            {{ collaborator.username }}
-                        </a>
-                        {% if request.user == current_project.user %}
-                        <form method="post" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="collaborator_id" value="{{ collaborator.id }}">
-                            <button type="submit" name="remove_collaborator" class="btn btn-danger btn-sm">Remove
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </li>
-                {% empty %}
-                <li class="list-group-item bg-transparent text-light">No collaborators added yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- Project Tasks -->
-<div class="mb-4">
-    <div class="card shadow border-0">
-        <div class="card-header text-light">Project Tasks</div>
-        <div class="card-body text-light">
-            {% if tasks %}
-            <ul class="list-group">
-                {% for task in tasks %}
-                <li class="list-group-item m-1" style="background-color: rgba(255, 255, 255, 0.1);">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <a href="#"
-                           class="text-light"
-                           data-bs-toggle="modal"
-                           data-bs-target="#updateTaskModal"
-                           data-task-id="{{ task.id }}"
-                           data-task-title="{{ task.title }}"
-                           data-task-description="{{ task.description }}"
-                           data-task-status="{{ task.status }}">
-                            <strong>{{ task.title }}</strong>
-                        </a>
-                        <span class="badge bg-secondary">{{ task.get_status_display }}</span>
-                    </div>
-                    <p class="mb-1 text-light">{{ task.description }}</p>
-                    <div class="small text-light">
-                        Assigned to: {{ task.assigned_to.username }} <br>
-                        Assigned by: {{ task.assigned_by.username }}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div class="text-center">
-                <p class="text-light">No tasks have been assigned to this project yet.</p>
+<div class="accordion mb-4" id="collaboratorsAccordion">
+    <div class="accordion-item bg-transparent border-0">
+        <h2 class="accordion-header" id="headingCollaborators">
+            <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollaborators" aria-expanded="true" aria-controls="collapseCollaborators">
+                Collaborators
+            </button>
+        </h2>
+        <div id="collapseCollaborators" class="accordion-collapse collapse show" aria-labelledby="headingCollaborators" data-bs-parent="#collaboratorsAccordion">
+            <div class="accordion-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                        <img src="{{ current_project.user.profile_picture.url }}" alt="Profile"
+                             class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
+                        <div class="d-flex justify-content-between w-100">
+                            <a href="{% url 'profile' current_project.user.username %}"
+                               class="card-title text-decoration-none text-light fs-5">
+                                {{ current_project.user.username }}
+                            </a>
+                            <span class="text-light ms-2">(Owner)</span>
+                        </div>
+                    </li>
+                    {% for collaborator in current_project.collaborators.all %}
+                    <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                        <img src="{{ collaborator.profile_picture.url }}" alt="Profile"
+                             class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
+                        <div class="d-flex justify-content-between w-100">
+                            <a href="{% url 'public_profile' collaborator.username %}"
+                               class="card-title text-decoration-none text-light fs-5">
+                                {{ collaborator.username }}
+                            </a>
+                            {% if request.user == current_project.user %}
+                            <form method="post" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="collaborator_id" value="{{ collaborator.id }}">
+                                <button type="submit" name="remove_collaborator" class="btn btn-danger btn-sm">Remove
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item bg-transparent text-light">No collaborators added yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
+
+
+<!-- Project Tasks Section -->
+<div class="accordion mb-4" id="tasksAccordion">
+    <div class="accordion-item bg-transparent border-0">
+        <h2 class="accordion-header" id="headingTasks">
+            <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="true" aria-controls="collapseTasks">
+                Project Tasks
+            </button>
+        </h2>
+        <div id="collapseTasks" class="accordion-collapse collapse show" aria-labelledby="headingTasks" data-bs-parent="#tasksAccordion">
+            <div class="accordion-body">
+                {% if tasks %}
+                <ul class="list-group">
+                    {% for task in tasks %}
+                    <li class="list-group-item m-1" style="background-color: rgba(255, 255, 255, 0.1);">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <a href="#"
+                               class="text-light"
+                               data-bs-toggle="modal"
+                               data-bs-target="#updateTaskModal"
+                               data-task-id="{{ task.id }}"
+                               data-task-title="{{ task.title }}"
+                               data-task-description="{{ task.description }}"
+                               data-task-status="{{ task.status }}">
+                                <strong>{{ task.title }}</strong>
+                            </a>
+                            <span class="badge bg-secondary">{{ task.get_status_display }}</span>
+                        </div>
+                        <p class="mb-1 text-light">{{ task.description }}</p>
+                        <div class="small text-light">
+                            Assigned to: {{ task.assigned_to.username }} <br>
+                            Assigned by: {{ task.assigned_by.username }}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center">
+                    <p class="text-light">No tasks have been assigned to this project yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Project Description -->
 <div class="mb-4">
