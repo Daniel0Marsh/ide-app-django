@@ -77,9 +77,9 @@
                         <hr class="dropdown-divider">
                     </li>
                     <li>
-                        <a class="btn btn-outline-light" data-bs-toggle="modal"
+                        <a class="dropdown-item" data-bs-toggle="modal"
                                 data-bs-target="#notificationsModal">
-                            <i class="bi bi-bell-fill fs-5 text-light"></i> Notifications
+                            <i class="bi bi-bell fs-5 text-light"></i> Notifications
                         </a>
                     </li>
                     <li>
@@ -88,7 +88,7 @@
                     <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">
                         <i class="bi bi-person-circle fs-5 text-light"></i> My Profile</a></li>
                     <li><a class="dropdown-item" href="{% url 'settings' username=user.username %}">
-                        <i class="bi bi-cog fs-5 text-light"></i> Settings</a></li>
+                        <i class="bi bi-gear fs-5 text-light"></i> Settings</a></li>
                     <li>
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
