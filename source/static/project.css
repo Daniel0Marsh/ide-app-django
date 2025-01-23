@@ -22,14 +22,20 @@
 }
 
 .accordion-button {
-    color: var(--text-accent);
-    font-size: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
     font-weight: bold;
-    text-decoration: none;
+    color: var(--text-light);
 }
 
-.accordion-button:not(.collapsed):hover {
+.accordion-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
     text-decoration: underline;
+    color: var(--text-accent);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-accent);
 }
 
 .accordion-body.card-body p {
