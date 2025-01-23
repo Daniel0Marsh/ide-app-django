@@ -7,16 +7,9 @@
     --btn-secondary: #6c63ff;
     --btn-danger: #e74c3c;
 }
-
-.accordion-item {
-    border: none;
-    border-radius: 0.5rem;
-}
-
 .accordion-item {
     background-color: var(--bg-darker);
     border: none;
-    border-radius: 0.5rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
