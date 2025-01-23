@@ -183,12 +183,12 @@ body {
     }
 
     .chat-card-body {
-        height: 50hv;
+        height: 50%;
         overflow-y: scroll;
         }
 
     .chat-card-body-main {
-        height: 100hv;
+        height: 100%;
         overflow-y: scroll;
     }
 }
