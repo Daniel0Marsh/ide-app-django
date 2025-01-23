@@ -185,28 +185,29 @@ body {
         transition: all 0.3s ease;
     }
 
+    /* Ensure ide-card takes up full screen */
     .ide-card {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100vw; /* Full width of viewport */
+        height: 100vh; /* Full height of viewport */
         transition: all 0.1s ease;
         color: var(--text-white);
         background-color: var(--bg-dark);
-        z-index: 800;
+        z-index: 800; /* Make sure it's below the sidebar */
     }
 
-    /* Adjust the content of ide-card when sidebar is active */
+    /* Adjust the content layout when sidebar is active */
     .sidebar.active + .ide-card {
-        margin-left: 0; /* Remove previous margin */
+        margin-left: 0; /* Remove any margin that could cause issues */
     }
 
-    /* Adjust the content layout when any sidebar is active */
+    /* Adjust content when sidebar is active */
     .files-sidebar-active .ide-content,
     .git-commits-sidebar-active .ide-content,
     .tasks-sidebar-active .ide-content {
-        margin-left: 0; /* Remove margin when sidebar is active */
+        margin-left: 0; /* Reset margin to fit full screen when sidebar is active */
     }
 
     /* Sidebar components styling */
