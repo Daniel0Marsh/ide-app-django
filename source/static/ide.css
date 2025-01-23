@@ -173,10 +173,6 @@ body {
         z-index: 10000;
     }
 
-    .sidebar.active {
-        left: -50;
-    }
-
     /* Sidebar when active - take up the full screen */
     .sidebar.active {
         position: fixed;
