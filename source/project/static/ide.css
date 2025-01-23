@@ -155,6 +155,64 @@ body {
     color: var(--text-white);
 }
 
+
+/* Adjust for small screens */
+@media (max-width: 1200px) {
+    .side-nav {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 50px;
+        display: flex; /* Use flexbox for centering */
+        justify-content: center; /* Horizontally center content */
+        align-items: center; /* Vertically center content */
+        text-align: center; /* Ensure text inside is centered */
+        background-color: var(--bg-darker); /* Optional background color */
+        padding: 0 10px; /* Optional: Padding for spacing */
+    }
+
+    /* Sidebar when active - take up the full screen */
+    .sidebar.active {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh; /* Full screen height */
+        width: 100%;  /* Full screen width */
+        z-index: 1000; /* Ensure it's above other content */
+        background-color: var(--bg-darker);
+        transition: all 0.3s ease; /* Smooth transition for opening/closing */
+    }
+
+    /* Adjust the content of ide-card when sidebar is active */
+    .sidebar.active + .ide-card {
+        margin-left: 0; /* Remove previous margin */
+    }
+
+    /* Adjust the content layout when any sidebar is active */
+    .files-sidebar-active .ide-content,
+    .git-commits-sidebar-active .ide-content,
+    .tasks-sidebar-active .ide-content {
+        margin-left: 0; /* Remove margin when sidebar is active */
+    }
+
+    /* Sidebar components styling */
+    .sidebar ul.components {
+        padding: 20px 0;
+        list-style: none; /* Ensure no default list styling */
+    }
+
+    .sidebar ul.components li a {
+        padding: 10px 15px;
+        display: block;
+        color: var(--text-white);
+        text-decoration: none;
+        transition: background-color 0.2s ease; /* Add smooth hover transition */
+    }
+}
+
+
 .sidebar ul.components li a:hover {
     background-color: var(--bg-dark);
     text-decoration: none;
