@@ -34,6 +34,7 @@
                     {% endif %}
                 </p>
             </div>
+            <p class="mb-0">{{ current_project.project_description }}</p>
             <div class="d-flex flex-wrap justify-content-start">
                 <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
                    class="btn btn-primary mx-1 mb-2">
@@ -122,7 +123,7 @@
         <div id="collapseCollaborators" class="accordion-collapse collapse show" aria-labelledby="headingCollaborators" data-bs-parent="#collaboratorsAccordion">
             <div class="accordion-body">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                    <li class="list-group-item bg-transparent border text-light d-flex align-items-center">
                         <img src="{{ current_project.user.profile_picture.url }}" alt="Profile"
                              class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
                         <div class="d-flex justify-content-between w-100">
@@ -134,7 +135,7 @@
                         </div>
                     </li>
                     {% for collaborator in current_project.collaborators.all %}
-                    <li class="list-group-item bg-transparent text-light d-flex align-items-center">
+                    <li class="list-group-item bg-transparent border text-light d-flex align-items-center">
                         <img src="{{ collaborator.profile_picture.url }}" alt="Profile"
                              class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
                         <div class="d-flex justify-content-between w-100">
@@ -205,24 +206,6 @@
         </div>
     </div>
 </div>
-
-
-<!-- Project Description Section -->
-<div class="accordion mb-2" id="descriptionAccordion">
-    <div class="accordion-item border-0">
-        <h2 class="accordion-header" id="headingDescription">
-            <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
-                Project Description
-            </button>
-        </h2>
-        <div id="collapseDescription" class="accordion-collapse collapse show" aria-labelledby="headingDescription" data-bs-parent="#descriptionAccordion">
-            <div class="accordion-body">
-                <p class="mb-0">{{ current_project.project_description }}</p>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 <!-- Project README.md -->
 <div class="mb-4">
