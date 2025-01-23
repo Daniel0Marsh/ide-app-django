@@ -181,17 +181,17 @@
 {% if user.is_authenticated %}
 <div class="chat-button">
     <button class="btn btn-lg btn-secondary m-4 m-sm-2" type="button" data-bs-toggle="collapse"
-            data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+        data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
         <i class="bi bi-chat-dots"></i>
     </button>
 </div>
 
 <div class="chat-box collapse" id="mainChatCard">
     <div class="card">
-        <div class='card-header'>
+        <div class="card-header">
             <button class="btn btn-secondary" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
-                <i class="bi bi-chat-dots"></i>
+                  data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+            <i class="bi bi-x-lg"></i>
             </button>
         </div>
         <div class="card-body p-0 m-0">
