@@ -188,8 +188,7 @@ body {
     .ide-card {
         top: 0;
         height: 100vh;
-        margin-left: 0;
-        margin-right: 0;
+        width: 100%;
         transition: all 0.1s ease;
         color: var(--text-white);
         background-color: var(--bg-dark);
