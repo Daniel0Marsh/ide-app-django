@@ -16,84 +16,38 @@
 
 <body>
 
-<!-- Navbar -->
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'home' %}">
-            <img src="{{ home.logo.image.url }}" alt="{{ home.website_title }}" class="navbar-logo text-light" style="width: 200px;">
-        </a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon m-2"></span>
-        </button>
-
-        <!-- Navbar content -->
-        <div class="collapse navbar-collapse" id="navbarContent">
-            <div class="ms-auto">
-                <form class="d-flex me-4 m-2" action="{% url 'search' %}" method="get">
-                    <div class="input-group">
-                        <input class="form-control" type="search" name="query" placeholder="Search users or projects"
-                               aria-label="Search">
-                        <button class="btn btn-outline-light" type="submit">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Notifications Dropdown -->
-            {% if user.is_authenticated %}
-            <div class="dropdown me-4" data-bs-theme="dark">
-                <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
-                        data-bs-target="#notificationsModal">
-                    <i class="bi bi-bell-fill"></i>
-                </button>
-            </div>
-            {% endif %}
-
-            <div class="dropdown me-4" data-bs-theme="dark">
-                {% if user.is_authenticated %}
-                <a href="{% url 'profile' username=user.username %}"
-                   class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
-                   aria-expanded="false">
-                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="40" height="40"
-                         class="rounded-circle">
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li>
-                            <span class="dropdown-item-text fw-bold">
-                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
-                                     class="rounded-circle">
-                                @{{ user.username }}
-                            </span>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
-                    <li><a class="dropdown-item" href="{% url 'settings' username=user.username %}">Settings</a></li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item">
-                                Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-                {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
-                <a href="{% url 'register' %}" class="btn btn-light">Sign Up</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</nav>
-
 <!-- project side-nav -->
 <div class="side-nav shadow-end border-end border-dark">
+    <!-- Git Branch Dropdown (aligned to the right) -->
+    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    <div class="dropend p-0 m-0 ms-auto" data-bs-theme="dark">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-signpost-split"></i> {{branch}}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
+            <li>
+                <button class="dropdown-item" type="submit" name="pull_and_update_files">
+                    <i class="bi bi-arrow-repeat"></i> Pull
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item" type="submit" name="push_all_commits">
+                    <i class="bi bi-arrow-90deg-up"></i> Push
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item" type="submit" name="commit_files">
+                    <i class="bi bi-file-earmark-text"></i> Commit
+                </button>
+            </li>
+            <li>
+                <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#branchModal">
+                    <i class="bi bi-shift"></i> Switch Branch
+                </a>
+            </li>
+        </ul>
+    </div>
+    {% endif %}
     <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip"
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
@@ -413,36 +367,6 @@
                 </button>
                 {% endif %}
             </div>
-            <!-- Git Branch Dropdown (aligned to the right) -->
-            {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-            <div class="dropdown p-0 m-0 ms-auto" data-bs-theme="dark">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-signpost-split"></i> {{branch}}
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
-                    <li>
-                        <button class="dropdown-item" type="submit" name="pull_and_update_files">
-                            <i class="bi bi-arrow-repeat"></i> Pull
-                        </button>
-                    </li>
-                    <li>
-                        <button class="dropdown-item" type="submit" name="push_all_commits">
-                            <i class="bi bi-arrow-90deg-up"></i> Push
-                        </button>
-                    </li>
-                    <li>
-                        <button class="dropdown-item" type="submit" name="commit_files">
-                            <i class="bi bi-file-earmark-text"></i> Commit
-                        </button>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#branchModal">
-                            <i class="bi bi-shift"></i> Switch Branch
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            {% endif %}
         </div>
     </div>
     <!-- Ensure the text area is visible below the dropdown section -->
