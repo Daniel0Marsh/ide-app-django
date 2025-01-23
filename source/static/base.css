@@ -156,7 +156,9 @@ body {
   right: 0;
   z-index: 10000;
   width: 30%;
-  transition: width 0.3s ease, height 0.3s ease;
+  height: 0;
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease, transform 0.3s ease;
 }
 
 .chat-box:not(.collapsed) {
@@ -191,6 +193,7 @@ body {
     padding: 10px;
   }
 }
+
 
 
 .message-item {
