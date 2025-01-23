@@ -170,12 +170,12 @@ body {
 }
 
 .chat-card-body {
-    height: 50%;
+    height: 50vh;
     overflow-y: scroll;
 }
 
 .chat-card-body-main {
-    height: 100%;
+    height: 100vh;
     overflow-y: scroll;
 }
 
