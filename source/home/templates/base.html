@@ -65,7 +65,7 @@
                     <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="40" height="40"
                          class="rounded-circle">
                 </a>
-                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                <ul class="dropdown-menu dropdown-menu-lg-end" aria-labelledby="userDropdown">
                     <li>
                         <span class="dropdown-item-text fw-bold">
                             <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="30" height="30"
@@ -77,22 +77,23 @@
                         <hr class="dropdown-divider">
                     </li>
                     <li>
-                        <button class="btn btn-outline-light" id="notificationsDropdown" data-bs-toggle="modal"
+                        <a class="btn btn-outline-light" data-bs-toggle="modal"
                                 data-bs-target="#notificationsModal">
-                            <i class="bi bi-bell-fill"></i>
-                        </button>
+                            <i class="bi bi-bell-fill fs-5 text-light"></i> Notifications
+                        </a>
                     </li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-                    <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">My Profile</a></li>
-                    <li><a class="dropdown-item" href="{% url 'settings' username=user.username %}">Settings</a></li>
+                    <li><a class="dropdown-item" href="{% url 'profile' username=user.username %}">
+                        <i class="bi bi-person-circle fs-5 text-light"></i> My Profile</a></li>
+                    <li><a class="dropdown-item" href="{% url 'settings' username=user.username %}">
+                        <i class="bi bi-cog fs-5 text-light"></i> Settings</a></li>
                     <li>
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="dropdown-item">
-                                Logout
-                                <i class="bi bi-box-arrow-left fs-5 text-light"></i>
+                                <i class="bi bi-box-arrow-left fs-5 text-light"></i> Logout
                             </button>
                         </form>
                     </li>
