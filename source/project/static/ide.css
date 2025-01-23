@@ -193,7 +193,7 @@ body {
     .ide-card {
         position: fixed;
         top: 0;
-        left: 0;
+        left: -50px;
         width: 100vw; /* Full width of viewport */
         height: 100vh; /* Full height of viewport */
         transition: all 0.1s ease;
