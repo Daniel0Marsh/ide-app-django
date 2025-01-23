@@ -33,26 +33,71 @@
 - Bootstrap API
 - Docker
 
-## Installation
+## Step-by-Step Guide: Installing and Setting Up Redis
+This guide provides a step-by-step approach to installing and configuring Redis on a Linux server.
 
+### Step 1: Update System Packages
+Make sure your system packages are up-to-date.
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+### Step 2: Install Redis
+Install Redis and its associated tools using the following command:
+```bash
+sudo apt install redis-server -y
+```
 
-### 1. Clone this repository.
+### Step 3: Verify Redis Installation
+Check the version of Redis to confirm it is installed:
+```bash
+redis-server --version
+```
+
+### Step 4: Enable and Start the Redis Service
+Ensure Redis is enabled to start at boot and is running:
+```bash
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+```
+Verify the status:
+```bash
+sudo systemctl status redis-server
+```
+
+### Step 5: Test Redis Locally
+Check if Redis is running by using the ping command:
+```bash
+redis-cli ping
+```
+If successful, you should see the response:
+```bash
+PONG
+```
+
+### Step 6: Open Port 6379 in Firewall
+Allow external connections to Redis by opening port 6379:
+```bash
+sudo ufw allow 6379
+```
+
+### Step 7: Clone this repository.
 ```bash
    git clone https://github.com/your-repo/project-platform.git
    cd project-platform
 ```
 
-### 2. Install the required dependencies using pip:
+### Step 8: Install the required dependencies using pip:
 ```bash
 pip install -r requirements.txt
 ```
-### 3 Run migrations to create necessary database tables:
+### Step 9: Run migrations to create necessary database tables:
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 4. Build the Docker image for running project code:
+### Step 10: Build the Docker image for running project code:
 ```bash
 sudo docker build -t terminal_session .
 ```
@@ -61,27 +106,26 @@ sudo docker build -t terminal_session .
 sudo docker rmi -f terminal_session
 ```
 
-### 5. Start your Django development server:
+### Step 11: Start your Django development server:
+
+
 ```bash
 python manage.py runserver
 ```
 
-### 6. For WebSocket functionality, run the ASGI server:
+For WebSocket functionality, run the ASGI server:
 ```bash
 daphne -p 8000 core.asgi:application
 ```
-#### or to run without local host: 
+to run without local host: 
 ```bash
 daphne -b 0.0.0.0 -p 8000 core.asgi:application
 ```
-#### or to run without local host and prevent server timeouts etc: 
+run without local host and prevent server timeouts etc: 
 ```bash
 nohup daphne -b 0.0.0.0 -p 8000 core.asgi:application &
 ```
 
-
-### 7. Navigate to the IDE app's URL in your browser to access the IDE.
-   `http:127.0.0.1:8000`
 
 ## Functionality
 - Messaging and Networking: Build a network of collaborators and communicate seamlessly.
