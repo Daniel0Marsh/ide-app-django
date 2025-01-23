@@ -196,7 +196,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body chat-card-body d-flex h-50">
+                <div class="card-body chat-card-body">
                     <ul class="list-group m-1">
                         {% for chat in recent_chats %}
                         <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
@@ -230,7 +230,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body chat-card-body d-flex h-50">
+                <div class="card-body chat-card-body">
                     <ul class="list-group m-1">
                         {% for chat in all_users %}
                         <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
@@ -270,7 +270,7 @@
                     </div>
                 </div>
 
-                <div class="card-body chat-card-body-main d-flex h-100">
+                <div class="card-body chat-card-body-main">
                     <div id="chat-log" class="p-3 mb-3">
                         {% for message in all_messages %}
                         <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
