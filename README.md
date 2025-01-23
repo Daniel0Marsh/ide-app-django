@@ -126,6 +126,16 @@ run without local host and prevent server timeouts etc:
 nohup daphne -b 0.0.0.0 -p 8000 core.asgi:application &
 ```
 
+stop the process using: 
+```bash
+ps aux | grep daphne
+```
+
+then use the PID
+```bash
+kill <PID>
+```
+
 
 ## Functionality
 - Messaging and Networking: Build a network of collaborators and communicate seamlessly.
