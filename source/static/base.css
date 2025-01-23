@@ -147,6 +147,16 @@ body {
   position: fixed;
   bottom: 0;
   right: 0;
+  height: 20px;
+  z-index: 10000;
+  width: 30%;
+}
+
+.chat-box:not(.collapsed) {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  height: 100vh;
   z-index: 10000;
   width: 30%;
 }
@@ -166,14 +176,6 @@ body {
 .chat-card-body-main {
     height: 100vh;
     overflow-y: scroll;
-}
-
-#mainChatCard:not(.collapsed) {
-    height: 100vh;
-}
-
-#mainChatCard:(.collapsed) {
-    height: 20px;
 }
 
 
