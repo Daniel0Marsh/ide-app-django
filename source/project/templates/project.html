@@ -112,10 +112,10 @@
 </div>
 
 <!-- Collaborators Section -->
-<div class="accordion mb-4" id="collaboratorsAccordion">
-    <div class="accordion-item bg-transparent border-0">
+<div class="accordion mb-2" id="collaboratorsAccordion">
+    <div class="accordion-item border-0">
         <h2 class="accordion-header" id="headingCollaborators">
-            <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollaborators" aria-expanded="true" aria-controls="collapseCollaborators">
+            <button class="accordion-button text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollaborators" aria-expanded="false" aria-controls="collapseCollaborators">
                 Collaborators
             </button>
         </h2>
@@ -161,12 +161,11 @@
     </div>
 </div>
 
-
 <!-- Project Tasks Section -->
-<div class="accordion mb-4" id="tasksAccordion">
+<div class="accordion mb-2" id="tasksAccordion">
     <div class="accordion-item border-0">
         <h2 class="accordion-header" id="headingTasks">
-            <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="true" aria-controls="collapseTasks">
+            <button class="accordion-button text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="false" aria-controls="collapseTasks">
                 Project Tasks
             </button>
         </h2>
@@ -209,15 +208,15 @@
 
 
 <!-- Project Description Section -->
-<div class="accordion mb-4" id="descriptionAccordion">
+<div class="accordion mb-2" id="descriptionAccordion">
     <div class="accordion-item border-0">
-        <h2 class="card-header" id="headingDescription">
+        <h2 class="accordion-header" id="headingDescription">
             <button class="accordion-button bg-dark text-light shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
                 Project Description
             </button>
         </h2>
         <div id="collapseDescription" class="accordion-collapse collapse show" aria-labelledby="headingDescription" data-bs-parent="#descriptionAccordion">
-            <div class="card-body">
+            <div class="accordion-body">
                 <p class="mb-0">{{ current_project.project_description }}</p>
             </div>
         </div>

@@ -1,0 +1,22 @@
+:root {
+    --bg-dark: #1e1e2f;
+    --bg-darker: #151521;
+    --text-light: #e4e4e7;
+    --text-accent: #00c8ff;
+    --btn-primary: #4caf50;
+    --btn-secondary: #6c63ff;
+    --btn-danger: #e74c3c;
+}
+
+.accordion {
+    background-color: var(--bg-darker);
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.accordion-header {
+    background-color: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+    color: var(--text-light);
+}
