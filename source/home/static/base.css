@@ -167,13 +167,6 @@ body {
   width: 30%;
 }
 
-#chatCard {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: #161b22;
-  position: relative;
-  padding: 5px;
-}
-
 .chat-card-body {
     height: 50vh;
     overflow-y: scroll;
