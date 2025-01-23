@@ -34,7 +34,7 @@
                     {% endif %}
                 </p>
             </div>
-            <p class="mb-0">{{ current_project.project_description }}</p>
+            <p class="mb-2">{{ current_project.project_description }}</p>
             <div class="d-flex flex-wrap justify-content-start">
                 <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
                    class="btn btn-primary mx-1 mb-2">
@@ -113,7 +113,7 @@
 </div>
 
 <!-- Collaborators Section -->
-<div class="accordion mb-2" id="collaboratorsAccordion">
+<div class="accordion mb-4 rounded" id="collaboratorsAccordion">
     <div class="accordion-item border-0">
         <h2 class="accordion-header" id="headingCollaborators">
             <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollaborators" aria-expanded="false" aria-controls="collapseCollaborators">
@@ -123,7 +123,7 @@
         <div id="collapseCollaborators" class="accordion-collapse collapse show" aria-labelledby="headingCollaborators" data-bs-parent="#collaboratorsAccordion">
             <div class="accordion-body">
                 <ul class="list-group">
-                    <li class="list-group-item bg-transparent border text-light d-flex align-items-center">
+                    <li class="list-group-item bg-transparent text-light d-flex align-items-center">
                         <img src="{{ current_project.user.profile_picture.url }}" alt="Profile"
                              class="profile-image rounded-circle me-2" style="width: 40px; height: 40px;">
                         <div class="d-flex justify-content-between w-100">
@@ -163,7 +163,7 @@
 </div>
 
 <!-- Project Tasks Section -->
-<div class="accordion mb-2" id="tasksAccordion">
+<div class="accordion rounded mb-4" id="tasksAccordion">
     <div class="accordion-item border-0">
         <h2 class="accordion-header" id="headingTasks">
             <button class="accordion-button shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="false" aria-controls="collapseTasks">
