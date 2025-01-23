@@ -159,12 +159,12 @@ body {
 }
 
 .chat-card-body {
-    height: 300px;
+    height: 50%;
     overflow-y: scroll;
 }
 
 .chat-card-body-main {
-    height: 600px;
+    height: 100%;
     overflow-y: scroll;
 }
 
