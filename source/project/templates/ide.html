@@ -21,7 +21,7 @@
     <!-- Git Branch Dropdown (aligned to the right) -->
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
     <div class="dropend p-0 m-0 ms-auto" data-bs-theme="dark">
-        <button class="btn mx-auto btn-dark mb-4 mt-3" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+        <button class="btn mx-auto btn-dark mb-2 mt-3" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false"
             title="Menu">
             <i class="bi bi-three-dots-vertical fs-5 text-light"></i>
         </button>
@@ -58,13 +58,13 @@
                 <hr class="dropdown-divider">
             </li>
             <li>
-                <button type="button" class="btn mx-auto btn-dark mb-4" title="Theme" data-bs-toggle="modal"
+                <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" title="Theme" data-bs-toggle="modal"
                         data-bs-target="#colorChangeModal">
                     <i class="bi bi-paint-bucket fs-5 text-light"></i>
                 </button>
             </li>
             <li>
-                <a class="btn mx-auto btn-dark mb-4" data-bs-toggle="tooltip" title="Home"
+                <a class="btn mx-auto btn-dark mb-2 mt-2" data-bs-toggle="tooltip" title="Home"
                    href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
                     <i class="bi bi-house fs-5 text-light"></i> Project Home
                 </a>
@@ -73,20 +73,20 @@
         </ul>
     </div>
     {% endif %}
-    <button type="button" class="btn mx-auto btn-dark mb-4" id="sidebarCollapse" data-bs-toggle="tooltip"
+    <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="sidebarCollapse" data-bs-toggle="tooltip"
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
     {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
-    <button type="button" class="btn mx-auto btn-dark mb-4" id="gitSidebarCollapse" data-bs-toggle="tooltip"
+    <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="gitSidebarCollapse" data-bs-toggle="tooltip"
             title="Git Commits">
         <i class="bi bi-git fs-5 text-light"></i>
     </button>
-    <button type="button" class="btn mx-auto btn-dark mb-4" id="taskSidebarCollapse" data-bs-toggle="tooltip"
+    <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="taskSidebarCollapse" data-bs-toggle="tooltip"
             title="Tasks">
         <i class="bi bi-card-checklist fs-5 text-light"></i>
     </button>
-    <button type="button" class="btn mx-auto btn-dark mb-4" title="Terminal" data-bs-toggle="offcanvas"
+    <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" title="Terminal" data-bs-toggle="offcanvas"
             data-bs-target="#offcanvasBottom"
             aria-controls="offcanvasBottom">
         <i class="bi bi-terminal fs-5 text-light"></i>
