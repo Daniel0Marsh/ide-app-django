@@ -23,7 +23,7 @@
     <div class="dropend p-0 m-0 ms-auto" data-bs-theme="dark">
         <button class="btn mx-auto btn-dark mb-4 mt-3" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false"
             title="Menu">
-            <i class="bi bi-list fs-5 text-light"></i>
+            <i class="bi bi-three-dots-vertical fs-5 text-light"></i>
         </button>
         <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
             <li>
@@ -353,7 +353,7 @@
     <input type="hidden" name="project_id" value="{{current_project.id}}">
 
     <div class="card-header shadow-end border-end border-dark">
-        <div class="hstack gap-3 align-middle">
+        <div class="hstack gap-1 align-middle">
             <div class="p-1">
                 {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
                 <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">

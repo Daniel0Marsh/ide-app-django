@@ -196,7 +196,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body" style="height: 300px; overflow-y: scroll;">
+                <div class="card-body chat-card-body" style="height: 300px; overflow-y: scroll;">
                     <ul class="list-group m-1">
                         {% for chat in recent_chats %}
                         <li class="list-group-item border-0 d-flex align-items-center justify-content-between text-light"
@@ -270,8 +270,8 @@
                     </div>
                 </div>
 
-                <div class="card-body">
-                    <div id="chat-log" class="p-3 mb-3" style="height: 600px; overflow-y: scroll;">
+                <div class="card-body chat-card-body-main">
+                    <div id="chat-log" class="p-3 mb-3">
                         {% for message in all_messages %}
                         <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
                              data-roomName="{{ message.room.name }}">

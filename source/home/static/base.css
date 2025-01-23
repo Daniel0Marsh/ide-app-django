@@ -147,7 +147,7 @@ body {
   position: fixed;
   bottom: 0;
   right: 0;
-  z-index: 1;
+  z-index: 10000;
   width: 30%;
 }
 
@@ -158,18 +158,39 @@ body {
   padding: 5px;
 }
 
+.chat-card-body {
+    height: 300px;
+    overflow-y: scroll;
+}
+
+.chat-card-body-main {
+    height: 600px;
+    overflow-y: scroll;
+}
+
+
 /* For small screens */
 @media (max-width: 1200px) {
-  .chat-box {
-    width: 100%; /* Make it take the full width of the screen */
-    bottom: 0;
-    right: 0;
-    margin: 0;
-  }
+    .chat-box {
+        width: 100%;
+        bottom: 0;
+        right: 0;
+        margin: 0;
+    }
 
-  #chatCard {
-    padding: 10px;
-  }
+    #chatCard {
+        padding: 10px;
+    }
+
+    .chat-card-body {
+        height: 50hv;
+        overflow-y: scroll;
+        }
+
+    .chat-card-body-main {
+        height: 100hv;
+        overflow-y: scroll;
+    }
 }
 
 
