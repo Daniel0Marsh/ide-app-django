@@ -177,6 +177,13 @@
     {% block content %}{% endblock %}
 </main>
 
+<div class="chat-button">
+    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse"
+            data-bs-target="#chatCardCollapse, #mainChatCard" id="toggleButton">
+        <i class="bi bi-chat-dots"></i>
+    </button>
+</div>
+
 {% if user.is_authenticated %}
 <div class="chat-box collapse" id="mainChatCard">
     <div class="card">
