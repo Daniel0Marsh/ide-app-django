@@ -172,6 +172,10 @@ body {
     height: 100vh;
 }
 
+#mainChatCard:(.collapsed) {
+    height: 20px;
+}
+
 
 /* For small screens */
 @media (max-width: 1200px) {
