@@ -180,12 +180,20 @@ body {
 #chat-log {
     flex-grow: 1;
     overflow-y: auto;
-    padding-bottom: 50px;
+    padding-bottom: 20px;  /* Add space for the input at the bottom */
+    margin-bottom: 50px;   /* To make space between the chat log and input */
 }
 
 .input-group.fixed-bottom {
+    position: sticky;
     bottom: 0;
     left: 0;
+    background-color: #343a40; /* Make background similar to the input field */
+    z-index: 10;  /* Ensure input stays on top of the messages */
+}
+
+.form-control {
+    border-radius: 0;
 }
 
 /* For small screens */
