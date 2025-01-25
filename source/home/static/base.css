@@ -171,27 +171,10 @@ body {
   overflow-y: auto;
 }
 
-/* Ensure the chat container takes full height minus input area */
-.card-body.chat-card-body-main {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+.chat-card-body-main {
+  height: 100vh;
+  overflow-y: auto;
 }
-
-/* Make chat-log scrollable and take up the available space */
-#chat-log {
-    overflow-y: auto;
-    flex-grow: 1;
-    margin-bottom: 10px;
-}
-
-/* Make sure the input group stays at the bottom */
-.input-group {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-}
-
 
 /* For small screens */
 @media (max-width: 1200px) {
