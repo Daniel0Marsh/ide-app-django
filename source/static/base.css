@@ -172,8 +172,23 @@ body {
 }
 
 .chat-card-body-main {
-  height: 100vh;
-  overflow-y: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-log {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 50px;
+}
+
+.input-group.fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
 }
 
 /* For small screens */
