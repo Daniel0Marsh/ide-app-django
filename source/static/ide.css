@@ -201,18 +201,22 @@ body {
 
     .sidebar.active + .ide-card {
         margin-left: 0;
+        left: 0px;
     }
 
     .files-sidebar-active .ide-content {
         margin-left: 0;
+        left: 0px;
     }
 
     .git-commits-sidebar-active .ide-content {
         margin-left: 0;
+        left: 0px;
     }
 
     .tasks-sidebar-active .ide-content {
         margin-left: 0;
+        left: 0px;
     }
 
     .sidebar ul.components li a {
