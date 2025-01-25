@@ -189,7 +189,8 @@ body {
     .ide-card {
         position: fixed;
         top: 0;
-        margin-left: -50px;
+        left: -50px;
+        margin-left: 0;
         width: 100vw;
         height: 100vh;
         transition: all 0.1s ease;
@@ -198,9 +199,20 @@ body {
         z-index: 800;
     }
 
-    .sidebar ul.components {
-        padding: 20px 0;
-        list-style: none;
+    .sidebar.active + .ide-card {
+        margin-left: 0;
+    }
+
+    .files-sidebar-active .ide-content {
+        margin-left: 0;
+    }
+
+    .git-commits-sidebar-active .ide-content {
+        margin-left: 0;
+    }
+
+    .tasks-sidebar-active .ide-content {
+        margin-left: 0;
     }
 
     .sidebar ul.components li a {
@@ -212,7 +224,7 @@ body {
     }
 
     .toast-container {
-        bottom: 20px;
+        margin-bottom: 20px;
 
     }
 }
