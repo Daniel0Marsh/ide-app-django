@@ -173,13 +173,16 @@ body {
 
 .chat-card-body-main {
     height: 100vh;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
 #chat-log {
     flex-grow: 1;
-    max-height: 90vh;
+    max-height: 90vh;  /* Max height for chat log */
     overflow-y: auto;
+    padding-right: 15px;  /* Optional, to ensure scroll doesn't overlap */
 }
 
 
