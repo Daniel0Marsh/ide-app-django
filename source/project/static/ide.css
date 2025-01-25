@@ -189,26 +189,13 @@ body {
     .ide-card {
         position: fixed;
         top: 0;
-        left: -50px;
-        margin-left: 0;
+        margin-left: -50px;
         width: 100vw;
         height: 100vh;
         transition: all 0.1s ease;
         color: var(--text-white);
         background-color: var(--bg-dark);
         z-index: 800;
-    }
-
-    /* Adjust the content layout when sidebar is active */
-    .sidebar.active + .ide-card {
-        margin-left: 0;
-    }
-
-    /* Adjust content when sidebar is active */
-    .files-sidebar-active .ide-content,
-    .git-commits-sidebar-active .ide-content,
-    .tasks-sidebar-active .ide-content {
-        margin-left: 0;
     }
 
     .sidebar ul.components {
@@ -221,11 +208,11 @@ body {
         display: block;
         color: var(--text-white);
         text-decoration: none;
-        transition: background-color 0.2s ease; /* Add smooth hover transition */
+        transition: background-color 0.2s ease;
     }
 
     .toast-container {
-    bottom: 20px;
+        bottom: 20px;
 
     }
 }
