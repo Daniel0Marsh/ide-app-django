@@ -91,7 +91,8 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_new_password')
 
-        if not request.user.check_password(current_password):
+        # Check if the user has a password set (if no password is set, allow them to update)
+        if request.user.password != '' and not request.user.check_password(current_password):
             messages.error(request, "Incorrect current password.")
             return redirect('settings', username=request.user.username)
 

@@ -205,18 +205,33 @@
         <div class="card-body">
             <form method="POST" action="">
                 {% csrf_token %}
-                <div class="mb-3">
-                    <label for="current_password" class="form-label text-light">Current Password</label>
-                    <input type="password" class="form-control" id="current_password" name="current_password" required>
-                </div>
-                <div class="mb-3">
-                    <label for="new_password" class="form-label text-light">New Password</label>
-                    <input type="password" class="form-control" id="new_password" name="new_password" required>
-                </div>
-                <div class="mb-3">
-                    <label for="confirm_new_password" class="form-label text-light">Confirm New Password</label>
-                    <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
-                </div>
+
+                {% if needs_password %}
+                    <!-- No previous password, asking only for new password -->
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label text-light">Set New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_new_password" class="form-label text-light">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                    </div>
+                {% else %}
+                    <!-- User has a previous password, asking for current password -->
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label text-light">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label text-light">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_new_password" class="form-label text-light">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                    </div>
+                {% endif %}
+
                 <div class="text-end">
                     <button type="submit" name="update_password" class="btn btn-danger">Update Password</button>
                 </div>

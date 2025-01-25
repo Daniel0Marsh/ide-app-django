@@ -430,7 +430,7 @@
 
 <!-- switching branch Modal -->
 <div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="branchModalLabel">Manage Branch</h5>
@@ -465,7 +465,7 @@
 
 <!-- update task modal -->
 <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
@@ -502,7 +502,7 @@
 
 <!-- Modal for changing background color and text syntax -->
 <div class="modal fade" id="colorChangeModal" tabindex="-1" aria-labelledby="colorChangeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
@@ -608,7 +608,7 @@
 </div>
 
 <!-- Toast container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 10000;">
     {% if messages %}
         {% for message in messages %}
             <div class="toast align-items-center text-bg-dark border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">

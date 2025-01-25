@@ -321,13 +321,27 @@ class GitHubUtils:
     @staticmethod
     def push_all_commits(request, project):
         """Push all local commits to the specified branch on GitHub."""
-
-        branch = GitHubUtils.get_current_branch(request, project)
         try:
+            branch = GitHubUtils.get_current_branch(request, project)
             repo = GitHubUtils.get_repo(request, project)
-            latest_commit = repo.get_git_commit(repo.get_git_ref(f"heads/{branch}").object.sha)
-            repo.get_git_ref(f"heads/{branch}").edit(latest_commit.sha)
 
+            # Get current and remote commit references
+            remote_ref = f"heads/{branch}"
+            local_ref = f"heads/{branch}"
+
+            remote_commit = repo.get_git_commit(repo.get_git_ref(remote_ref).object.sha)
+            local_commit = repo.get_git_commit(repo.get_git_ref(local_ref).object.sha)
+
+            # Compare commits to ensure local is ahead of remote
+            if remote_commit.sha != local_commit.sha:
+                messages.error(
+                    request,
+                    f"Please update your {branch} branch by pulling the latest changes before pushing."
+                )
+                return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+            # Push the local commit to the remote branch
+            repo.get_git_ref(remote_ref).edit(local_commit.sha)
             messages.success(request, f"Your changes have been successfully pushed to the {branch} branch!")
 
         except Exception as e:
