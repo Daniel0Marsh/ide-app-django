@@ -329,27 +329,6 @@
     {% endif %}
 </div>
 
-<script>
-    // Function to toggle checkboxes based on "select-all" checkbox
-    function toggleCheckboxes(sectionId, selectAllCheckboxId) {
-        const selectAllCheckbox = document.getElementById(selectAllCheckboxId);
-        const checkboxes = document.querySelectorAll(`#${sectionId} input[type="checkbox"]`);
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = selectAllCheckbox.checked;
-        });
-    }
-
-    document.getElementById('select-all-files-untracked').addEventListener('change', function() {
-        toggleCheckboxes('uncommitted-files-untracked-section', 'select-all-files-untracked');
-    });
-
-    document.getElementById('select-all-files-tracked').addEventListener('change', function() {
-        toggleCheckboxes('uncommitted-files-tracked-section', 'select-all-files-tracked');
-    });
-</script>
-
-
-
 <!--- This is the main CodeMirror IDE section including the nave buttons--->
 <form method="post" enctype="multipart/form-data" action="" class="card ide-card ide-content border-0">
     {% csrf_token %}
@@ -687,6 +666,26 @@
 <!-- Monokai -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/monokai.min.css">
 
+
+<!-- toggle checkboxes based on "select-all" checkbox -->
+<script>
+    // Function to toggle checkboxes based on "select-all" checkbox
+    function toggleCheckboxes(sectionId, selectAllCheckboxId) {
+        const selectAllCheckbox = document.getElementById(selectAllCheckboxId);
+        const checkboxes = document.querySelectorAll(`#${sectionId} input[type="checkbox"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    document.getElementById('select-all-files-untracked').addEventListener('change', function() {
+        toggleCheckboxes('uncommitted-files-untracked-section', 'select-all-files-untracked');
+    });
+
+    document.getElementById('select-all-files-tracked').addEventListener('change', function() {
+        toggleCheckboxes('uncommitted-files-tracked-section', 'select-all-files-tracked');
+    });
+</script>
 
 <!-- Toast JS -->
 <script>
