@@ -198,12 +198,15 @@ class GitHubUtils:
         """
         gets the current branch for the project
         """
-        try:
-            repo = GitHubUtils.get_repo(request, project)
-            branch = repo.get_branch(repo.default_branch)
-            return branch.name
-        except Exception as e:
-            messages.error(request, f"Error fetching branch: {e}")
+        if bool(project.repository):
+            try:
+                repo = GitHubUtils.get_repo(request, project)
+                branch = repo.get_branch(repo.default_branch)
+                return branch.name
+            except Exception as e:
+                messages.error(request, f"Error fetching branch: {e}")
+        else:
+            messages.error(request, f"GitHub account is not connected. Please link your account.")
 
     @staticmethod
     def _redirect_with_error(request, message):

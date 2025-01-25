@@ -189,7 +189,8 @@ body {
     .ide-card {
         position: fixed;
         top: 0;
-        left: -50px;
+        left: 0px;
+        margin-left: 0;
         width: 100vw;
         height: 100vh;
         transition: all 0.1s ease;
@@ -210,7 +211,6 @@ body {
         margin-left: 0;
     }
 
-    /* Sidebar components styling */
     .sidebar ul.components {
         padding: 20px 0;
         list-style: none;
@@ -222,6 +222,11 @@ body {
         color: var(--text-white);
         text-decoration: none;
         transition: background-color 0.2s ease; /* Add smooth hover transition */
+    }
+
+    .toast-container {
+    bottom: 20px;
+
     }
 }
 

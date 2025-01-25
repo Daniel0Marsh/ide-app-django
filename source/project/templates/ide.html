@@ -26,37 +26,39 @@
             <i class="bi bi-three-dots-vertical fs-5 text-light"></i>
         </button>
         <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
-            <li>
-                <span class="dropdown-item-text fw-bold">
-                    Branch: {{branch}}
-                </span>
-            </li>
-            <li>
-                <hr class="dropdown-divider">
-            </li>
-            <li>
-                <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#branchModal">
-                    <i class="bi bi-shift"></i> Switch Branch
-                </a>
-            </li>
-            <li>
-                <button class="dropdown-item" type="submit" name="pull_and_update_files">
-                    <i class="bi bi-arrow-repeat"></i> Pull
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item" type="submit" name="push_all_commits">
-                    <i class="bi bi-arrow-90deg-up"></i> Push
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item" type="submit" name="commit_files">
-                    <i class="bi bi-file-earmark-text"></i> Commit
-                </button>
-            </li>
-            <li>
-                <hr class="dropdown-divider">
-            </li>
+            {% if is_git_repo %}
+                <li>
+                    <span class="dropdown-item-text fw-bold">
+                        Branch: {{branch}}
+                    </span>
+                </li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#branchModal">
+                        <i class="bi bi-shift"></i> Switch Branch
+                    </a>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="submit" name="pull_and_update_files">
+                        <i class="bi bi-arrow-repeat"></i> Pull
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="submit" name="push_all_commits">
+                        <i class="bi bi-arrow-90deg-up"></i> Push
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="submit" name="commit_files">
+                        <i class="bi bi-file-earmark-text"></i> Commit
+                    </button>
+                </li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+            {% endif %}
             <li>
                 <button type="button" class="dropdown-item" title="Theme" data-bs-toggle="modal"
                         data-bs-target="#colorChangeModal">
@@ -69,7 +71,6 @@
                     <i class="bi bi-house fs-5 text-light"></i> Project Home
                 </a>
             </li>
-
         </ul>
     </div>
     {% endif %}
