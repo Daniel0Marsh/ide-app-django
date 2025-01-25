@@ -26,7 +26,7 @@ class ProjectContainerManager:
         self.project = project
         self.user = user
         self.container_name = f"{self.user.username}_{self.user.id}"
-        self.project_path = project.project_path  # change to: user.project_dir this once docker container is made persistent!
+        self.project_path = user.project_dir
         self.client = docker.from_env()
         self.timeout_timer = None
 

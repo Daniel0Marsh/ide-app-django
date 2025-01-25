@@ -417,7 +417,7 @@
                 <div id="terminal" class="p-1 text-light"></div>
                 <div class="d-flex align-items-center">
                     <div class="prompt p-1 text-light">
-                        <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}/{{ current_project.project_name }}</span>$
+                        <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}</span>$
                     </div>
                     <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
                     <input type="hidden" id="username" value="{{ user.username }}">
@@ -964,7 +964,7 @@
         const terminalDiv = document.getElementById('terminal');
 
         terminalDiv.innerHTML += `<div>
-            <span class="username">user@Ubuntu</span>:<span class="path">~/{{user}}/{{ current_project.project_name }}</span>$ ${promptValue}
+            <span class="username">user@Ubuntu</span>:<span class="path">~/{{user}}</span>$ ${promptValue}
         </div>`;
 
         if (promptValue.toLowerCase() === 'clear') {
