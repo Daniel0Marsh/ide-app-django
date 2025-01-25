@@ -35,7 +35,7 @@
                 </p>
             </div>
             <p class="mb-2">{{ current_project.project_description }}</p>
-            <div class="d-flex flex-wrap justify-content-start">
+            <div class="d-flex flex-wrap justify-content-start ms-0">
                 <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
                    class="btn btn-primary mx-1 mb-2 btn-sm">
                     Open IDE
@@ -120,7 +120,7 @@
                 Collaborators
             </button>
         </h2>
-        <div id="collapseCollaborators" class="accordion-collapse collapse show" aria-labelledby="headingCollaborators" data-bs-parent="#collaboratorsAccordion">
+        <div id="collapseCollaborators" class="accordion-collapse collapse" aria-labelledby="headingCollaborators" data-bs-parent="#collaboratorsAccordion">
             <div class="accordion-body">
                 <ul class="list-group">
                     <li class="list-group-item bg-transparent text-light d-flex align-items-center">
@@ -168,7 +168,7 @@
                 Project Tasks
             </button>
         </h2>
-        <div id="collapseTasks" class="accordion-collapse collapse show" aria-labelledby="headingTasks" data-bs-parent="#tasksAccordion">
+        <div id="collapseTasks" class="accordion-collapse collapse" aria-labelledby="headingTasks" data-bs-parent="#tasksAccordion">
             <div class="accordion-body">
                 {% if tasks %}
                 <ul class="list-group">
