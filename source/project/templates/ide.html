@@ -58,13 +58,13 @@
                 <hr class="dropdown-divider">
             </li>
             <li>
-                <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" title="Theme" data-bs-toggle="modal"
+                <button type="button" class="dropdown-item" title="Theme" data-bs-toggle="modal"
                         data-bs-target="#colorChangeModal">
                     <i class="bi bi-paint-bucket fs-5 text-light"></i> Syntax
                 </button>
             </li>
             <li>
-                <a class="btn mx-auto btn-dark mb-2 mt-2" data-bs-toggle="tooltip" title="Home"
+                <a class="dropdown-item" data-bs-toggle="tooltip" title="Home"
                    href="{% url 'project' username=current_project.user.username project_id=current_project.id %}">
                     <i class="bi bi-house fs-5 text-light"></i> Project Home
                 </a>
