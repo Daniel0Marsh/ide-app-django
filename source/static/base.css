@@ -180,13 +180,9 @@ body {
 
 #chat-log {
     flex-grow: 1;
-    overflow-y: auto;  /* Allow scroll when content overflows */
-    padding-right: 15px;  /* Optional, to ensure scroll doesn't overlap */
-}
-
-.input-group {
-    flex-shrink: 0;  /* Prevent the input field from shrinking */
-    padding: 1rem;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-bottom: 50px
 }
 
 
