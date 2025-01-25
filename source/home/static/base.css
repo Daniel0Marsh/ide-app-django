@@ -180,9 +180,13 @@ body {
 
 #chat-log {
     flex-grow: 1;
-    max-height: 90vh;  /* Max height for chat log */
-    overflow-y: scroll;
+    overflow-y: auto;  /* Allow scroll when content overflows */
     padding-right: 15px;  /* Optional, to ensure scroll doesn't overlap */
+}
+
+.input-group {
+    flex-shrink: 0;  /* Prevent the input field from shrinking */
+    padding: 1rem;
 }
 
 
