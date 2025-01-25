@@ -35,7 +35,7 @@ class Message(models.Model):
             ActivityLog.objects.create(
                 user=self.recipient,
                 sender=self.sender,
-                notification_type='new_message',
+                activity_type='new_message',
                 message='',
                 task=None,
                 project=None

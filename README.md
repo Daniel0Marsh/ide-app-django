@@ -54,7 +54,21 @@ Check the version of Redis to confirm it is installed:
 redis-server --version
 ```
 
-### Step 4: Enable and Start the Redis Service
+### Step 4: Update the Redis Configuration File
+Open the Redis configuration file located at `/etc/redis/redis.conf`:
+```bash
+sudo nano /etc/redis/redis.conf
+```
+#### Modify the bind Directive:
+Find the line starting with `bind 127.0.0.1`, and change it to:
+`bind 0.0.0.0`
+#### Disable Protected Mode (if needed):
+Find the line starting with: `protected-mode yes`, and change it to:
+`protected-mode no`
+#### Save and Exit:
+After making the changes, save and close the file. Press Ctrl + X, then Y, and Enter.
+
+### Step 5: Enable and Start the Redis Service
 Ensure Redis is enabled to start at boot and is running:
 ```bash
 sudo systemctl enable redis-server
@@ -65,7 +79,7 @@ Verify the status:
 sudo systemctl status redis-server
 ```
 
-### Step 5: Test Redis Locally
+### Step 6: Test Redis Locally
 Check if Redis is running by using the ping command:
 ```bash
 redis-cli ping
@@ -75,29 +89,29 @@ If successful, you should see the response:
 PONG
 ```
 
-### Step 6: Open Port 6379 in Firewall
+### Step 7: Open Port 6379 in Firewall
 Allow external connections to Redis by opening port 6379:
 ```bash
 sudo ufw allow 6379
 ```
 
-### Step 7: Clone this repository.
+### Step 8: Clone this repository.
 ```bash
    git clone https://github.com/your-repo/project-platform.git
    cd project-platform
 ```
 
-### Step 8: Install the required dependencies using pip:
+9### Step 9: Install the required dependencies using pip:
 ```bash
 pip install -r requirements.txt
 ```
-### Step 9: Run migrations to create necessary database tables:
+### Step 10: Run migrations to create necessary database tables:
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### Step 10: Build the Docker image for running project code:
+### Step 11: Build the Docker image for running project code:
 ```bash
 sudo docker build -t terminal_session .
 ```
@@ -106,7 +120,7 @@ sudo docker build -t terminal_session .
 sudo docker rmi -f terminal_session
 ```
 
-### Step 11: Start your Django development server:
+### Step 12: Start your Django development server:
 
 
 ```bash
