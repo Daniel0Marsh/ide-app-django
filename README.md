@@ -128,7 +128,7 @@ nohup daphne -b 0.0.0.0 -p 8000 core.asgi:application &
 
 stop the process using: 
 ```bash
-ps aux | grep daphne
+ps aux | grep '[d]aphne'
 ```
 
 then use the PID

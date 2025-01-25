@@ -6,6 +6,9 @@
     --btn-primary: #4caf50;
     --btn-secondary: #6c63ff;
     --btn-danger: #e74c3c;
+    --btn-dark: #333333;
+    --text-white: #ffffff;
+    --link-blue: #3498db;
 }
 
 body {
@@ -15,9 +18,24 @@ body {
     overflow: hidden;
 }
 
+button {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.btn-primary, .btn-secondary, .btn-danger, .btn-dark {
+    border: none;
+    background-color: transparent;
+}
+
 .btn-primary {
     background-color: var(--btn-primary);
-    border: none;
 }
 
 .btn-primary:hover {
@@ -26,7 +44,6 @@ body {
 
 .btn-secondary {
     background-color: var(--btn-secondary);
-    border: none;
 }
 
 .btn-secondary:hover {
@@ -35,7 +52,6 @@ body {
 
 .btn-danger {
     background-color: var(--btn-danger);
-    border: none;
 }
 
 .btn-danger:hover {
@@ -44,22 +60,22 @@ body {
 
 .btn-dark {
     background-color: var(--btn-dark);
-    border: none;
 }
 
 .btn-dark:hover {
     background-color: var(--btn-secondary);
 }
 
-.card {
+.card, .modal-content, .terminal, .sidebar {
     background-color: var(--bg-darker);
-    border: none;
+}
+
+.card {
     border-radius: 0.5rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .card-header {
-    background-color: var(--bg-dark);
     font-weight: bold;
     color: var(--text-light);
 }
@@ -79,210 +95,8 @@ body {
     font-size: 1.1rem;
 }
 
-.modal-content {
-    background-color: var(--bg-darker);
-    color: var(--text-light);
-}
-
-.main-content {
-    margin: 0 auto;
-    max-width: 1200px;
-    overflow: hidden;
-}
-
-.navbar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--text-white);
-    position: fixed;
-    top: 0;
-    width: 100%;
-    background-color: var(--bg-darker);
-    z-index: 1000;
-}
-
-.side-nav {
-    position: fixed;
-    top: 0;
-    height: 100vh;
-    width: 50px;
-    z-index: 900;
-    background-color: var(--bg-darker);
-    color: var(--text-white);
-    text-align: center;
-}
-
-.sidebar {
-    position: fixed;
-    top: 0;
-    height: 100vh;
-    width: 300px;
-    left: -350px;
-    z-index: 800;
-    background-color: var(--bg-dark);
-    transition: all 0.1s ease;
-    color: var(--text-white);
-}
-
-.sidebar.active {
-    left: 50;
-}
-
-.sidebar.active + .ide-card {
-    margin-left: 350px;
-}
-
-.files-sidebar-active .ide-content {
-    margin-left: 350px;
-}
-
-.git-commits-sidebar-active .ide-content {
-    margin-left: 350px;
-}
-
-.tasks-sidebar-active .ide-content {
-    margin-left: 350px;
-}
-
-.sidebar ul.components {
-    padding: 20px 0;
-}
-
-.sidebar ul.components li a {
-    padding: 10px 15px;
-    display: block;
-    color: var(--text-white);
-}
-
-
-/* Adjust for small screens */
-@media (max-width: 1200px) {
-    .side-nav {
-        position: fixed;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        background-color: var(--bg-darker);
-        z-index: 10000;
-    }
-
-    /* Sidebar when active - take up the full screen */
-    .sidebar.active {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 100%;
-        z-index: 1000;
-        background-color: var(--bg-darker);
-        transition: all 0.3s ease;
-    }
-
-    /* Ensure ide-card takes up full screen */
-    .ide-card {
-        position: fixed;
-        top: 0;
-        left: -50px;
-        width: 100vw; /* Full width of viewport */
-        height: 100vh; /* Full height of viewport */
-        transition: all 0.1s ease;
-        color: var(--text-white);
-        background-color: var(--bg-dark);
-        z-index: 800; /* Make sure it's below the sidebar */
-    }
-
-    /* Adjust the content layout when sidebar is active */
-    .sidebar.active + .ide-card {
-        margin-left: 0; /* Remove any margin that could cause issues */
-    }
-
-    /* Adjust content when sidebar is active */
-    .files-sidebar-active .ide-content,
-    .git-commits-sidebar-active .ide-content,
-    .tasks-sidebar-active .ide-content {
-        margin-left: 0; /* Reset margin to fit full screen when sidebar is active */
-    }
-
-    /* Sidebar components styling */
-    .sidebar ul.components {
-        padding: 20px 0;
-        list-style: none; /* Ensure no default list styling */
-    }
-
-    .sidebar ul.components li a {
-        padding: 10px 15px;
-        display: block;
-        color: var(--text-white);
-        text-decoration: none;
-        transition: background-color 0.2s ease; /* Add smooth hover transition */
-    }
-}
-
-
-.sidebar ul.components li a:hover {
-    background-color: var(--bg-dark);
-    text-decoration: none;
-}
-
-.sidebar ul.components ul.nested li a {
-    padding-left: 30px;
-}
-
-.folder-btn {
-    color: var(--text-white);
-    font-size: 15px;
-}
-
-.file-item {
-    color: var(--text-white);
-    font-size: 15px;
-}
-
-.ide-card {
-    top: 0;
-    height: 100vh;
-    margin-left: 50px;
-    transition: all 0.1s ease;
-    color: var(--text-white);
-    background-color: var(--bg-dark);
-}
-
 .terminal-header {
-    background-color: var(--bg-darker);
     color: var(--text-light);
-}
-
-.terminal {
-    background-color: var(--bg-dark);
-    overflow: auto;
-    font-size: 16px;
-    font-weight: bold;
-    height: 100%;
-    font-family: monospace;
-    color: var(--text-light);
-}
-
-.prompt {
-    padding: 0;
-}
-
-.username {
-    color: var(--text-accent);
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.path {
-    color: var(--link-blue);
-    font-weight: bold;
-    font-size: 16px;
 }
 
 .terminal-input {
@@ -295,3 +109,141 @@ body {
     resize: vertical;
     flex-grow: 1;
     -webkit-appearance: none;
+}
+
+.username, .path {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.username {
+    color: var(--text-accent);
+}
+
+.path {
+    color: var(--link-blue);
+}
+
+.main-content {
+    margin: 0 auto;
+    max-width: 1200px;
+    overflow: hidden;
+}
+
+.navbar, .side-nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: var(--bg-darker);
+    z-index: 1000;
+}
+
+.navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-white);
+}
+
+.side-nav {
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 300px;
+    left: -350px;
+    transition: all 0.1s ease;
+    color: var(--text-white);
+}
+
+.sidebar.active {
+    left: 0;
+}
+
+.sidebar.active + .ide-card, .files-sidebar-active .ide-content, .git-commits-sidebar-active .ide-content, .tasks-sidebar-active .ide-content {
+    margin-left: 350px;
+}
+
+.sidebar ul.components {
+    padding: 20px 0;
+    list-style: none;
+}
+
+.sidebar ul.components li a {
+    padding: 10px 15px;
+    display: block;
+    color: var(--text-white);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar ul.components li a:hover {
+    background-color: var(--bg-dark);
+}
+
+.sidebar ul.components ul.nested li a {
+    padding-left: 30px;
+}
+
+.folder-btn, .file-item {
+    color: var(--text-white);
+    font-size: 15px;
+}
+
+.ide-card {
+    position: fixed;
+    top: 0;
+    left: 50px;
+    width: calc(100% - 50px);
+    height: 100vh;
+    transition: all 0.1s ease;
+    color: var(--text-white);
+    background-color: var(--bg-dark);
+}
+
+.terminal {
+    overflow: auto;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: monospace;
+    color: var(--text-light);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .side-nav {
+        bottom: 0;
+        height: 50px;
+        text-align: center;
+    }
+
+    .sidebar.active {
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        background-color: var(--bg-darker);
+    }
+
+    .ide-card {
+        left: -50px;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .sidebar.active + .ide-card {
+        margin-left: 0;
+    }
+
+    .files-sidebar-active .ide-content,
+    .git-commits-sidebar-active .ide-content,
+    .tasks-sidebar-active .ide-content {
+        margin-left: 0;
+    }
+}
