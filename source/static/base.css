@@ -189,6 +189,7 @@ body {
 .input-group {
   /* Ensure the input group stays fixed at the bottom */
   padding: 10px;
+  bottom: 0;
   background-color: #343a40; /* Same as input background for consistency */
   border-top: 1px solid #ccc; /* Optional: add a border between chat and input */
 }
