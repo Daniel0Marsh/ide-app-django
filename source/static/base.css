@@ -172,16 +172,25 @@ body {
 }
 
 .chat-card-body-main {
-  height: 100%; /* Full height of the viewport */
+  height: 100vh;  /* Full height of the viewport */
   display: flex;
   flex-direction: column;
+  padding: 0;  /* Remove any default padding */
 }
 
 #chat-log {
-  flex-grow: 1; /* Take up remaining space */
-  overflow-y: auto; /* Allow scrolling */
+  flex-grow: 1;  /* Take up remaining space */
+  overflow-y: auto;  /* Allow scrolling */
   padding: 15px;
   margin-bottom: 15px;
+  overflow-anchor: none;  /* Prevent scroll position jumping */
+}
+
+.input-group {
+  /* Ensure the input group stays fixed at the bottom */
+  padding: 10px;
+  background-color: #343a40; /* Same as input background for consistency */
+  border-top: 1px solid #ccc; /* Optional: add a border between chat and input */
 }
 
 
