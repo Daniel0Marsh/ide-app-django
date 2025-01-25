@@ -281,8 +281,7 @@
                 <div class="card-body chat-card-body-main">
                     <div id="chat-log" class="p-3 mb-3">
                         {% for message in all_messages %}
-                        <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
-                             data-roomName="{{ message.room.name }}">
+                        <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}" data-roomName="{{ message.room.name }}">
                             <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
                             <div class="message-content">
                                 <div class="user-name">
@@ -294,7 +293,7 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <div class="input-group p-1 bottom-o ">
+                    <div class="input-group p-1">
                         <input id="chat-message-input" type="text" class="form-control bg-dark text-light" aria-label="Message">
                         <button id="chat-message-submit" class="btn btn-secondary">Send</button>
                     </div>
