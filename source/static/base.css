@@ -173,8 +173,6 @@ body {
 
 .chat-card-body-main {
     height: 100vh;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
 }
 
