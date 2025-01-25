@@ -70,17 +70,17 @@
     <!-- Bio Card -->
     <div class="col-md-6">
         {% if is_own_profile %}
-        <div class="card user-bio shadow border-0">
-            <div class="card-body">
-                {% if user_profile.bio %}
-                <p>{{ user_profile.bio }}</p>
-                {% endif %}
-                <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
-                        data-bs-target="#editBioModal">
-                    Edit Bio
-                </button>
-            </div>
-        </div>
+            {% if user_profile.bio %}
+                <div class="card user-bio shadow border-0">
+                    <div class="card-body">
+                        <p>{{ user_profile.bio }}</p>
+                        <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
+                                data-bs-target="#editBioModal">
+                            Edit Bio
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
         {% elif user_profile.bio %}
         <div class="card user-bio p-4 shadow-lg border-0">
             <div class="card-body">
@@ -246,7 +246,9 @@
 <!-- Recent Activity -->
 <div class="mb-4">
     <div class="card shadow border-0 mb-4">
-        <div class="card-header text-light">Recent Activity</div>
+        <div class="card-header text-light">
+            <h3 class="mb-2 text-light">Recent Activity</h3>
+        </div>
         <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
             {% for activity in recent_activity %}
                 <div class="card border m-3">
