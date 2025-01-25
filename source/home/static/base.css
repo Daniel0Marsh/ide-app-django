@@ -181,7 +181,7 @@ body {
 #chat-log {
     flex-grow: 1;
     max-height: 90vh;  /* Max height for chat log */
-    overflow-y: auto;
+    overflow-y: scroll;
     padding-right: 15px;  /* Optional, to ensure scroll doesn't overlap */
 }
 
