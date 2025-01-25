@@ -175,21 +175,21 @@ body {
 .card-body.chat-card-body-main {
     display: flex;
     flex-direction: column;
+    margin-bottom: 10px;
     height: 100%;
 }
 
 /* Make chat-log scrollable and take up the available space */
 #chat-log {
     overflow-y: auto;
-    flex-grow: 1; /* Allows the chat log to take the remaining space */
+    flex-grow: 1;
 }
 
 /* Make sure the input group stays at the bottom */
 .input-group {
     position: sticky;
     bottom: 0;
-    z-index: 10; /* Keeps input above the chat log */
-    background-color: #2c2f38; /* Optional: background color for better visibility */
+    z-index: 10;
 }
 
 
