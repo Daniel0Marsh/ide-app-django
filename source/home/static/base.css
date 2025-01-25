@@ -172,7 +172,7 @@ body {
 }
 
 .chat-card-body-main {
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
 }
 
