@@ -172,9 +172,18 @@ body {
 }
 
 .chat-card-body-main {
-  height: 100vh;
-  overflow-y: auto;
+  height: 100vh; /* Full height of the viewport */
+  display: flex;
+  flex-direction: column;
 }
+
+#chat-log {
+  flex-grow: 1; /* Take up remaining space */
+  overflow-y: auto; /* Allow scrolling */
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
 
 /* For small screens */
 @media (max-width: 1200px) {
