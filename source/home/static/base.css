@@ -178,6 +178,7 @@ body {
 
 #chat-log {
     flex-grow: 1;
+    max-height: 90vh;
     overflow-y: auto;
 }
 
