@@ -44,7 +44,7 @@
         </button>
 
         <!-- Navbar content -->
-        <div class="collapse navbar-collapse d-flex flex-row p-2" id="navbarContent">
+        <div class="collapse navbar-collapse p-2" id="navbarContent">
             <div class="ms-auto">
                 <form class="d-flex me-4" action="{% url 'search' %}" method="get">
                     <div class="input-group">
@@ -57,7 +57,7 @@
                 </form>
             </div>
 
-            <div class="dropdown me-4" data-bs-theme="dark">
+            <div class="dropdown me-4 mt-sm-3" data-bs-theme="dark">
                 {% if user.is_authenticated %}
                 <a href="{% url 'profile' username=user.username %}"
                    class="d-flex align-items-center dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown"
