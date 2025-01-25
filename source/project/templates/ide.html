@@ -914,7 +914,7 @@
     let historyIndex = -1;
 
     function initWebSocket(username, projectId) {
-        const socketUrl = `ws://127.0.0.1:8000/ws/ide/${username}/${projectId}/`;
+        const socketUrl = `ws://209.38.78.211:8000/ws/ide/${username}/${projectId}/`;
         socket = new WebSocket(socketUrl);
 
         socket.onopen = function() {

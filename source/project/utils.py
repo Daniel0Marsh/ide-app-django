@@ -64,8 +64,6 @@ class ProjectContainerManager:
             read_only=False,
             mem_limit=self.user.default_mem_limit,
             memswap_limit=self.user.default_memswap_limit,
-            cpus=str(self.user.default_cpus),
-            cpu_shares=self.user.default_cpu_shares,
         )
 
         DockerSession.objects.create(
