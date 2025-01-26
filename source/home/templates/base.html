@@ -284,7 +284,7 @@
                             <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
                                  data-roomName="{{ message.room.name }}">
                                 <div class="message-content">
-                                    <div class="timestamp">{{ message.timestamp|date:"H:i" }}</div>
+                                    <div class="timestamp">{{ message.timestamp }}</div>
                                     <div class="message-bubble">{{ message.content }}</div>
                                 </div>
                             </div>
