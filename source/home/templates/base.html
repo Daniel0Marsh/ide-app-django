@@ -285,11 +285,10 @@
                             {% set message_date = message.timestamp.date() %}
                             {% if last_date != message_date %}
                                 {% if last_date is not none %}
-                                    </div> <!-- End previous date section if needed -->
                                 {% endif %}
                                 <!-- Display Date in Center -->
                                 <div class="date-stamp">{{ message.timestamp|date("F j, Y") }}</div>
-                                <div class="date-divider"></div> <!-- Optional divider for style -->
+                                <div class="date-divider"></div>
                                 {% set last_date = message_date %}
                             {% endif %}
 
