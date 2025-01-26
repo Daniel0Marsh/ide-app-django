@@ -221,11 +221,11 @@ body {
 .message-content {
     display: flex;
     flex-direction: column;
-    margin: 0 10px;
+    margin: 0 5px;
 }
 
 .message-item.sender .message-content {
-    margin: 0 10px 0 0;
+    margin: 0 5px 0 0;
 }
 
 .message-bubble {
