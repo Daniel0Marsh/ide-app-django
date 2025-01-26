@@ -244,18 +244,6 @@ body {
     color: black;
 }
 
-.profile-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-top: 15px;
-}
-
-.user-name {
-    font-weight: bold;
-    color: white;
-}
-
 .timestamp {
     font-size: 0.8rem;
     color: #adb5bd;

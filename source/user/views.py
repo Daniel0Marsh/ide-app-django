@@ -30,7 +30,7 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             github_account = None
 
         context = {
-            'needs_password': not request.user.password or request.user.password == ' ',
+            'needs_password': bool(request.user.password),
             'github_account': github_account,
             'enabled_notifications': ActivityLog.objects.filter(user=request.user, notification_enabled=True),
             'new_follower': ActivityLog.objects.filter(user=request.user, activity_type='new_follower', notification_enabled=True).first(),

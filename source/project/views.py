@@ -254,7 +254,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         project = Project.objects.filter(id=kwargs.get('project_id')).first()
         if not project:
-            return redirect('personal_profile')
+            return HttpResponse("Project not found", status=404)
 
         readme_path, readme_content = self.handle_readme(project)
 

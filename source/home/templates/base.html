@@ -280,18 +280,26 @@
 
                 <div class="card-body chat-card-body-main">
                     <div id="chat-log" class="p-3 mb-3">
+                        {% set last_date = None %}
                         {% for message in all_messages %}
-                        <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
-                             data-roomName="{{ message.room.name }}">
-                            <img class="profile-img" src="{{ message.sender.profile_picture.url }}" alt="Profile">
-                            <div class="message-content">
-                                <div class="user-name">
-                                    {{ message.sender.username }}
-                                    <span class="timestamp">{{ message.timestamp }}</span>
+                            {% set message_date = message.timestamp.date() %}
+                            {% if last_date != message_date %}
+                                {% if last_date is not none %}
+                                    </div> <!-- End previous date section if needed -->
+                                {% endif %}
+                                <!-- Display Date in Center -->
+                                <div class="date-stamp">{{ message.timestamp|date("F j, Y") }}</div>
+                                <div class="date-divider"></div> <!-- Optional divider for style -->
+                                {% set last_date = message_date %}
+                            {% endif %}
+
+                            <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
+                                 data-roomName="{{ message.room.name }}">
+                                <div class="message-content">
+                                    <div class="timestamp">{{ message.timestamp|date("H:i") }}</div>
+                                    <div class="message-bubble">{{ message.content }}</div>
                                 </div>
-                                <div class="message-bubble">{{ message.content }}</div>
                             </div>
-                        </div>
                         {% endfor %}
                     </div>
                     <div class="input-group p-2">
@@ -353,7 +361,6 @@
                     // Update the UI with the selected recipient's details
                     document.getElementById('recipient-username').textContent = recipientUsername;
                     document.getElementById('recipient-username').href = recipientProfileUrl;
-                    document.getElementById('recipient-profile-img').src = recipientProfileImage;
 
                     // Filter and display messages for the selected chat room
                     filterMessagesByRoom(currentRoomName);
@@ -419,49 +426,58 @@
         };
 
         // Function to create a new message element and return it
-        function createMessageElement(data, isSender) {
+        function createMessageElement(data, isSender, lastDate) {
             const messageItem = document.createElement('div');
             messageItem.classList.add('message-item', isSender ? 'sender' : 'receiver');
             messageItem.dataset.roomname = data.roomName; // Add room name for filtering
 
-            // Create the profile image for the sender
-            const profileImg = document.createElement('img');
-            profileImg.classList.add('profile-img');
-            profileImg.src = data.profile_image_url;
-
-            // Create the container for the message content (including username and timestamp)
+            // Create the container for the message content (including timestamp and message)
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
 
-            // Username and timestamp container
-            const usernameContainer = document.createElement('div');
+            // Check if we need to add a date separator
+            const messageDate = new Date(data.timestamp);
+            const messageDateString = messageDate.toISOString().split('T')[0]; // Get YYYY-MM-DD part of timestamp
 
-            const userName = document.createElement('span');
-            userName.classList.add('user-name');
-            userName.textContent = data.sender;
+            // If the current message's date is different from the last message's date, insert a date separator
+            if (lastDate !== messageDateString) {
+                // Create a new div for the date
+                const dateStamp = document.createElement('div');
+                dateStamp.classList.add('date-stamp');
+                dateStamp.textContent = messageDate.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
 
+                // Add date separator to the message content
+                messageContent.appendChild(dateStamp);
+
+                // Store the current date for the next comparison
+                lastDate = messageDateString;
+            }
+
+            // Timestamp container (formatted as HH:mm)
+            const timestampContainer = document.createElement('div');
+            timestampContainer.classList.add('timestamp');
             const timestamp = document.createElement('span');
-            timestamp.classList.add('timestamp');
-            timestamp.textContent = data.timestamp;
+            timestamp.textContent = messageDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            timestampContainer.appendChild(timestamp);
 
-            // Append username and timestamp to the container
-            usernameContainer.appendChild(userName);
-            usernameContainer.appendChild(timestamp);
-
-            // Message bubble container
+            // Create the message bubble container
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message-bubble');
             messageBubble.textContent = data.message;
 
-            // Append username, timestamp, and message bubble to the message content
-            messageContent.appendChild(usernameContainer);
+            // Append timestamp and message bubble to the message content
+            messageContent.appendChild(timestampContainer);
             messageContent.appendChild(messageBubble);
 
-            // Append profile image and message content to the message item
-            messageItem.appendChild(profileImg);
+            // Append message content to the message item
             messageItem.appendChild(messageContent);
 
-            return messageItem;
+            return { messageItem, lastDate };
         }
 
         // WebSocket onclose handler for unexpected disconnections
