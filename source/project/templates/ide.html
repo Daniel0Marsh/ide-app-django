@@ -78,7 +78,7 @@
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
-    {% if is_read_only %}
+    {% if not is_read_only %}
     <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="gitSidebarCollapse" data-bs-toggle="tooltip"
             title="Git Commits">
         <i class="bi bi-git fs-5 text-light"></i>
