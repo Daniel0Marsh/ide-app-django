@@ -199,6 +199,11 @@ body {
   #chatCard {
     padding: 10px;
   }
+
+  #chat-log {
+    height: 70vh;
+    overflow-y: auto;
+  }
 }
 
 
