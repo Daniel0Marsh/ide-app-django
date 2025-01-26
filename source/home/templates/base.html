@@ -290,7 +290,7 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <div class="input-group p-2">
+                    <div class="input-group mt-auto p-2">
                         <input id="chat-message-input" type="text" class="form-control bg-dark text-light"
                                aria-label="Message">
                         <button id="chat-message-submit" class="btn btn-secondary">Send</button>
@@ -420,41 +420,25 @@
             messageItem.classList.add('message-item', isSender ? 'sender' : 'receiver');
             messageItem.dataset.roomname = data.roomName; // Add room name for filtering
 
-            // Create the profile image for the sender
-            const profileImg = document.createElement('img');
-            profileImg.classList.add('profile-img');
-            profileImg.src = data.profile_image_url;
-
-            // Create the container for the message content (including username and timestamp)
+            // Create the container for the message content
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
 
-            // Username and timestamp container
-            const usernameContainer = document.createElement('div');
-
-            const userName = document.createElement('span');
-            userName.classList.add('user-name');
-            userName.textContent = data.sender;
-
-            const timestamp = document.createElement('span');
+            // Timestamp container
+            const timestamp = document.createElement('div');
             timestamp.classList.add('timestamp');
-            timestamp.textContent = data.timestamp;
-
-            // Append username and timestamp to the container
-            usernameContainer.appendChild(userName);
-            usernameContainer.appendChild(timestamp);
+            timestamp.textContent = data.timestamp; // Assuming timestamp is in the correct format (H:i)
 
             // Message bubble container
             const messageBubble = document.createElement('div');
             messageBubble.classList.add('message-bubble');
             messageBubble.textContent = data.message;
 
-            // Append username, timestamp, and message bubble to the message content
-            messageContent.appendChild(usernameContainer);
+            // Append timestamp and message bubble to the message content
+            messageContent.appendChild(timestamp);
             messageContent.appendChild(messageBubble);
 
-            // Append profile image and message content to the message item
-            messageItem.appendChild(profileImg);
+            // Append message content to the message item
             messageItem.appendChild(messageContent);
 
             return messageItem;

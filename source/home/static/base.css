@@ -162,24 +162,25 @@ body {
 }
 
 .chat-box:not(.collapsed) {
-  height: 100vh;
-  width: 30%;
+    height: 100vh;
+    width: 30%;
 }
 
 .chat-card-body {
-  height: 50vh;
-  overflow-y: auto;
+    height: 50vh;
+    overflow-y: auto;
 }
 
 .chat-card-body-main {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #chat-log {
-  overflow-y: auto;  /* Allow scrolling */
-  padding: 15px;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
 }
 
 /* For small screens */
