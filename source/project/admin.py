@@ -8,7 +8,7 @@ class ProjectAdmin(admin.ModelAdmin):
     Admin interface for managing projects.
     """
     list_display = ('project_name', 'user', 'is_public', 'likes', 'modified_at', 'created_at')
-    list_filter = ('is_public', 'selected_theme', 'selected_syntax', 'created_at', 'modified_at')
+    list_filter = ('is_public', 'created_at', 'modified_at')
     search_fields = ('project_name', 'user__username', 'repository', 'project_description')
     ordering = ('-created_at',)
     filter_horizontal = ('collaborators', 'liked_by')
@@ -17,9 +17,6 @@ class ProjectAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('user', 'project_name', 'project_path', 'repository', 'project_description')
-        }),
-        ('Appearance', {
-            'fields': ('selected_theme', 'selected_syntax')
         }),
         ('Privacy & Collaboration', {
             'fields': ('is_public', 'collaborators')

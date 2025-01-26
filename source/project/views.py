@@ -13,6 +13,7 @@ from django.views.generic import TemplateView
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
 from .models import Project, Task
+from user.models import IDESettings
 from home.models import HomePage
 from .utils import ProjectContainerManager, GitHubUtils
 

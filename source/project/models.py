@@ -10,40 +10,12 @@ class Project(models.Model):
     """
     Represents a software project with theme, syntax settings, and user-related information.
     """
-    THEME_CHOICES = [
-        ('default', 'Light Mode'),
-        ('eclipse', 'Eclipse'),
-        ('material', 'Material'),
-        ('cobalt', 'Cobalt'),
-        ('monokai', 'Monokai'),
-        ('dracula', 'Dracula'),
-    ]
-
-    SYNTAX_CHOICES = [
-        ('auto', 'Auto Detect'),
-        ('plain', 'Plain Text'),
-        ('python', 'Python'),
-        ('javascript', 'JavaScript'),
-        ('html', 'HTML'),
-        ('css', 'CSS'),
-        ('java', 'Java'),
-        ('c', 'C'),
-        ('cpp', 'C++'),
-        ('php', 'PHP'),
-        ('ruby', 'Ruby'),
-        ('swift', 'Swift'),
-        ('go', 'Go'),
-        ('rust', 'Rust'),
-        ('typescript', 'TypeScript'),
-    ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100)
     repository = models.CharField(max_length=100, blank=True, null=True)
     project_description = TextField(blank=True, null=True)
-    selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
-    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
     is_public = models.BooleanField(default=False)
     likes = models.PositiveIntegerField(default=0)
     liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_projects', blank=True)

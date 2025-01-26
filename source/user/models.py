@@ -129,3 +129,44 @@ def create_default_profile(sender, instance, created, **kwargs):
 
         instance.project_dir = user_project_dir
         instance.save()
+
+
+class IDESettings(models.Model):
+    """
+    Represents the IDE settings for a user, ensuring one instance per user.
+    """
+    THEME_CHOICES = [
+        ('default', 'Dracula (Default)'),
+        ('monokai', 'Monokai'),
+        ('ayu-dark', 'Ayu Dark'),
+        ('light-mode', 'Light Mode'),
+        ('eclipse', 'Eclipse'),
+        ('solarized-light', 'Solarized Light'),
+    ]
+
+    SYNTAX_CHOICES = [
+        ('auto', 'Auto Detect'),
+        ('plain', 'Plain Text'),
+        ('python', 'Python'),
+        ('javascript', 'JavaScript'),
+        ('html', 'HTML'),
+        ('css', 'CSS'),
+        ('java', 'Java'),
+        ('c', 'C'),
+        ('cpp', 'C++'),
+        ('php', 'PHP'),
+        ('ruby', 'Ruby'),
+        ('swift', 'Swift'),
+        ('go', 'Go'),
+        ('rust', 'Rust'),
+        ('typescript', 'TypeScript'),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
+    selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
+    font_size = models.PositiveIntegerField(default=14)
+    show_line_numbers = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s IDE Settings"

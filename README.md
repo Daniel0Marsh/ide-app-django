@@ -95,20 +95,20 @@ Allow external connections to Redis by opening port 6379:
 sudo ufw allow 6379
 ```
 
-### Step 8: Clone this repository.
+### Step 8: Install Docker via apt 
 ```bash
-   git clone https://github.com/your-repo/project-platform.git
-   cd project-platform
+sudo apt update
+sudo apt install docker.io
+```
+### Step 9: Start Docker and enable it to run on boot
+```bash
+sudo systemctl enable --now docker
 ```
 
-9### Step 9: Install the required dependencies using pip:
+### Step 10: Add the User to the Docker Group
 ```bash
-pip install -r requirements.txt
-```
-### Step 10: Run migrations to create necessary database tables:
-```bash
-python manage.py makemigrations
-python manage.py migrate
+sudo usermod -aG docker $(whoami)
+newgrp docker
 ```
 
 ### Step 11: Build the Docker image for running project code:
@@ -120,9 +120,23 @@ sudo docker build -t terminal_session .
 sudo docker rmi -f terminal_session
 ```
 
-### Step 12: Start your Django development server:
+### Step 12: Clone this repository.
+```bash
+   git clone https://github.com/your-repo/project-platform.git
+   cd project-platform
+```
 
+### Step 13: Install the required dependencies using pip:
+```bash
+pip install -r requirements.txt
+```
+### Step 14: Run migrations to create necessary database tables:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
+### Step 15: Start your Django development server:
 ```bash
 python manage.py runserver
 ```
