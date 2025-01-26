@@ -280,32 +280,16 @@
 
                 <div class="card-body chat-card-body-main">
                     <div id="chat-log" class="p-3 mb-3">
-                        {% with last_date=None %}
                         {% for message in all_messages %}
-                            {% with message_date=message.timestamp.date %}
-                                {% if last_date != message_date %}
-                                    {% if last_date %}
-                                        </div> <!-- End previous date section if needed -->
-                                    {% endif %}
-                                    <!-- Display Date in Center -->
-                                    <div class="date-stamp">{{ message.timestamp|date:"F j, Y" }}</div>
-                                    <div class="date-divider"></div> <!-- Optional divider for style -->
-                                    {% with last_date=message_date %}
-                                    {% endwith %}
-                                {% endif %}
-
-                                <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
-                                     data-roomName="{{ message.room.name }}">
-                                    <div class="message-content">
-                                        <div class="timestamp">{{ message.timestamp|date:"H:i" }}</div>
-                                        <div class="message-bubble">{{ message.content }}</div>
-                                    </div>
+                            <div class="message-item {% if message.sender == request.user %}sender{% else %}receiver{% endif %}"
+                                 data-roomName="{{ message.room.name }}">
+                                <div class="message-content">
+                                    <div class="timestamp">{{ message.timestamp|date:"H:i" }}</div>
+                                    <div class="message-bubble">{{ message.content }}</div>
                                 </div>
-                            {% endwith %}
+                            </div>
                         {% endfor %}
-                        {% endwith %}
                     </div>
-
                     <div class="input-group p-2">
                         <input id="chat-message-input" type="text" class="form-control bg-dark text-light"
                                aria-label="Message">
