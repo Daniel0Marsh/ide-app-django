@@ -40,8 +40,8 @@ class CustomUserAdmin(UserAdmin):
     """
     Admin interface for CustomUser.
     """
-    list_display = ('username', 'email', 'is_staff', 'is_superuser', 'date_joined')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_display = ('username', 'email', 'is_staff', 'is_superuser', 'date_joined', 'project_dir')
+    list_filter = ('is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'email')
     ordering = ('username',)
 
@@ -54,7 +54,8 @@ class CustomUserAdmin(UserAdmin):
                 'default_cpus', 'default_cpu_shares'
             )
         }),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        ('Project Info', {'fields': ('project_dir',)}),  # Added project_dir
         ('Important Dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -64,6 +65,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('username', 'email', 'password1', 'password2', 'is_active', 'is_staff', 'is_superuser')
         }),
     )
+
 
 
 @admin.register(DockerSession)
