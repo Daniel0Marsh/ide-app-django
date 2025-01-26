@@ -19,7 +19,7 @@
 <!-- project side-nav -->
 <div class="side-nav shadow-end border-end border-dark">
     <!-- Git Branch Dropdown (aligned to the right) -->
-    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    {% if not is_read_only %}
     <div class="dropend p-0 m-0 ms-auto" data-bs-theme="dark">
         <button class="btn mx-auto btn-dark mb-2 mt-2" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false"
             title="Menu">
@@ -62,7 +62,7 @@
             <li>
                 <button type="button" class="dropdown-item" title="Theme" data-bs-toggle="modal"
                         data-bs-target="#colorChangeModal">
-                    <i class="bi bi-paint-bucket fs-5 text-light"></i> Syntax
+                    <i class="bi bi-paint-bucket fs-5 text-light"></i> IDE Settings
                 </button>
             </li>
             <li>
@@ -78,7 +78,7 @@
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>
     </button>
-    {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+    {% if is_read_only %}
     <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="gitSidebarCollapse" data-bs-toggle="tooltip"
             title="Git Commits">
         <i class="bi bi-git fs-5 text-light"></i>
@@ -339,7 +339,7 @@
     <div class="card-header shadow-end border-end border-dark">
         <div class="hstack gap-1 align-middle">
             <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                {% if not is_read_only %}
                 <button class="btn folder-btn" data-bs-toggle="modal" data-bs-target="#RenameModal" type="reset">
                     <i class="bi bi-pencil"></i> {{file_name}}
                 </button>
@@ -351,7 +351,7 @@
             </div>
             <div class="vr"></div>
             <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                {% if not is_read_only %}
                 <button class="btn file-item" name="save_file" type="submit" data-bs-toggle="tooltip"
             title="Save File">
                     <i class="bi bi-save fs-5 text-light"></i>
@@ -359,7 +359,7 @@
                 {% endif %}
             </div>
             <div class="p-1">
-                {% if request.user == current_project.user or request.user in current_project.collaborators.all %}
+                {% if not is_read_only %}
                 <button class="btn file-item" name="delete" type="submit" data-bs-toggle="tooltip"
             title="Delete File">
                     <i class="bi bi-trash fs-5 text-light"></i>
@@ -483,65 +483,135 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="colorChangeModalLabel">Theme and Text Syntax</h5>
+                <h5 class="modal-title" id="colorChangeModalLabel">IDE Settings</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="post" enctype="multipart/form-data" action="">
                     {% csrf_token %}
-                    <input type="hidden" id="selectedTheme" name="selected_theme" value="">
-                    <input type="hidden" id="selectedSyntax" name="selected_syntax" value="">
-                    <div class=" ms-auto">
+                    <input type="hidden" name="theme" id="themeInput" value="{{ request.user.idesettings.selected_theme }}">
+                    <input type="hidden" name="syntax" id="syntaxInput" value="{{ request.user.idesettings.selected_syntax }}">
+
+                    <!-- Settings Switches -->
+                    <div class="p-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="show_line_numbers" id="lineNumbersCheckbox"
+                                {% if request.user.idesettings.show_line_numbers %}checked{% endif %}>
+                            <label class="form-check-label" for="lineNumbersCheckbox">
+                                Show Line Numbers
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="auto_close_brackets" id="autoCloseBracketsCheckbox"
+                                {% if request.user.idesettings.auto_close_brackets %}checked{% endif %}>
+                            <label class="form-check-label" for="autoCloseBracketsCheckbox">
+                                Auto Close Brackets
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="match_brackets" id="matchBracketsCheckbox"
+                                {% if request.user.idesettings.match_brackets %}checked{% endif %}>
+                            <label class="form-check-label" for="matchBracketsCheckbox">
+                                Match Brackets
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="highlight_current_line" id="highlightCurrentLineCheckbox"
+                                {% if request.user.idesettings.highlight_current_line %}checked{% endif %}>
+                            <label class="form-check-label" for="highlightCurrentLineCheckbox">
+                                Highlight Current Line
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="line_wrapping" id="lineWrappingCheckbox"
+                                {% if request.user.idesettings.line_wrapping %}checked{% endif %}>
+                            <label class="form-check-label" for="lineWrappingCheckbox">
+                                Line Wrapping
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="indent_with_tabs" id="indentWithTabsCheckbox"
+                                {% if request.user.idesettings.indent_with_tabs %}checked{% endif %}>
+                            <label class="form-check-label" for="indentWithTabsCheckbox">
+                                Indent With Tabs
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="linting" id="lintingCheckbox"
+                                {% if request.user.idesettings.linting %}checked{% endif %}>
+                            <label class="form-check-label" for="lintingCheckbox">
+                                Linting
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Theme Dropdown -->
+                    <div class="p-3">
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown"
-                                    data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
-                                Theme: <span id="currentTheme">Default</span>
+                            <button class="btn btn-sm btn-dark dropdown-toggle" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false" name="selected_theme">
+                                Theme: <span id="currentTheme">{{ request.user.idesettings.selected_theme|capfirst }}</span>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="themeDropdown">
-                                <li><a class="dropdown-item" onclick="changeTheme('default')">Dracula (Default)</a></li>
-                                <li><a class="dropdown-item" onclick="changeTheme('monokai')">Monokai</a></li>
-                                <li><a class="dropdown-item" onclick="changeTheme('ayu-dark')">Ayu Dark</a></li>
-                                <li><a class="dropdown-item" onclick="changeTheme('light-mode')">Light Mode</a></li>
-                                <li><a class="dropdown-item" onclick="changeTheme('eclipse')">Eclipse</a></li>
-                                <li><a class="dropdown-item" onclick="changeTheme('solarized-light')">Solarized Light</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="dracula">Dracula</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="monokai">Monokai</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="ayu-dark">Ayu Dark</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="light-mode">Light Mode</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="eclipse">Eclipse</a></li>
+                                <li><a class="dropdown-item theme-option" data-theme="solarized-light">Solarized Light</a></li>
                             </ul>
                         </div>
                     </div>
-                    <div class="p-2">
+
+                    <!-- Syntax Dropdown -->
+                    <div class="p-3">
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="syntaxDropdown"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                Syntax Highlighting: <span id="currentSyntax">Auto Detect</span>
+                            <button class="btn btn-sm btn-dark dropdown-toggle" id="syntaxDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Syntax Highlighting: <span id="currentSyntax">{{ request.user.idesettings.selected_syntax|capfirst }}</span>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="syntaxDropdown">
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('autodetect')">Auto Detect</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('plain')">Plain Text</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('python')">Python</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('javascript')">JavaScript</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('html')">HTML</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('css')">CSS</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('java')">Java</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('c')">C</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('cpp')">CPP</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('php')">PHP</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('ruby')">Ruby</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('swift')">Swift</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('go')">Go</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('rust')">Rust</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="changeSyntax('typescript')">TypeScript</a></li>
-                                <!-- Add more syntax highlighting options as needed -->
+                                <li><a class="dropdown-item syntax-option" data-syntax="auto">Auto Detect</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="python">Python</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="javascript">JavaScript</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="html">HTML</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="css">CSS</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="java">Java</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="c">C</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="cpp">C++</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="php">PHP</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="ruby">Ruby</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="swift">Swift</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="go">Go</a></li>
+                                <li><a class="dropdown-item syntax-option" data-syntax="rust">Rust</a></li>
                             </ul>
                         </div>
                     </div>
+
+                    <!-- Tab Size and Font Size Inputs -->
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <label for="tab_size" class="form-label">Tab Size</label>
+                            <input type="number" class="form-control bg-dark text-light" id="tab_size" name="tab_size" value="{{ request.user.idesettings.tab_size }}" min="1" max="8" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="font_size" class="form-label">Font Size (px)</label>
+                            <input type="number" class="form-control bg-dark text-light" id="font_size" name="font_size" value="{{ request.user.idesettings.font_size }}" min="8" max="36" required>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer with Submit Button -->
                     <div class="modal-footer">
-                        <button type="submit" name="update_theme" class="btn btn-secondary">Apply Changes</button>
+                        <button type="submit" name="update_ide_settings" class="btn btn-primary">Apply Changes</button>
                     </div>
                 </form>
             </div>
+
+
         </div>
     </div>
 </div>
+
+
 
 <!-- Modal for renaming file-->
 <div class="modal fade modal-dark" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
@@ -584,13 +654,30 @@
 
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- CodeMirror js and css -->
+<!-- CodeMirror CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
-<!-- JavaScript -->
+<!-- CodeMirror JavaScript -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+<!-- CodeMirror Mode for Syntax Highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script>
+<!-- CodeMirror Addon for Auto Close Brackets -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/edit/closebrackets.min.js"></script>
+<!-- CodeMirror Addon for Matching Brackets -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/edit/matchbrackets.min.js"></script>
+<!-- CodeMirror Addon for Highlighting the Active Line -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/selection/active-line.min.js"></script>
+
+<!-- CodeMirror Addon for linting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/addon/lint/lint.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/addon/lint/lint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/addon/lint/javascript-lint.min.js"></script>
+
+<!-- CodeMirror Show-Hint (Autocomplete) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/addon/hint/show-hint.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/addon/hint/show-hint.min.css">
+
 
 <!-- Here are all the links to the different syntax highlighting for CodeMirror -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/plain/plain.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/mode/multiplex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
@@ -602,7 +689,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/swift/swift.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/rust/rust.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/typescript/typescript.min.js"></script>
 
 <!-- Here are all the links to the different themes for CodeMirror -->
 
@@ -811,38 +897,69 @@
 
 <!-- update CodeMirror theme js logic -->
 <script>
-    var editor;
-    function changeTheme(theme) {
-        editor.setOption("theme", theme);
-        document.getElementById('currentTheme').textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
-        document.getElementById('selectedTheme').value = theme;
-    }
-
-    function changeSyntax(mode) {
-        editor.setOption("mode", mode);
-        document.getElementById('currentSyntax').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-        document.getElementById('selectedSyntax').value = mode;
-    }
-
     document.addEventListener("DOMContentLoaded", function () {
-        editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
-            lineNumbers: true,
-            mode: "autodetect",
-            theme: "default",
-            autoCloseBrackets: true,
-            matchBrackets: true
+        // Initialize editor with settings from the database
+        const initialSettings = {
+            theme: "{{ request.user.idesettings.selected_theme }}",
+            syntax: "{{ request.user.idesettings.selected_syntax }}",
+            lineNumbers: {{ request.user.idesettings.show_line_numbers|yesno:"true,false" }},
+            autoCloseBrackets: {{ request.user.idesettings.auto_close_brackets|yesno:"true,false" }},
+            matchBrackets: {{ request.user.idesettings.match_brackets|yesno:"true,false" }},
+            highlightCurrentLine: {{ request.user.idesettings.highlight_current_line|yesno:"true,false" }},
+            lineWrapping: {{ request.user.idesettings.line_wrapping|yesno:"true,false" }},
+            indentWithTabs: {{ request.user.idesettings.indent_with_tabs|yesno:"true,false" }},
+            linting: {{ request.user.idesettings.linting|yesno:"true,false" }},
+            tabSize: {{ request.user.idesettings.tab_size }},
+            fontSize: {{ request.user.idesettings.font_size }},
+            readOnly: {{ is_read_only|yesno:"true,false" }}
+        };
+
+        let editor = CodeMirror.fromTextArea(document.getElementById("myTextarea"), {
+            lineNumbers: initialSettings.lineNumbers,
+            mode: initialSettings.syntax,
+            theme: initialSettings.theme,
+            autoCloseBrackets: initialSettings.autoCloseBrackets,
+            matchBrackets: initialSettings.matchBrackets,
+            lineWrapping: initialSettings.lineWrapping,
+            indentWithTabs: initialSettings.indentWithTabs,
+            tabSize: initialSettings.tabSize,
+            styleActiveLine: initialSettings.highlightCurrentLine,
+            lint: initialSettings.linting,
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete', // Enable autocomplete on Ctrl + Space
+                'Ctrl-Z': 'undo',             // Undo functionality
+                'Ctrl-Y': 'redo',             // Redo functionality
+            },
         });
+
+        editor.getWrapperElement().style.fontSize = `${initialSettings.fontSize}px`;
         editor.setSize(null, "100%");
 
-        var initialTheme = "{{ request.user.ide_settings.selected_theme }}";
-        var initialSyntax = "{{ request.user.ide_settings.selected_syntax }}";
+        // Theme Dropdown Event Handler
+        document.querySelectorAll('.theme-option').forEach(item => {
+            item.addEventListener('click', function () {
+                const newTheme = item.getAttribute('data-theme');
+                document.getElementById('currentTheme').textContent = newTheme.charAt(0).toUpperCase() + newTheme.slice(1).replace(/-/g, ' ');
+                editor.setOption('theme', newTheme);
 
-        if (initialTheme !== "default") {
-            changeTheme(initialTheme);
-        }
-        if (initialSyntax !== "auto") {
-            changeSyntax(initialSyntax);
-        }
+                // Update the hidden input and submit the form
+                document.getElementById('themeInput').value = newTheme;
+                document.getElementById('settingsForm').submit();
+            });
+        });
+
+        // Syntax Dropdown Event Handler
+        document.querySelectorAll('.syntax-option').forEach(item => {
+            item.addEventListener('click', function () {
+                const newSyntax = item.getAttribute('data-syntax');
+                document.getElementById('currentSyntax').textContent = newSyntax.charAt(0).toUpperCase() + newSyntax.slice(1);
+                editor.setOption('mode', newSyntax);
+
+                // Update the hidden input and submit the form
+                document.getElementById('syntaxInput').value = newSyntax;
+                document.getElementById('settingsForm').submit();
+            });
+        });
     });
 </script>
 

@@ -245,9 +245,8 @@ class ProjectView(TemplateView):
         return redirect('profile', username=request.user.username)
 
 
-class IdeView(LoginRequiredMixin, TemplateView):
+class IdeView(TemplateView):
     template_name = 'ide.html'
-    login_url = 'login'
 
     def get(self, request, *args, **kwargs):
         """
@@ -265,6 +264,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return JsonResponse({'project_tree': project_tree})
 
         context = {
+            'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
             'home': HomePage.objects.first(),
             'current_project': project,
             'project_tree': project_tree,
@@ -314,7 +314,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             'rename_file': self.save_file,
             'open_file': self.open_file,
             'download_project': self.download_project,
-            'update_theme': self.update_theme,
+            'update_ide_settings': self.update_ide_settings,
             'update_task': update_task,
             'create_git_repo': GitHubUtils.create_git_repo,
             'commit_files': GitHubUtils.commit_files,
@@ -330,14 +330,24 @@ class IdeView(LoginRequiredMixin, TemplateView):
         return HttpResponse("Invalid action", status=400)
 
     @staticmethod
-    def update_theme(request, project):
+    def update_ide_settings(request, project):
         """
         Update the theme and syntax for a project.
         """
-        project.selected_theme = request.POST.get('selected_theme', 'default_theme')
-        project.selected_syntax = request.POST.get('selected_syntax', 'default_syntax')
-        project.last_modified_at = now()
-        project.save()
+        settings = request.user.idesettings
+        settings.selected_theme = request.POST.get('theme')
+        settings.selected_syntax = request.POST.get('syntax')
+        settings.show_line_numbers = 'on' in request.POST.getlist("show_line_numbers")
+        settings.auto_close_brackets = 'on' in request.POST.getlist("auto_close_brackets")
+        settings.match_brackets = 'on' in request.POST.getlist("match_brackets")
+        settings.highlight_current_line = 'on' in request.POST.getlist("highlight_current_line")
+        settings.line_wrapping = 'on' in request.POST.getlist("line_wrapping")
+        settings.indent_with_tabs = 'on' in request.POST.getlist("indent_with_tabs")
+        settings.linting = 'on' in request.POST.getlist("linting")
+        settings.tab_size = request.POST.get("tab_size")
+        settings.font_size = request.POST.get("font_size")
+        settings.last_modified_at = now()
+        settings.save()
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -358,6 +368,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         context = {
+            'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
             'home': HomePage.objects.first(),
             'current_project': project,
             'file_name': os.path.basename(file_path),
@@ -425,6 +436,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
                             project=project, message=action)
 
         context = {
+            'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
             'home': HomePage.objects.first(),
             'current_project': project,
             'file_name': file_name,

@@ -130,13 +130,16 @@ def create_default_profile(sender, instance, created, **kwargs):
         instance.project_dir = user_project_dir
         instance.save()
 
+        # Create default IDE settings for the user
+        IDESettings.objects.create(user=instance)
+
 
 class IDESettings(models.Model):
     """
     Represents the IDE settings for a user, ensuring one instance per user.
     """
     THEME_CHOICES = [
-        ('default', 'Dracula (Default)'),
+        ('dracula', 'Dracula'),
         ('monokai', 'Monokai'),
         ('ayu-dark', 'Ayu Dark'),
         ('light-mode', 'Light Mode'),
@@ -163,10 +166,18 @@ class IDESettings(models.Model):
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='default')
+    selected_theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='dracula')
     selected_syntax = models.CharField(max_length=20, choices=SYNTAX_CHOICES, default='auto')
-    font_size = models.PositiveIntegerField(default=14)
     show_line_numbers = models.BooleanField(default=True)
+    auto_close_brackets = models.BooleanField(default=True)
+    match_brackets = models.BooleanField(default=True)
+    highlight_current_line = models.BooleanField(default=True)
+    line_wrapping = models.BooleanField(default=True)
+    indent_with_tabs = models.BooleanField(default=True)
+    linting = models.BooleanField(default=True)
+    tab_size = models.IntegerField(default=4)
+    font_size = models.IntegerField(default=14)
 
     def __str__(self):
         return f"{self.user.username}'s IDE Settings"
+

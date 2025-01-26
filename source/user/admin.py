@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.urls import path
-from .models import SenderEmailSettings, CustomUser, DockerSession, ActivityLog
+from .models import SenderEmailSettings, CustomUser, DockerSession, ActivityLog, IDESettings
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -35,6 +35,28 @@ class SenderEmailSettingsAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 
+class IDESettingsInline(admin.StackedInline):
+    """
+    Inline admin interface for IDESettings.
+    """
+    model = IDESettings
+    can_delete = False
+    readonly_fields = (
+        'selected_theme',
+        'selected_syntax',
+        'show_line_numbers',
+        'auto_close_brackets',
+        'match_brackets',
+        'highlight_current_line',
+        'line_wrapping',
+        'indent_with_tabs',
+        'linting',
+        'tab_size',
+        'font_size'
+    )
+    verbose_name = "IDE Settings"
+
+
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     """
@@ -65,6 +87,8 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('username', 'email', 'password1', 'password2', 'is_active', 'is_staff', 'is_superuser')
         }),
     )
+
+    inlines = [IDESettingsInline]
 
 
 
