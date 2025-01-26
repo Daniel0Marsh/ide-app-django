@@ -179,7 +179,7 @@ body {
 }
 
 #chat-log {
-    height: 50vh;
+    height: 80vh;
     overflow-y: auto;
 }
 
