@@ -133,59 +133,6 @@
     </div>
 
 
-    <!-- user storage limit -->
-    <div class="card border border-primary shadow mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Storage Limit Settings</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="">
-            {% csrf_token %}
-                <div class="mb-3">
-                    <label for="user_storage_limit" class="form-label text-light">Storage Limit</label>
-                    <input type="text"
-                           class="form-control"
-                           id="user_storage_limit"
-                           name="user_storage_limit"
-                           value="{{ user.user_storage_limit }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the maximum size allowed for your project storage (in MB).</small>
-                </div>
-                <div class="mb-3">
-                    <label for="current_folder_size" class="form-label text-light">Current Storage Size</label>
-                    <input type="text"
-                           class="form-control"
-                           id="current_folder_size"
-                           name="current_folder_size"
-                           value="{{ current_folder_size }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the current size of the folder containing all your projects (in MB).</small>
-                </div>
-                <div class="mb-3">
-                    <label for="remaining_size" class="form-label text-light">Remaining Storage Space</label>
-                    <input type="text"
-                           class="form-control"
-                           id="remaining_size"
-                           name="remaining_size"
-                           value="{{ remaining_size }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the remaining space in your storage (in MB).</small>
-                </div>
-                <div class="text-end">
-                    {% if not user.is_admin %}
-                        <p class="text-light">You are not permitted to change Docker settings.</p>
-                    {% else %}
-                        <button type="submit"
-                                name="storage_limit"
-                                class="btn btn-danger">
-                            Update Docker Settings
-                        </button>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Docker Settings -->
     <div class="card border border-danger shadow mb-4">
         <div class="card-header">
