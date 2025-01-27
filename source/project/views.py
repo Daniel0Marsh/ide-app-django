@@ -77,7 +77,7 @@ class ProjectView(TemplateView):
         """
         project_name = kwargs.get('project_name')
         current_project = Project.objects.filter(
-            name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
+            project_name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
 
         if not current_project:
             return redirect('profile')
@@ -105,7 +105,7 @@ class ProjectView(TemplateView):
         Handle POST requests for various project actions.
         """
         project_name = kwargs.get('project_name')
-        project = Project.objects.filter(name=project_name).first()
+        project = Project.objects.filter(project_name=project_name).first()
 
         if not project:
             return HttpResponse("Project not found", status=404)
@@ -285,7 +285,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         project_name = kwargs.get('project_name')
         project = Project.objects.filter(
-            name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
+            project_name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
         if not project:
             return HttpResponse("Project not found", status=404)
 
