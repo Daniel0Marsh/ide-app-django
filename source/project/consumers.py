@@ -13,17 +13,20 @@ class TerminalConsumer(AsyncWebsocketConsumer):
         Establish connection, retrieve user and project, and join room group.
         """
         self.username = self.scope['url_route']['kwargs']['username']
-        self.project_id = self.scope['url_route']['kwargs']['project_id']
+        self.project_name = self.scope['url_route']['kwargs']['project_name']
 
+        # Retrieve the user by username
         self.user = await self.get_user(self.username)
         if not self.user:
             await self.close()
 
-        self.project = await self.get_project(self.project_id)
+        # Retrieve the project by project_name
+        self.project = await self.get_project(self.project_name)
         if not self.project:
             await self.close()
 
-        self.room_group_name = f"terminal_{self.user.id}_{self.project.id}"
+        # Create a room group name based on the user ID and project name
+        self.room_group_name = f"terminal_{self.user.id}_{self.project.project_name}"
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
@@ -76,12 +79,12 @@ class TerminalConsumer(AsyncWebsocketConsumer):
             return None
 
     @sync_to_async
-    def get_project(self, project_id):
+    def get_project(self, project_name):
         """
-        Retrieve project by ID.
+        Retrieve project by project_name.
         """
         from .models import Project
         try:
-            return Project.objects.get(id=project_id)
+            return Project.objects.get(project_name=project_name)
         except Project.DoesNotExist:
             return None

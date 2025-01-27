@@ -986,8 +986,6 @@
 
     function initWebSocket(username, projectName) {
         const socketUrl = `ws://${window.location.host}/ws/${username}/${projectName}/editor`;
-        console.log("WebSocket URL:", socketUrl);
-
 
         socket = new WebSocket(socketUrl);
 
