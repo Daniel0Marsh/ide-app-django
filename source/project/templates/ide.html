@@ -395,7 +395,7 @@
                     <div class="prompt p-1 text-light">
                         <span class="username">user@Ubuntu</span>:<span class="path">~/{{ user }}</span>$
                     </div>
-                    <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
+                    <input id="terminal-input" class="terminal-input border-0 text-light" autocomplete="off">
                     <input type="hidden" id="username" value="{{ user.username }}">
                     <input type="hidden" id="project-name" value="{{ current_project.project_name }}">
                 </div>
@@ -990,27 +990,27 @@
 
         socket = new WebSocket(socketUrl);
 
-        socket.onopen = function() {
+        socket.onopen = function() {/home/dan/django-ide-app/source
             console.log("WebSocket connection established.");
         };
 
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
 
-            if (data.type === 'terminal_output') {
-                const terminalDiv = document.getElementById('terminal');
-                const formattedResponse = data.output
-                    .split('\n')
-                    .map(line => `<div><span class="output">${line}</span></div>`)
-                    .join('');
+        if (data.type === 'terminal_output') {
+            const formattedResponse = data.output
+                .split('\n')
+                .map(line => `<div style="white-space: nowrap; overflow-x: auto;">` +
+                    `<span class="output">${line}</span></div>`)
+                .join('');
 
                 terminalDiv.innerHTML += formattedResponse;
                 terminalDiv.scrollTop = terminalDiv.scrollHeight;
             }
 
             if (data.type === 'terminal_error') {
-                const terminalDiv = document.getElementById('terminal');
-                const errorResponse = `<div><span class="error">${data.error}</span></div>`;
+                const errorResponse = `<div style="white-space: nowrap; overflow-x: auto;">` +
+                    `<span class="error">${data.error}</span></div>`;
                 terminalDiv.innerHTML += errorResponse;
                 terminalDiv.scrollTop = terminalDiv.scrollHeight;
             }
