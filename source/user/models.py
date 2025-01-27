@@ -56,6 +56,8 @@ class CustomUser(AbstractUser):
                                        help_text="Number of CPUs allocated for Docker containers.")
     default_cpu_shares = models.PositiveIntegerField(default=512,
                                                      help_text="Relative CPU weight for Docker containers.")
+    user_storage_limit = models.PositiveIntegerField(default=10000,
+                                                            help_text="Maximum size of the directory containing all user projects in megabytes (MB).")
 
     def __str__(self):
         """Return the username of the user."""

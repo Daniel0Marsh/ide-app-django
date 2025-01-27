@@ -1,3 +1,4 @@
+import os
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import FileSystemStorage
@@ -29,6 +30,15 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         except UserSocialAuth.DoesNotExist:
             github_account = None
 
+        # Calculate the current folder size
+        current_folder_size = self.get_folder_size(request.user.project_dir)  # In MB
+
+        # Get the folder size limit (assuming it's a model field for user)
+        project_folder_size_limit = request.user.project_folder_size_limit
+
+        # Calculate remaining space
+        remaining_size = project_folder_size_limit - current_folder_size
+
         context = {
             'needs_password': bool(request.user.password),
             'github_account': github_account,
@@ -36,10 +46,23 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             'new_follower': ActivityLog.objects.filter(user=request.user, activity_type='new_follower', notification_enabled=True).first(),
             'task': ActivityLog.objects.filter(user=request.user, activity_type='task', notification_enabled=True).first(),
             'new_message': ActivityLog.objects.filter(user=request.user, activity_type='new_message', notification_enabled=True).first(),
-            'project': ActivityLog.objects.filter(user=request.user, activity_type='project', notification_enabled=True).first()
+            'project': ActivityLog.objects.filter(user=request.user, activity_type='project', notification_enabled=True).first(),
+            'current_folder_size': current_folder_size,
+            'remaining_size': remaining_size,
+            'project_folder_size_limit': project_folder_size_limit
         }
 
         return self.render_to_response(context)
+
+    @staticmethod
+    def get_folder_size(folder_path):
+        """Calculate the total size of files in a folder."""
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(folder_path):
+            for f in filenames:
+                file_path = os.path.join(dirpath, f)
+                total_size += os.path.getsize(file_path)
+        return total_size / (1024 * 1024)  # Return size in MB
 
     def post(self, request, *args, **kwargs):
         """
@@ -51,6 +74,7 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             'update_notifications': self.update_notifications,
             'link_github': self.link_github,
             'unlink_github': self.unlink_github,
+            'storage_limit': self.storage_limit,
             'update_docker_settings': self.update_docker_settings,
             'delete_account': self.delete_account,
         }
@@ -165,6 +189,20 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         else:
             messages.error(request, "You must be logged in to unlink your GitHub account.")
 
+        return redirect('settings', username=request.user.username)
+
+    @staticmethod
+    def storage_limit(request):
+        """Update storage limit for the user (admin only)."""
+        user = request.user
+        if not user.is_admin:
+            messages.error(request, "You do not have permission to update Docker settings.")
+            return redirect('settings', username=request.user.username)
+
+        user.user_storage_limit = request.POST.get('project_folder_size_limit', user.user_storage_limit)
+
+        user.save()
+        messages.success(request, "Storage limit updated successfully.")
         return redirect('settings', username=request.user.username)
 
     @staticmethod

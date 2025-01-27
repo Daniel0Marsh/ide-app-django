@@ -85,50 +85,105 @@
     </div>
 </div>
 
-    <!-- GitHub Account Integration -->
+<!-- GitHub Account Integration -->
+<div class="card border border-primary shadow mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">GitHub Account</h5>
+    </div>
+    <div class="card-body">
+        {% if github_account %}
+            <!-- Show Linked Account Details -->
+            <p class="text-light">
+                Your GitHub account is linked. Below are the details:
+            </p>
+            <ul class="list-group mb-3">
+                <li class="list-group-item m-1">
+                    <strong>Username:</strong> {{ github_account.extra_data.login }}
+                </li>
+                <li class="list-group-item m-1">
+                    <strong>Profile Link:</strong>
+                    <a href="https://github.com/{{ github_account.extra_data.login }}" target="_blank" class="btn btn-link text-light">
+                        View GitHub Profile
+                    </a>
+                </li>
+            </ul>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="text-end">
+                    <button type="submit" name="unlink_github" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Unlink GitHub Account
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <!-- Prompt to Link Account -->
+            <p class="text-light">
+                Link your GitHub account to enable project synchronization, repository management, and other GitHub integration features.
+            </p>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="text-end">
+                    <button type="submit" name="link_github" class="btn btn-secondary">
+                        <i class="bi bi-github"></i> Link GitHub Account
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+
+    <!-- user storage limit -->
     <div class="card border border-primary shadow mb-4">
         <div class="card-header">
-            <h5 class="card-title mb-0">GitHub Account</h5>
+            <h5 class="card-title mb-0">Storage Limit</h5>
         </div>
         <div class="card-body">
-            {% if github_account %}
-                <!-- Show Linked Account Details -->
-                <p class="text-light">
-                    Your GitHub account is linked. Below are the details:
-                </p>
-                <ul class="list-group mb-3">
-                    <li class="list-group-item m-1">
-                        <strong>Username:</strong> {{ github_account.extra_data.login }}
-                    </li>
-                    <li class="list-group-item m-1">
-                        <strong>Profile Link:</strong>
-                        <a href="https://github.com/{{ github_account.extra_data.login }}" target="_blank" class="btn btn-link text-light">
-                            View GitHub Profile
-                        </a>
-                    </li>
-                </ul>
-                <form method="POST" action="">
-                    {% csrf_token %}
-                    <div class="text-end">
-                        <button type="submit" name="unlink_github" class="btn btn-danger">
-                            <i class="bi bi-x-circle"></i> Unlink GitHub Account
+            <form method="POST" action="">
+            {% csrf_token %}
+                <div class="mb-3">
+                    <label for="project_folder_size_limit" class="form-label text-light">Project Folder Size Limit</label>
+                    <input type="text"
+                           class="form-control"
+                           id="project_folder_size_limit"
+                           name="project_folder_size_limit"
+                           value="{{ user.project_folder_size_limit }} MB"
+                           disabled>
+                    <small class="form-text text-light">This is the maximum size allowed for the entire project folder (in MB).</small>
+                </div>
+                <div class="mb-3">
+                    <label for="current_folder_size" class="form-label text-light">Current Folder Size</label>
+                    <input type="text"
+                           class="form-control"
+                           id="current_folder_size"
+                           name="current_folder_size"
+                           value="{{ current_folder_size }} MB"
+                           disabled>
+                    <small class="form-text text-light">This is the current size of the folder containing all your projects (in MB).</small>
+                </div>
+                <div class="mb-3">
+                    <label for="remaining_size" class="form-label text-light">Remaining Folder Space</label>
+                    <input type="text"
+                           class="form-control"
+                           id="remaining_size"
+                           name="remaining_size"
+                           value="{{ remaining_size }} MB"
+                           disabled>
+                    <small class="form-text text-light">This is the remaining space in your project folder (in MB).</small>
+                </div>
+                <div class="text-end">
+                    {% if not user.is_admin %}
+                        <p class="text-light">You are not permitted to change Docker settings.</p>
+                    {% else %}
+                        <button type="submit"
+                                name="storage_limit"
+                                class="btn btn-danger"
+                                {% if not user.is_admin %}disabled{% endif %}>
+                            Update Docker Settings
                         </button>
-                    </div>
-                </form>
-            {% else %}
-                <!-- Prompt to Link Account -->
-                <p class="text-light">
-                    Link your GitHub account to enable project synchronization, repository management, and other GitHub integration features.
-                </p>
-                <form method="POST" action="">
-                    {% csrf_token %}
-                    <div class="text-end">
-                        <button type="submit" name="link_github" class="btn btn-secondary">
-                            <i class="bi bi-github"></i> Link GitHub Account
-                        </button>
-                    </div>
-                </form>
-            {% endif %}
+                    {% endif %}
+                </div>
+            </form>
         </div>
     </div>
 
