@@ -209,7 +209,7 @@ body {
   .chat-box.show ~ .main-content {
     overflow: hidden;
   }
-    .chat-box.show ~ .body {
+    .chat-box.show ~ body {
     overflow: hidden;
   }
 }
