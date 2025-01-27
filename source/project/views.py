@@ -4,16 +4,18 @@ import markdown
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import (HttpResponse, HttpResponseRedirect, JsonResponse, FileResponse)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 from django.views.generic import TemplateView
 
+from .models import Project, Task
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
-from .models import Project, Task
 from home.models import HomePage
+from user.models import CustomUser, ActivityLog
 from .utils import ProjectContainerManager, GitHubUtils
 
 
@@ -90,12 +92,33 @@ class ProjectView(TemplateView):
             with open(readme_path, "r", encoding="utf-8") as readme_file:
                 readme_content = markdown.markdown(readme_file.read())
 
+        username = self.kwargs.get("username")
+        if username:
+            user_profile = get_object_or_404(CustomUser, username=username)
+        else:
+            user_profile = request.user
+
+        if isinstance(request.user, AnonymousUser):
+            following_users = []
+            followers_users = []
+            chat_rooms = []
+            enabled_notifications = None
+        else:
+            following_users = request.user.following.all()
+            followers_users = request.user.followers.all()
+            chat_rooms = ChatRoom.objects.filter(participants=request.user)
+            enabled_notifications = ActivityLog.objects.filter(user=request.user, notification_enabled=True)
+
         context = {
             'home': HomePage.objects.first(),
             'current_project': current_project,
             'project_tree': project_tree,
             'readme_content': readme_content,
             'tasks': current_project.tasks.all(),
+            'recent_chats': chat_rooms,
+            'enabled_notifications': enabled_notifications,
+            'all_users': list(set(following_users) | set(followers_users)),
+            'all_messages': Message.objects.filter(room__in=chat_rooms).order_by('timestamp'),
         }
 
         return render(request, self.template_name, context)
@@ -291,29 +314,31 @@ class IdeView(LoginRequiredMixin, TemplateView):
 
         readme_path, readme_content = self.handle_readme(project)
 
-        project_tree = get_project_tree(project.project_path)
-
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'project_tree': project_tree})
+            return JsonResponse({'project_tree': get_project_tree(project.project_path)})
+
+        return render(request, self.template_name, self.get_context(request, project, readme_path, readme_content, file_name='README.md'))
+
+    @staticmethod
+    def get_context(request, project, file_path, file_content, file_name):
+        """
+        method to get all template context and return it.
+        """""
 
         context = {
             'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
             'home': HomePage.objects.first(),
             'current_project': project,
-            'project_tree': project_tree,
-            'file_name': 'README.md',
-            'file_path': readme_path,
-            'file_content': readme_content,
+            'project_tree': get_project_tree(project.project_path),
+            'file_name': file_name,
+            'file_path': file_path,
+            'file_content': file_content,
             'tasks': project.tasks.all(),
-            'recent_chats': ChatRoom.objects.filter(participants=request.user),
-            'all_users': (request.user.following.all() | request.user.followers.all()).distinct(),
-            'all_messages': Message.objects.filter(room__participants=request.user).order_by('timestamp'),
             'is_git_repo': bool(project.repository),
             'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
             'branch': GitHubUtils.get_current_branch(request, project),
         }
-
-        return render(request, self.template_name, context)
+        return context
 
     @staticmethod
     def handle_readme(project):
@@ -400,19 +425,7 @@ class IdeView(LoginRequiredMixin, TemplateView):
             messages.warning(request, "Error Reading File!")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-        context = {
-            'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
-            'home': HomePage.objects.first(),
-            'current_project': project,
-            'file_name': os.path.basename(file_path),
-            'file_path': file_path,
-            'file_content': file_content,
-            'project_tree': get_project_tree(project.project_path),
-            'is_git_repo': bool(project.repository),
-            'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
-        }
-
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, self.get_context(request, project, file_path, file_content, file_name=os.path.basename(file_path)))
 
     @staticmethod
     def delete(request, project):
@@ -442,9 +455,6 @@ class IdeView(LoginRequiredMixin, TemplateView):
         file_content = request.POST.get('file_contents', '')
         file_path = request.POST.get('file_path')
         new_file_name = request.POST.get('new_file_name')
-
-        project_path = project.project_path
-        action = ''
 
         if new_file_name:
             if not file_path:
@@ -477,16 +487,4 @@ class IdeView(LoginRequiredMixin, TemplateView):
         add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
                             project=project, message=action)
 
-        context = {
-            'is_read_only': not (request.user in project.collaborators.all() or request.user == project.user),
-            'home': HomePage.objects.first(),
-            'current_project': project,
-            'file_name': file_name,
-            'file_path': file_path,
-            'file_content': file_content,
-            'project_tree': get_project_tree(project_path),
-            'is_git_repo': bool(project.repository),
-            'uncommitted_files': GitHubUtils.get_uncommitted_files(request, project) if project.repository else [],
-        }
-
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, self.get_context(request, project, file_path, file_content, file_name))
