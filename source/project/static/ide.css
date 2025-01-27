@@ -197,6 +197,7 @@ body {
         color: var(--text-white);
         background-color: var(--bg-dark);
         z-index: 800;
+        padding-bottom: 50px;
     }
 
     .sidebar.active + .ide-card {
