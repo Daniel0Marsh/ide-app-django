@@ -19,14 +19,13 @@
 <!-- project side-nav -->
 <div class="side-nav shadow-end border-end border-dark">
     <!-- Git Branch Dropdown (aligned to the right) -->
-    {% if not is_read_only %}
     <div class="dropend p-0 m-0 ms-auto" data-bs-theme="dark">
         <button class="btn mx-auto btn-dark mb-2 mt-2" type="button" id="gitBranchDropdown" data-bs-toggle="dropdown" aria-expanded="false"
             title="Menu">
             <i class="bi bi-three-dots-vertical fs-5 text-light"></i>
         </button>
         <ul class="dropdown-menu" aria-labelledby="gitBranchDropdown">
-            {% if is_git_repo %}
+            {% if is_git_repo and not is_read_only %}
                 <li>
                     <span class="dropdown-item-text fw-bold">
                         Branch: {{branch}}
@@ -73,7 +72,6 @@
             </li>
         </ul>
     </div>
-    {% endif %}
     <button type="button" class="btn mx-auto btn-dark mb-2 mt-2" id="sidebarCollapse" data-bs-toggle="tooltip"
             title="Project">
         <i class="bi bi-folder2-open fs-5 text-light"></i>

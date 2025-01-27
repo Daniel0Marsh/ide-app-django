@@ -83,8 +83,13 @@ class ActivityLog(models.Model):
     NOTIFICATION_TYPES = [
         ('new_follower', 'New Follower'),
         ('new_message', 'New Message'),
-        ('task', 'Task'),
-        ('project', 'Project'),
+        ('task_created', 'Task Created'),
+        ('task_updated', 'Task Updated'),
+        ('task_deleted', 'Task deleted'),
+        ('project_created', 'Project Created'),
+        ('project_updated', 'Project Updated'),
+        ('project_deleted', 'Project Deleted'),
+        ('collaborator_added', 'Collaborator Added')
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activity')

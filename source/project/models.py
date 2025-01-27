@@ -56,8 +56,8 @@ def create_task_notification(sender, instance, created, **kwargs):
         ActivityLog.objects.create(
             user=instance.assigned_to,
             sender=instance.assigned_by,
-            notification_type='task',
-            message=f"{instance.assigned_by} Created task {instance.title}",
+            notification_type='task_created',
+            message='',
             task=instance,
             project=instance.project
         )

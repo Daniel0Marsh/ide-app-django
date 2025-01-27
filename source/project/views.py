@@ -13,7 +13,6 @@ from django.views.generic import TemplateView
 from chat.models import ChatRoom, Message
 from profile.views import add_activity_to_log
 from .models import Project, Task
-from user.models import IDESettings
 from home.models import HomePage
 from .utils import ProjectContainerManager, GitHubUtils
 
@@ -64,7 +63,7 @@ def update_task(request, project):
     task.status = request.POST.get('task_status')
     task.save()
 
-    add_activity_to_log(user=task.assigned_to, activity_type='task', sender=request.user, task=task, project=project, message=f"{request.user.username} updated task {task.title}")
+    add_activity_to_log(user=task.assigned_to, activity_type='task_updated', sender=request.user, task=task, project=project, message='')
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -114,7 +113,8 @@ class ProjectView(TemplateView):
         action_map = {
             'add_collaborator': self.add_collaborator,
             'edit_project_details': self.edit_project_details,
-            'delete': self.delete_project,
+            'delete_project': self.delete_project,
+            'download_project': self.download_project,
             'remove_collaborator': self.remove_collaborator,
             'toggle_like': self.toggle_like,
             'add_task': self.add_task,
@@ -169,9 +169,10 @@ class ProjectView(TemplateView):
 
         project.collaborators.add(collaborator)
 
-        add_activity_to_log(user=collaborator, activity_type='project', sender=request.user, task=None,
-                            project=project,
-                            message=f"{request.user.username} added {collaborator.username} to project {project.project_name}")
+        add_activity_to_log(user=collaborator, activity_type='collaborator_added', sender=request.user, task=None,
+                            project=project, message='')
+        add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
+                            project=project, message=f"Added collaborator: {collaborator.username}")
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -188,8 +189,10 @@ class ProjectView(TemplateView):
 
         if collaborator in project.collaborators.all():
             project.collaborators.remove(collaborator)
-            add_activity_to_log(user=collaborator, activity_type='project', sender=request.user, task=None,
-                                project=project, message=f"{request.user.username} removed {collaborator.username} from project {project.project_name}")
+            add_activity_to_log(user=collaborator, activity_type='collaborator_removed', sender=request.user, task=None,
+                                project=project, message='')
+            add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
+                                project=project, message=f"Removed collaborator: {collaborator.username}")
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -209,8 +212,8 @@ class ProjectView(TemplateView):
             project.project_name, project.project_description, project.is_public = new_name, new_description, is_public
             project.save()
 
-            add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
-                                project=project, message=f"{request.user.username} updated project: {project.project_name}'s details")
+            add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
+                                project=project, message='')
 
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -231,8 +234,8 @@ class ProjectView(TemplateView):
             container_manager.delete_container()
             shutil.rmtree(project.project_path)
 
-            add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
-                                project=project, message=f"{request.user.username} Deleted Project {project.project_name}")
+            add_activity_to_log(user=request.user, activity_type='project_deleted', sender=None, task=None,
+                                project=project, message='')
             project.delete()
 
         except Project.DoesNotExist:
@@ -244,9 +247,37 @@ class ProjectView(TemplateView):
 
         return redirect('profile', username=request.user.username)
 
+    @staticmethod
+    def download_project(request, project):
+        """
+        Create and return a zip file of the project's directory for download.
+        """
+        project_name = project.project_name
+        project_path = project.project_path
+        zip_file_path = os.path.join("/tmp", f"{os.path.basename(project_path)}.zip")
 
-class IdeView(TemplateView):
+        try:
+            shutil.make_archive(zip_file_path[:-4], 'zip', project_path)
+
+            with open(zip_file_path, 'rb') as zip_file:
+                response = FileResponse(zip_file, as_attachment=True)
+                response['Content-Disposition'] = f'attachment; filename="{os.path.basename(project_path)}.zip"'
+        except Exception:
+            messages.warning(request, "Unable to Download project at this time!")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+        finally:
+            if os.path.exists(zip_file_path):
+                os.remove(zip_file_path)
+
+        add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
+                            project=project, message=f"Downloaded the project: {project_name}")
+
+        return response
+
+
+class IdeView(LoginRequiredMixin, TemplateView):
     template_name = 'ide.html'
+    login_url = 'login'
 
     def get(self, request, *args, **kwargs):
         """
@@ -313,7 +344,6 @@ class IdeView(TemplateView):
             'save_file': self.save_file,
             'rename_file': self.save_file,
             'open_file': self.open_file,
-            'download_project': self.download_project,
             'update_ide_settings': self.update_ide_settings,
             'update_task': update_task,
             'create_git_repo': GitHubUtils.create_git_repo,
@@ -393,15 +423,16 @@ class IdeView(TemplateView):
             action = f"Deleted file {os.path.basename(file_path)}"
         except OSError as e:
             action = f"Failed to delete file {file_path}: {e}"
+            messages.warning(request, f"Failed to delete file {file_path}: {e}")
 
-        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
+        add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
                             project=project, message=action)
 
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     def save_file(self, request, project):
         """
-        Save, rename, or create a new file in the project and update project settings.
+        Save or rename an existing file in the project and update project settings.
         """
 
         file_name = request.POST.get('file_name')
@@ -413,26 +444,34 @@ class IdeView(TemplateView):
         action = ''
 
         if new_file_name:
-            file_path = file_path or os.path.join(project_path, new_file_name)
-            os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name)) if file_path else None
-            file_name = new_file_name
-            action = f"Renamed file {file_name} to {new_file_name}" if file_path else f"Created a new file {new_file_name}"
+            if not file_path:
+                messages.warning(request, "File path is required to rename a file.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+            new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
+            try:
+                os.rename(file_path, new_file_path)
+                file_name = new_file_name
+                file_path = new_file_path
+                action = f"Renamed file to {new_file_name}"
+            except Exception:
+                messages.warning(request, "Error renaming file.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         elif file_path:
             action = f"Saved changes to file {file_name}"
         else:
-            file_path = os.path.join(project_path, file_name or 'new_file.txt')
-            file_name = file_name or 'new_file.txt'
-            action = f"Created a new file {file_name}"
+            messages.warning(request, "File path is required to save changes.")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         try:
             normalized_content = file_content.replace('\r\n', '\n').replace('\r', '\n')
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(normalized_content)
         except Exception:
-            messages.warning(request, "Error Saving File")
+            messages.warning(request, "Error saving file.")
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
+        add_activity_to_log(user=request.user, activity_type='project_updated', sender=None, task=None,
                             project=project, message=action)
 
         context = {
@@ -448,30 +487,3 @@ class IdeView(TemplateView):
         }
 
         return render(request, self.template_name, context)
-
-    @staticmethod
-    def download_project(request, project):
-        """
-        Create and return a zip file of the project's directory for download.
-        """
-        project_name = project.project_name
-        project_path = project.project_path
-        zip_file_path = os.path.join("/tmp", f"{os.path.basename(project_path)}.zip")
-
-        try:
-            shutil.make_archive(zip_file_path[:-4], 'zip', project_path)
-
-            with open(zip_file_path, 'rb') as zip_file:
-                response = FileResponse(zip_file, as_attachment=True)
-                response['Content-Disposition'] = f'attachment; filename="{os.path.basename(project_path)}.zip"'
-        except Exception:
-            messages.warning(request, "Unable to Download project at this time!")
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-        finally:
-            if os.path.exists(zip_file_path):
-                os.remove(zip_file_path)
-
-        add_activity_to_log(user=request.user, activity_type='project', sender=None, task=None,
-                            project=project, message=f"Downloaded the project: {project_name}")
-
-        return response

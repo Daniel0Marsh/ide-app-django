@@ -1,4 +1,4 @@
-1) notification
+1)
 2) cpus on docker set up
 3) change project url to project_name not id
-4) anonymous user on ide page
+4)

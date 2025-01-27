@@ -129,13 +129,12 @@
                                 <strong>{{ notification.get_activity_type_display }}</strong>:
                                 {% if notification.activity_type == 'new_follower' %}
                                     <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
-                                        {{ notification.sender.username }}</a>
-                                    started following you.
+                                        {{ notification.sender.username }}</a>started following you.
                                 {% elif notification.activity_type == 'new_message' %}
                                     You have a new message from:
                                     <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
                                         {{ notification.sender.username }}</a>
-                                {% elif notification.activity_type == 'task' %}
+                                {% elif notification.activity_type == 'task_created' %}
                                     A new task titled:
                                     <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
                                         {{ notification.task.title }}</a>
@@ -145,15 +144,63 @@
                                     by:
                                     <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
                                         {{ notification.sender.username }}</a>
-                                {% elif notification.activity_type == 'project' %}
-                                    The project:
-                                    <a href="" class="text-light">
+                                {% elif notification.activity_type == 'task_updated' %}
+                                    The task titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.task.title }}</a>
+                                    has been updated on the project:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
                                         {{ notification.project.project_name }}</a>
-                                    has updates by:
-                                    <a href="" class="text-light">
+                                    by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
                                         {{ notification.sender.username }}</a>
-                                {% else %}
-                                    {{ notification.message }}
+                                {% elif notification.activity_type == 'task_deleted' %}
+                                    The task titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.task.title }}</a>
+                                    has been deleted on the project:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                {% elif notification.activity_type == 'project_created' %}
+                                    The project titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    has been created by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+                                {% elif notification.activity_type == 'project_updated' %}
+                                    The project titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    has been updated by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a><br>{{ activity.message }}
+                                {% elif notification.activity_type == 'project_deleted' %}
+                                    The project titled:
+                                    <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                        {{ notification.project.project_name }}</a>
+                                    has been deleted by:
+                                    <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                        {{ notification.sender.username }}</a>
+
+                                    {% elif notification.activity_type == 'collaborator_added' %}
+                                        You have been added to the project:
+                                        <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                            {{ notification.project.project_name }}</a>
+                                        by:
+                                        <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                            {{ notification.sender.username }}</a>
+
+                                    {% elif notification.activity_type == 'collaborator_removed' %}
+                                        You have been removed from the project:
+                                        <a href="{% url 'project' username=notification.sender.username project_id=notification.project.id %}" class="text-light">
+                                            {{ notification.project.project_name }}</a>
+                                        by:
+                                        <a href="{% url 'profile' username=notification.sender.username %}" class="text-light">
+                                            {{ notification.sender.username }}</a>
                                 {% endif %}
                                 <br>
                                 <small class="text-light">Received on: {{ notification.created_at }}</small>

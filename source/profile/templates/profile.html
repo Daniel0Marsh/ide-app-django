@@ -250,28 +250,75 @@
             <h3 class="mb-2 text-light">Recent Activity</h3>
         </div>
         <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
-            {% for activity in recent_activity %}
-                {% if activity.activity_type != new_message %}
-                    <div class="card border m-3">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <h5 class="card-title">{{ activity.get_activity_type_display }}</h5>
-                            <small class="text-light ms-3"><i class="bi bi-clock"></i> {{ activity.created_at|date:"F j, Y, g:i a" }}</small>
-                        </div>
-                            {% if activity.project.project_name %}
-                                <p class="card-text text-light ms-3 mb-3"><strong>Project:</strong> {{ activity.project.project_name }}</p>
-                            {% elif activity.task.title %}
-                                <p class="card-text text-light ms-3 mb-3"><strong>Task:</strong> {{ activity.task.title }}</p>
+            <ul class="list-group">
+                {% for activity in recent_activity %}
+                <li class="list-group-item text-light m-1">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ activity.get_activity_type_display }}</strong>:
+                            {% elif activity.activity_type == 'task_created' %}
+                                A new task titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.task.title }}</a>
+                                has been assigned to you on the project:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a>
+                            {% elif activity.activity_type == 'task_updated' %}
+                                The task titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.task.title }}</a>
+                                has been updated on the project:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a>
+                            {% elif activity.activity_type == 'task_deleted' %}
+                                The task titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.task.title }}</a>
+                                has been deleted on the project:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a>
+                            {% elif activity.activity_type == 'project_created' %}
+                                The project titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                has been created by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a>
+                            {% elif activity.activity_type == 'project_updated' %}
+                                The project titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                has been updated by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a><br>{{ activity.message }}
+                            {% elif activity.activity_type == 'project_deleted' %}
+                                The project titled:
+                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                    {{ activity.project.project_name }}</a>
+                                has been deleted by:
+                                <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
+                                    {{ activity.sender.username }}</a>
                             {% endif %}
-                        {% if activity.message %}
-                        <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> {{ activity.message }}</p>
-                        {% else %}
-                            <p class="card-text text-light ms-3 mb-3"><strong>Description:</strong> No Description available</p>
-                        {% endif %}
+                            <br>
+                            <small class="text-light">Received on: {{ activity.created_at }}</small>
+                        </div>
                     </div>
-                {% endif %}
-            {% empty %}
-            <p class="text-light p-3 m-3">No recent activity available.</p>
-            {% endfor %}
+                </li>
+                {% empty %}
+                <li class="list-group-item bg-dark text-light text-center">
+                    <strong>You have no new activities.</strong>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
