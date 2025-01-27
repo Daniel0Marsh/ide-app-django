@@ -178,7 +178,7 @@ body {
         position: fixed;
         top: 0;
         left: 0;
-        height: 100vh;
+        height: calc(100vh - 50px);
         width: 100%;
         z-index: 1000;
         background-color: var(--bg-darker);
@@ -192,7 +192,7 @@ body {
         left: -50px;
         margin-left: 0;
         width: 100vw;
-        height: 100vh;
+        height: calc(100vh - 50px);
         transition: all 0.1s ease;
         color: var(--text-white);
         background-color: var(--bg-dark);
