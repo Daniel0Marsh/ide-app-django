@@ -43,94 +43,94 @@
         </div>
     </div>
 
-<!-- Notifications -->
-<div class="card border border-primary shadow mb-4">
-    <div class="card-header">
-        <h5 class="card-title mb-0">Notification Preferences</h5>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="">
-            {% csrf_token %}
-
-            <!-- New Follower Notifications -->
-            <div class="form-check form-switch m-2">
-                <input class="form-check-input" type="checkbox" id="new_follower_notifications" name="new_follower_notifications" {% if new_follower %}checked{% endif %}>
-                <label class="form-check-label text-light" for="new_follower_notifications">New Follower Notifications</label>
-            </div>
-
-            <!-- Task Notifications -->
-            <div class="form-check form-switch m-2">
-                <input class="form-check-input" type="checkbox" id="task_notifications" name="task_notifications" {% if task %}checked{% endif %}>
-                <label class="form-check-label text-light" for="task_notifications">Task Notifications</label>
-            </div>
-
-            <!-- Message Notifications -->
-            <div class="form-check form-switch m-2">
-                <input class="form-check-input" type="checkbox" id="message_notifications" name="message_notifications" {% if new_message %}checked{% endif %}>
-                <label class="form-check-label text-light" for="message_notifications">Message Notifications</label>
-            </div>
-
-            <!-- Project Notifications -->
-            <div class="form-check form-switch m-2">
-                <input class="form-check-input" type="checkbox" id="project_notifications" name="project_notifications" {% if project %}checked{% endif %}>
-                <label class="form-check-label text-light" for="project_notifications">Project Notifications</label>
-            </div>
-
-            <!-- Buttons -->
-            <div class="text-end mt-3">
-                <button type="submit" name="update_notifications" class="btn btn-secondary">Save Changes</button>
-                <button type="button" name="clear_notifications" class="btn btn-danger">Clear All Notifications</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- GitHub Account Integration -->
-<div class="card border border-primary shadow mb-4">
-    <div class="card-header">
-        <h5 class="card-title mb-0">GitHub Account</h5>
-    </div>
-    <div class="card-body">
-        {% if github_account %}
-            <!-- Show Linked Account Details -->
-            <p class="text-light">
-                Your GitHub account is linked. Below are the details:
-            </p>
-            <ul class="list-group mb-3">
-                <li class="list-group-item m-1">
-                    <strong>Username:</strong> {{ github_account.extra_data.login }}
-                </li>
-                <li class="list-group-item m-1">
-                    <strong>Profile Link:</strong>
-                    <a href="https://github.com/{{ github_account.extra_data.login }}" target="_blank" class="btn btn-link text-light">
-                        View GitHub Profile
-                    </a>
-                </li>
-            </ul>
+    <!-- Notifications -->
+    <div class="card border border-primary shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Notification Preferences</h5>
+        </div>
+        <div class="card-body">
             <form method="POST" action="">
                 {% csrf_token %}
-                <div class="text-end">
-                    <button type="submit" name="unlink_github" class="btn btn-danger">
-                        <i class="bi bi-x-circle"></i> Unlink GitHub Account
-                    </button>
+
+                <!-- New Follower Notifications -->
+                <div class="form-check form-switch m-2">
+                    <input class="form-check-input" type="checkbox" id="new_follower_notifications" name="new_follower_notifications" {% if new_follower %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="new_follower_notifications">New Follower Notifications</label>
+                </div>
+
+                <!-- Task Notifications -->
+                <div class="form-check form-switch m-2">
+                    <input class="form-check-input" type="checkbox" id="task_notifications" name="task_notifications" {% if task %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="task_notifications">Task Notifications</label>
+                </div>
+
+                <!-- Message Notifications -->
+                <div class="form-check form-switch m-2">
+                    <input class="form-check-input" type="checkbox" id="message_notifications" name="message_notifications" {% if new_message %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="message_notifications">Message Notifications</label>
+                </div>
+
+                <!-- Project Notifications -->
+                <div class="form-check form-switch m-2">
+                    <input class="form-check-input" type="checkbox" id="project_notifications" name="project_notifications" {% if project %}checked{% endif %}>
+                    <label class="form-check-label text-light" for="project_notifications">Project Notifications</label>
+                </div>
+
+                <!-- Buttons -->
+                <div class="text-end mt-3">
+                    <button type="submit" name="update_notifications" class="btn btn-secondary">Save Changes</button>
+                    <button type="button" name="clear_notifications" class="btn btn-danger">Clear All Notifications</button>
                 </div>
             </form>
-        {% else %}
-            <!-- Prompt to Link Account -->
-            <p class="text-light">
-                Link your GitHub account to enable project synchronization, repository management, and other GitHub integration features.
-            </p>
-            <form method="POST" action="">
-                {% csrf_token %}
-                <div class="text-end">
-                    <button type="submit" name="link_github" class="btn btn-secondary">
-                        <i class="bi bi-github"></i> Link GitHub Account
-                    </button>
-                </div>
-            </form>
-        {% endif %}
+        </div>
     </div>
-</div>
+
+    <!-- GitHub Account Integration -->
+    <div class="card border border-primary shadow mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">GitHub Account</h5>
+        </div>
+        <div class="card-body">
+            {% if github_account %}
+                <!-- Show Linked Account Details -->
+                <p class="text-light">
+                    Your GitHub account is linked. Below are the details:
+                </p>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item m-1">
+                        <strong>Username:</strong> {{ github_account.extra_data.login }}
+                    </li>
+                    <li class="list-group-item m-1">
+                        <strong>Profile Link:</strong>
+                        <a href="https://github.com/{{ github_account.extra_data.login }}" target="_blank" class="btn btn-link text-light">
+                            View GitHub Profile
+                        </a>
+                    </li>
+                </ul>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <div class="text-end">
+                        <button type="submit" name="unlink_github" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Unlink GitHub Account
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <!-- Prompt to Link Account -->
+                <p class="text-light">
+                    Link your GitHub account to enable project synchronization, repository management, and other GitHub integration features.
+                </p>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <div class="text-end">
+                        <button type="submit" name="link_github" class="btn btn-secondary">
+                            <i class="bi bi-github"></i> Link GitHub Account
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
 
 
     <!-- user storage limit -->
