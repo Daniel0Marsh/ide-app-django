@@ -204,6 +204,11 @@ body {
     height: 70vh;
     overflow-y: auto;
   }
+
+    /* Prevent scrolling in the main content when the chat-box is open */
+  .chat-box:not(.collapsed) ~ .main-content {
+    overflow: hidden;
+  }
 }
 
 
