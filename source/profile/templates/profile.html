@@ -623,7 +623,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const selectedYear = button.getAttribute('data-year');
             const username = button.getAttribute('data-username'); // Pass the username if required
 
-            fetch(`/profile/${username}/activities/?year=${selectedYear}`)
+            fetch(`/${username}/activities/?year=${selectedYear}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
