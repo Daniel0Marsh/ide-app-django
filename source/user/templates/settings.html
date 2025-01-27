@@ -133,7 +133,7 @@
     </div>
 
     <!-- user storage limit -->
-    <div class="card border border-primary shadow mb-4">
+    <div class="card border border-danger shadow mb-4">
         <div class="card-header">
             <h5 class="card-title mb-0">Storage Limit Settings</h5>
         </div>
@@ -172,7 +172,7 @@
                 </div>
                 <div class="text-end">
                     {% if not user.is_admin %}
-                        <p class="text-light">You are not permitted to change Docker settings.</p>
+                        <p class="text-light">You are not permitted to change Storage Limit Settings</p>
                     {% else %}
                         <button type="submit"
                                 name="storage_limit"
@@ -253,7 +253,7 @@
     <!-- Update Password -->
     <div class="card border border-danger shadow mb-4">
         <div class="card-header">
-            <h5 class="card-title text-danger mb-0">{% if needs_password %}Add Password Authentication{% else %}Update Password</h5>
+            <h5 class="card-title text-danger mb-0">{% if needs_password %}Add Password Authentication{% else %}Update Password{% endif %}</h5>
         </div>
         <div class="card-body">
             <form method="POST" action="">
@@ -314,5 +314,4 @@
         </div>
     </div>
 </div>
-{% endif %}
 {% endblock %}
