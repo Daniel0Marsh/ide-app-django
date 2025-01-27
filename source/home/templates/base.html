@@ -488,6 +488,20 @@
     });
 </script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+  const chatBox = document.getElementById('mainChatCard');
+
+  chatBox.addEventListener('shown.bs.collapse', () => {
+    document.body.classList.add('chat-box-open');
+  });
+
+  chatBox.addEventListener('hidden.bs.collapse', () => {
+    document.body.classList.remove('chat-box-open');
+  });
+});
+</script>
+
 <!-- JavaScript to trigger the alert for notifications -->
 <script>
     // Show alert when there are unread notifications
