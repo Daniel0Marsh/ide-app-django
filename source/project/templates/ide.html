@@ -984,7 +984,7 @@
     let historyIndex = -1;
 
     function initWebSocket(username, projectId) {
-        const socketUrl = `ws://209.38.78.211:8000/ws/ide/${username}/${projectId}/`;
+        const socketUrl = `ws://{window.location.host}/ws/${username}/${projectId}/editor`;
         socket = new WebSocket(socketUrl);
 
         socket.onopen = function() {

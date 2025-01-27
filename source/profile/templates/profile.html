@@ -256,7 +256,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <strong>{{ activity.get_activity_type_display }}</strong>:
-                            {% elif activity.activity_type == 'task_created' %}
+                            {% if activity.activity_type == 'task_created' %}
                                 A new task titled:
                                 <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
                                     {{ activity.task.title }}</a>
