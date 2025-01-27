@@ -21,7 +21,7 @@
                         {{ current_project.user.username }}
                     </a>
                     /
-                    <a href="{% url 'project' username=current_project.user.username project_id=current_project.id %}"
+                    <a href="{% url 'project' username=current_project.user.username project_name=current_project.project_name %}"
                        class="card-title">
                         {{ current_project.project_name }}
                     </a>
@@ -36,7 +36,7 @@
             </div>
             <p class="mb-2">{{ current_project.project_description }}</p>
             <div class="d-flex flex-wrap justify-content-start ms-0">
-                <a href="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+                <a href="{% url 'ide' username=current_project.user.username project_name=current_project.project_name %}"
                    class="btn btn-primary mx-1 mb-2 btn-sm">
                     Open IDE
                 </a>
@@ -51,7 +51,7 @@
 
                 {% if user.is_authenticated %}
                 <form method="post"
-                      action="{% url 'project' username=current_project.user.username project_id=current_project.id %}"
+                      action="{% url 'project' username=current_project.user.username project_name=current_project.project_name %}"
                       class="mx-1">
                     {% csrf_token %}
                     <button type="submit" name="toggle_like" class="btn btn-secondary mx-1 mb-2 btn-sm">

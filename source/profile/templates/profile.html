@@ -250,7 +250,7 @@
             <h3 class="mb-2 text-light">Recent Activity</h3>
         </div>
         <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
-            <ul class="list-group">
+            <ul class="list-group p-3">
                 {% for activity in recent_activity %}
                 <li class="list-group-item text-light m-1">
                     <div class="d-flex justify-content-between">
@@ -268,41 +268,41 @@
                                     {{ activity.sender.username }}</a>
                             {% elif activity.activity_type == 'task_updated' %}
                                 The task titled:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.task.title }}</a>
                                 has been updated on the project:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.project.project_name }}</a>
                                 by:
                                 <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
                                     {{ activity.sender.username }}</a>
                             {% elif activity.activity_type == 'task_deleted' %}
                                 The task titled:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.task.title }}</a>
                                 has been deleted on the project:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.project.project_name }}</a>
                                 by:
                                 <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
                                     {{ activity.sender.username }}</a>
                             {% elif activity.activity_type == 'project_created' %}
                                 The project titled:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.project.project_name }}</a>
                                 has been created by:
                                 <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
                                     {{ activity.sender.username }}</a>
                             {% elif activity.activity_type == 'project_updated' %}
                                 The project titled:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.project.project_name }}</a>
                                 has been updated by:
                                 <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">
                                     {{ activity.sender.username }}</a><br>{{ activity.message }}
                             {% elif activity.activity_type == 'project_deleted' %}
                                 The project titled:
-                                <a href="{% url 'project' username=activity.sender.username project_id=activity.project.id %}" class="text-light">
+                                <a href="{% url 'project' username=activity.sender.username project_name=activity.project.project_name %}" class="text-light">
                                     {{ activity.project.project_name }}</a>
                                 has been deleted by:
                                 <a href="{% url 'profile' username=activity.sender.username %}" class="text-light">

@@ -75,12 +75,12 @@ class ProjectView(TemplateView):
         """
         Handle GET requests for the project view.
         """
-        project_id = kwargs.get('project_id')
-        current_project = Project.objects.filter(id=project_id).first() if project_id else Project.objects.order_by(
-            '-modified_at').first()
+        project_name = kwargs.get('project_name')
+        current_project = Project.objects.filter(
+            name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
 
         if not current_project:
-            return redirect('personal_profile')
+            return redirect('profile')
 
         project_tree = get_project_tree(current_project.project_path)
         readme_content = "<p>No README file available.</p>"
@@ -104,8 +104,8 @@ class ProjectView(TemplateView):
         """
         Handle POST requests for various project actions.
         """
-        project_id = kwargs.get('project_id')
-        project = Project.objects.filter(id=project_id).first()
+        project_name = kwargs.get('project_name')
+        project = Project.objects.filter(name=project_name).first()
 
         if not project:
             return HttpResponse("Project not found", status=404)
@@ -283,7 +283,9 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         Handle GET requests for the IDE view.
         """
-        project = Project.objects.filter(id=kwargs.get('project_id')).first()
+        project_name = kwargs.get('project_name')
+        project = Project.objects.filter(
+            name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
         if not project:
             return HttpResponse("Project not found", status=404)
 
@@ -334,7 +336,8 @@ class IdeView(LoginRequiredMixin, TemplateView):
         """
         Handle POST requests for various project actions.
         """
-        project = Project.objects.filter(id=kwargs.get('project_id')).first()
+        project_name = kwargs.get('project_name')
+        project = Project.objects.filter(name=project_name).first()
 
         if not project:
             return HttpResponse("Project not found", status=404)
