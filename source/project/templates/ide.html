@@ -619,7 +619,7 @@
                 <h1 class="modal-title fs-5" id="renameModalLabel">Rename</h1>
             </div>
             <form method="post" enctype="multipart/form-data"
-                  action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+                  action="{% url 'ide' username=current_project.user.username project_name=current_project.project_name %}"
                   class="modal-body">
                 {% csrf_token %}
                 <input type="text" name="new_file_name" value="{{ file_name }}"
@@ -923,6 +923,7 @@
             tabSize: initialSettings.tabSize,
             styleActiveLine: initialSettings.highlightCurrentLine,
             lint: initialSettings.linting,
+            readOnly: initialSettings.readOnly,
             extraKeys: {
                 'Ctrl-Space': 'autocomplete', // Enable autocomplete on Ctrl + Space
                 'Ctrl-Z': 'undo',             // Undo functionality
