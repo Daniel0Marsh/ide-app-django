@@ -41,7 +41,7 @@
                     Open IDE
                 </a>
                 <form method="post"
-                      action="{% url 'ide' username=current_project.user.username project_id=current_project.id %}"
+                      action="{% url 'ide' username=current_project.user.username project_name=current_project.project_name %}"
                       class="ms-1">
                     {% csrf_token %}
                     <input type="hidden" name="project_id" value="{{current_project.id}}">
