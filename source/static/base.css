@@ -24,7 +24,7 @@ body {
     font-family: 'Arial', sans-serif;
     padding-top: 56px;
     margin: 0;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .btn-primary {
