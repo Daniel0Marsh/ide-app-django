@@ -34,10 +34,10 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         current_folder_size = self.get_folder_size(request.user.project_dir)  # In MB
 
         # Get the folder size limit (assuming it's a model field for user)
-        project_folder_size_limit = request.user.project_folder_size_limit
+        user_storage_limit = request.user.user_storage_limit
 
         # Calculate remaining space
-        remaining_size = project_folder_size_limit - current_folder_size
+        remaining_size = user_storage_limit - current_folder_size
 
         context = {
             'needs_password': bool(request.user.password),
@@ -49,7 +49,7 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             'project': ActivityLog.objects.filter(user=request.user, activity_type='project', notification_enabled=True).first(),
             'current_folder_size': current_folder_size,
             'remaining_size': remaining_size,
-            'project_folder_size_limit': project_folder_size_limit
+            'user_storage_limit': user_storage_limit
         }
 
         return self.render_to_response(context)
@@ -196,10 +196,10 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         """Update storage limit for the user (admin only)."""
         user = request.user
         if not user.is_admin:
-            messages.error(request, "You do not have permission to update Docker settings.")
+            messages.error(request, "You do not have permission to update storage limit")
             return redirect('settings', username=request.user.username)
 
-        user.user_storage_limit = request.POST.get('project_folder_size_limit', user.user_storage_limit)
+        user.user_storage_limit = request.POST.get('user_storage_limit', user.user_storage_limit)
 
         user.save()
         messages.success(request, "Storage limit updated successfully.")
