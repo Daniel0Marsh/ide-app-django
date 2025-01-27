@@ -457,7 +457,7 @@
                     {% for project in user_projects %}
                     <div class="col-md-4">
                         <div class="card p-3 m-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                            <a href="{% url 'project' username=project.user.username project_id=project.id %}"
+                            <a href="{% url 'project' username=project.user.username project_name=project.project_name %}"
                                class="card-title text-decoration-none">
                                 {{ project.user.username }}/{{ project.project_name }}
                             </a>
