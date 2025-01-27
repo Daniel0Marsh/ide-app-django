@@ -206,10 +206,7 @@ body {
   }
 
     /* Prevent scrolling when the chat-box is open on small screens */
-  .chat-box:not(.collapsed) ~ .main-content {
-    overflow: hidden;
-  }
-    .chat-box:not(.collapsed) ~ .body {
+  .chat-box.show ~ .main-content {
     overflow: hidden;
   }
 }
