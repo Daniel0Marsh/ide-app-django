@@ -1,4 +1,4 @@
 1) cpus on docker set up
-2)
+2) add file size limit on user project_dir
 3)
 4)
