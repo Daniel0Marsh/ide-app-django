@@ -397,7 +397,7 @@
                     </div>
                     <input id="terminal-input" class="terminal-input border-0 text-light ms-2" autocomplete="off">
                     <input type="hidden" id="username" value="{{ user.username }}">
-                    <input type="hidden" id="project-id" value="{{ current_project.id }}">
+                    <input type="hidden" id="project-name" value="{{ current_project.project_name }}">
                 </div>
             </div>
         </div>
@@ -984,8 +984,8 @@
     let commandHistory = [];
     let historyIndex = -1;
 
-    function initWebSocket(username, projectId) {
-        const socketUrl = `ws://{window.location.host}/ws/${username}/${projectId}/editor`;
+    function initWebSocket(username, projectName) {
+        const socketUrl = `ws://{window.location.host}/ws/${username}/${projectName}/editor`;
         socket = new WebSocket(socketUrl);
 
         socket.onopen = function() {
@@ -1070,8 +1070,8 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const username = document.getElementById('username').value;
-        const projectId = document.getElementById('project-id').value;
-        initWebSocket(username, projectId);
+        const projectName = document.getElementById('project-name').value;
+        initWebSocket(username, projectName);
     });
 </script>
 

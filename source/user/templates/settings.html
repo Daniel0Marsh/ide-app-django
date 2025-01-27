@@ -200,7 +200,7 @@
     <!-- Update Password -->
     <div class="card border border-danger shadow mb-4">
         <div class="card-header">
-            <h5 class="card-title text-danger mb-0">Update Password</h5>
+            <h5 class="card-title text-danger mb-0">{% if needs_password %}Add Password Authentication{% else %}Update Password</h5>
         </div>
         <div class="card-body">
             <form method="POST" action="">
@@ -209,11 +209,11 @@
                 {% if needs_password %}
                     <!-- No previous password, asking only for new password -->
                     <div class="mb-3">
-                        <label for="new_password" class="form-label text-light">Set New Password</label>
+                        <label for="new_password" class="form-label text-light">Set Password</label>
                         <input type="password" class="form-control" id="new_password" name="new_password" required>
                     </div>
                     <div class="mb-3">
-                        <label for="confirm_new_password" class="form-label text-light">Confirm New Password</label>
+                        <label for="confirm_new_password" class="form-label text-light">Confirm Password</label>
                         <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
                     </div>
                 {% else %}
