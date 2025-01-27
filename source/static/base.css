@@ -24,7 +24,7 @@ body {
     font-family: 'Arial', sans-serif;
     padding-top: 56px;
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .btn-primary {
@@ -207,6 +207,9 @@ body {
 
     /* Prevent scrolling when the chat-box is open on small screens */
   .chat-box.show ~ .main-content {
+    overflow: hidden;
+  }
+    .chat-box.show ~ .body {
     overflow: hidden;
   }
 }
