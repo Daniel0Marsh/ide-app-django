@@ -62,8 +62,8 @@ class ProjectContainerManager:
             user=f"{os.getuid()}:{os.getgid()}",
             security_opt=["no-new-privileges"],
             read_only=False,
-            mem_limit=self.user.default_mem_limit,
-            memswap_limit=self.user.default_memswap_limit,
+            mem_limit=self.user.subscription.mem_limit,
+            memswap_limit=self.user.subscription.memswap_limit,
         )
 
         DockerSession.objects.create(

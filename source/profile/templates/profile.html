@@ -111,33 +111,35 @@
         </div>
         <div class="row g-4">
             {% for project in user_projects|slice:":3" %}
-            <div class="col-md-4">
-                <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
-                    <div class="d-flex flex-wrap justify-content-start">
-                        <a href="{% url 'project' username=project.user.username project_name=project.project_name %}"
-                           class="card-title">
-                            {{ project.user.username }} / {{ project.project_name }}
-                        </a>
-                        <!-- Public/Private Status -->
-                        <p class="text-light small ms-1">
-                            {% if project.is_public %}
-                            <span class="badge bg-primary">Public</span>
-                            {% else %}
-                            <span class="badge bg-danger">Private</span>
-                            {% endif %}
-                        </p>
+                {% if project.status != 'deleted' %}
+                    <div class="col-md-4">
+                        <div class="card p-3 m-3 shadow" style="background-color: rgba(255, 255, 255, 0.15);">
+                            <div class="d-flex flex-wrap justify-content-start">
+                                <a href="{% url 'project' username=project.user.username project_name=project.project_name %}"
+                                   class="card-title">
+                                    {{ project.user.username }} / {{ project.project_name }}
+                                </a>
+                                <!-- Public/Private Status -->
+                                <p class="text-light small ms-1">
+                                    {% if project.is_public %}
+                                    <span class="badge bg-primary">Public</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Private</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <p class="card-text text-light">{{ project.project_description }}</p>
+                            <p class="text-light small">
+                                {% if project.user == user_profile %}
+                                <span class="badge bg-primary">Owned</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Collaboration</span>
+                                {% endif %}
+                                Last modified: {{ project.modified_at|date:"M d, Y" }}
+                            </p>
+                        </div>
                     </div>
-                    <p class="card-text text-light">{{ project.project_description }}</p>
-                    <p class="text-light small">
-                        {% if project.user == user_profile %}
-                        <span class="badge bg-primary">Owned</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Collaboration</span>
-                        {% endif %}
-                        Last modified: {{ project.modified_at|date:"M d, Y" }}
-                    </p>
-                </div>
-            </div>
+                {% endif %}
             {% empty %}
             <p class="text-light p-3 m-3">No recent projects or collaborations available.</p>
             {% endfor %}
@@ -442,7 +444,6 @@
     </div>
 </div>
 
-
 <!-- All Projects Modal -->
 <div class="modal fade" id="allProjectsModal" tabindex="-1" aria-labelledby="allProjectsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -455,23 +456,25 @@
             <div class="modal-body">
                 <div class="row g-4">
                     {% for project in user_projects %}
-                    <div class="col-md-4">
-                        <div class="card p-3 m-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
-                            <a href="{% url 'project' username=project.user.username project_name=project.project_name %}"
-                               class="card-title text-decoration-none">
-                                {{ project.user.username }}/{{ project.project_name }}
-                            </a>
-                            <p class="card-text text-light">{{ project.project_description }}</p>
-                            <p class="small text-light">
-                                {% if project.user == user_profile %}
-                                <span class="badge bg-primary">Owned</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Collaboration</span>
-                                {% endif %}
-                                Last modified: {{ project.modified_at|date:"M d, Y" }}
-                            </p>
-                        </div>
-                    </div>
+                        {% if project.status != 'deleted' %}
+                            <div class="col-md-4">
+                                <div class="card p-3 m-4 shadow-sm" style="background-color: rgba(255, 255, 255, 0.15);">
+                                    <a href="{% url 'project' username=project.user.username project_name=project.project_name %}"
+                                       class="card-title text-decoration-none">
+                                        {{ project.user.username }}/{{ project.project_name }}
+                                    </a>
+                                    <p class="card-text text-light">{{ project.project_description }}</p>
+                                    <p class="small text-light">
+                                        {% if project.user == user_profile %}
+                                        <span class="badge bg-primary">Owned</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Collaboration</span>
+                                        {% endif %}
+                                        Last modified: {{ project.modified_at|date:"M d, Y" }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
                     {% empty %}
                     <p class="text-center">No projects available.</p>
                     {% endfor %}

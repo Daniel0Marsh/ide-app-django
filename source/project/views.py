@@ -82,7 +82,7 @@ class ProjectView(TemplateView):
             project_name=project_name).first() if project_name else Project.objects.order_by('-modified_at').first()
 
         if not current_project:
-            return redirect('profile')
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
         project_tree = get_project_tree(current_project.project_path)
         readme_content = "<p>No README file available.</p>"
@@ -259,7 +259,7 @@ class ProjectView(TemplateView):
 
             add_activity_to_log(user=request.user, activity_type='project_deleted', sender=None, task=None,
                                 project=project, message='')
-            project.delete()
+            project.mark_as_deleted()
 
         except Project.DoesNotExist:
             messages.warning(request, "Project not found")

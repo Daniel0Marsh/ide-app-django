@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2 class="text-center m-5">Change Your Subscription Plan</h2>
+
+  <div class="row">
+    <!-- Free Plan Card -->
+    <div class="col-12 col-md-5 col-lg-4">
+      <div class="card border {% if subscription.plan_name == 'free' %}border-primary{% endif %} shadow-sm rounded">
+        <div class="card-body text-light" style="min-height: 400px;">
+          <h5 class="card-title text-center">Free Plan</h5>
+          <p class="card-text text-light">Perfect for small projects or personal use, this plan offers a basic setup for low-resource needs.</p>
+          <ul class="list-unstyled text-light">
+            <li><strong>Storage Limit:</strong> 10 MB</li>
+            <li><strong>Memory Limit:</strong> 512 MB</li>
+            <li><strong>Memory + Swap Limit:</strong> 1 GB</li>
+            <li><strong>CPU Limit:</strong> 1 CPU</li>
+            <li><strong>CPU Shares Limit:</strong> 512</li>
+          </ul>
+          <p class="text-light">Ideal for testing or small projects.</p>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="free">
+            <button type="submit" class="btn btn-primary btn-sm {% if subscription.plan_name == 'free' %}disabled{% endif %} w-100">Select Free Plan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Plan Card -->
+    <div class="col-12 col-md-5 col-lg-4">
+      <div class="card border {% if subscription.plan_name == 'basic' %}border-primary{% endif %} shadow-sm rounded">
+        <div class="card-body text-light" style="min-height: 400px;">
+          <h5 class="card-title text-center">Basic Plan</h5>
+          <p class="card-text text-light">Designed for small businesses or projects that need more flexibility and resources.</p>
+          <ul class="list-unstyled text-light">
+            <li><strong>Storage Limit:</strong> 50 MB</li>
+            <li><strong>Memory Limit:</strong> 1 GB</li>
+            <li><strong>Memory + Swap Limit:</strong> 2 GB</li>
+            <li><strong>CPU Limit:</strong> 1 CPU</li>
+            <li><strong>CPU Shares Limit:</strong> 1024</li>
+          </ul>
+          <p class="text-light">Perfect for growing projects with moderate resource demands.</p>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="basic">
+            <button type="submit" class="btn btn-primary btn-sm {% if subscription.plan_name == 'basic' %}disabled{% endif %} w-100">Select Basic Plan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Plan Card -->
+    <div class="col-12 col-md-5 col-lg-4">
+      <div class="card border {% if subscription.plan_name == 'full' %}border-primary{% endif %} shadow-sm rounded">
+        <div class="card-body text-light" style="min-height: 400px;">
+          <h5 class="card-title text-center">Full Plan</h5>
+          <p class="card-text text-light">For high-performance applications, this plan offers ample resources for large-scale projects.</p>
+          <ul class="list-unstyled text-light">
+            <li><strong>Storage Limit:</strong> 200 MB</li>
+            <li><strong>Memory Limit:</strong> 4 GB</li>
+            <li><strong>Memory + Swap Limit:</strong> 8 GB</li>
+            <li><strong>CPU Limit:</strong> 4 CPUs</li>
+            <li><strong>CPU Shares Limit:</strong> 2048</li>
+          </ul>
+          <p class="text-light">Best for intensive applications, large projects with complex demands.</p>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="full">
+            <button type="submit" class="btn btn-primary btn-sm {% if subscription.plan_name == 'full' %}disabled{% endif %} w-100">Select Full Plan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info text-center mt-4">
+    <strong>Not sure which plan to choose?</strong> You can always upgrade or downgrade later, depending on your needs!
+  </div>
+
+{% endblock %}

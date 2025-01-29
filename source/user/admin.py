@@ -2,37 +2,18 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.urls import path
-from .models import SenderEmailSettings, CustomUser, DockerSession, ActivityLog, IDESettings
+from .models import CustomUser, DockerSession, ActivityLog, IDESettings, Subscription
 from django.contrib.auth.admin import UserAdmin
 
 
-@admin.register(SenderEmailSettings)
-class SenderEmailSettingsAdmin(admin.ModelAdmin):
-    """
-    Admin interface for managing SenderEmailSettings.
-    Ensures only one instance can exist.
-    """
-    list_display = ('sender_email',)
-    search_fields = ('sender_email',)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'plan_name', 'mem_limit', 'memswap_limit', 'cpus', 'storage_limit', 'created_at', 'expires_at')
+    list_filter = ('plan_name', 'created_at')
+    search_fields = ('user__username', 'stripe_customer_id', 'stripe_subscription_id')
+    readonly_fields = ('stripe_customer_id', 'stripe_subscription_id', 'created_at')
 
-    def has_add_permission(self, request):
-        """Prevent adding new SenderEmailSettings if one already exists."""
-        if SenderEmailSettings.objects.exists():
-            return False
-        return super().has_add_permission(request)
 
-    def has_delete_permission(self, request, obj=None):
-        """Prevent deletion of the SenderEmailSettings instance."""
-        return False
-
-    def changelist_view(self, request, extra_context=None):
-        """
-        Redirect to the change form if the instance exists.
-        """
-        if SenderEmailSettings.objects.exists():
-            obj = SenderEmailSettings.objects.first()
-            return HttpResponseRedirect(f"/admin/app_name/senderemailsettings/{obj.id}/change/")
-        return super().changelist_view(request, extra_context=extra_context)
+admin.site.register(Subscription, SubscriptionAdmin)
 
 
 class IDESettingsInline(admin.StackedInline):
@@ -70,14 +51,8 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'bio', 'profile_picture')}),
-        ('Docker Settings', {
-            'fields': (
-                'default_mem_limit', 'default_memswap_limit',
-                'default_cpus', 'default_cpu_shares'
-            )
-        }),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
-        ('Project Info', {'fields': ('project_dir',)}),  # Added project_dir
+        ('Project Info', {'fields': ('project_dir',)}),
         ('Important Dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -89,7 +64,6 @@ class CustomUserAdmin(UserAdmin):
     )
 
     inlines = [IDESettingsInline]
-
 
 
 @admin.register(DockerSession)

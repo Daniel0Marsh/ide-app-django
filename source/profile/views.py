@@ -18,7 +18,7 @@ from django.views.generic import TemplateView
 
 from chat.models import ChatRoom, Message
 from project.models import Project
-from user.models import CustomUser, ActivityLog
+from user.models import CustomUser, ActivityLog, Subscription
 from home.models import HomePage
 
 
@@ -196,13 +196,19 @@ class ProfileView(TemplateView):
         except Project.DoesNotExist:
             return HttpResponse("Project not found", status=404)
 
-        return redirect('ide', username=request.user.username, project_id=project.id)
+        return redirect('ide', username=request.user.username, project_project_name=project.project_name)
 
     @staticmethod
     def create_project(request):
         """
         Create a new project, handle file upload (.zip), and redirect to the IDE view.
         """
+
+        # Check if the current folder size exceeds the storage limit
+        if ProfileView.check_storage_limit(request):
+            messages.warning(request, "Storage limit exceeded. Cannot create a new project.")
+            return redirect('profile', username=request.user)
+
         project_name = request.POST.get('project_name')
         project_description = request.POST.get('project_description')
         project_folder = request.FILES.get('project_folder')
@@ -231,17 +237,44 @@ class ProfileView(TemplateView):
 
         # Create README
         with open(os.path.join(project_path, "README.md"), "w") as readme_file:
-            readme_file.write(f"# Welcome to your {project_name}!\n\nThis is the README.md file for your project.\n\n{project_description or 'No description provided.'}")
+            readme_file.write(
+                f"# Welcome to your {project_name}!\n\nThis is the README.md file for your project.\n\n{project_description or 'No description provided.'}")
 
-        add_activity_to_log(request.user, activity_type='project', sender=None, task=None, project=project, message='You created a new project')
+        add_activity_to_log(request.user, activity_type='project', sender=None, task=None, project=project,
+                            message='You created a new project')
 
-        return redirect('project', username=request.user.username, project_id=project.id)
+        return redirect('project', username=request.user.username, project_name=project.project_name)
+
+    @staticmethod
+    def check_storage_limit(request):
+        """Check if the user exceeds storage limit and returns a bool"""
+
+        subscription = Subscription.objects.filter(user=request.user).first()
+
+        # Calculate the current folder size
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(request.user.project_dir):
+            for f in filenames:
+                file_path = os.path.join(dirpath, f)
+                total_size += os.path.getsize(file_path)
+
+        current_folder_size = total_size / (1024 * 1024)  # Convert bytes to MB
+        storage_limit = subscription.storage_limit  # Get the folder size limit (assuming it's a model field for user)
+
+        # Check if the current folder size exceeds the storage limit
+        return current_folder_size >= storage_limit
 
     @staticmethod
     def clone_repo(request):
         """
         Create a new project using the repo name and clone the repo into the user's project directory.
         """
+
+        # Check if the current folder size exceeds the storage limit
+        if ProfileView.check_storage_limit(request):
+            messages.warning(request, "Storage limit exceeded. Cannot create a new project.")
+            return redirect('profile', username=request.user)
+
         repo_url = request.POST.get('repo_url')
         repo_name = repo_url.split('/')[-1]
 
@@ -267,7 +300,7 @@ class ProfileView(TemplateView):
         add_activity_to_log(request.user, activity_type='project', sender=None, task=None, project=project,
                             message='You cloned a repository')
 
-        return redirect('ide', username=request.user.username, project_id=project.id)
+        return redirect('ide', username=request.user.username, project_project_name=project.project_name)
 
     @staticmethod
     def edit_bio(request):

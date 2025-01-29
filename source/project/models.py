@@ -12,6 +12,7 @@ class Project(models.Model):
     """
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[('Deleted', 'deleted'), ('Not Deleted', 'not_deleted')], default='not_deleted')
     project_name = models.CharField(max_length=100)
     project_path = models.CharField(max_length=100)
     repository = models.CharField(max_length=100, blank=True, null=True)
@@ -25,6 +26,14 @@ class Project(models.Model):
 
     def __str__(self):
         return self.project_name
+
+    def mark_as_deleted(self):
+        # Set status to 'deleted'
+        self.status = 'deleted'
+        self.liked_by.clear()
+        self.collaborators.clear()
+        self.likes = 0
+        self.save()
 
 
 class Task(models.Model):

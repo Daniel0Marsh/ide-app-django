@@ -2,19 +2,102 @@ import os
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from .models import CustomUser, SenderEmailSettings
 from social_django.utils import psa
+from django.urls import reverse
 from social_django.models import UserSocialAuth
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.views.generic import TemplateView, View
-from .models import ActivityLog
+from .models import ActivityLog, CustomUser
+from django.conf import settings
+import stripe
+from .models import Subscription
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+class SubscriptionView(LoginRequiredMixin, TemplateView):
+    """Handle subscription page where user can update their subscriptions."""
+    template_name = 'subscription.html'
+    login_url = 'login'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'subscription': Subscription.objects.filter(user=self.request.user).first(),
+            'plan_choices': Subscription.PLAN_CHOICES,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle plan change."""
+        plan = request.POST.get('plan')
+        if plan not in dict(Subscription.PLAN_CHOICES):
+            return HttpResponseForbidden("Invalid plan.")
+
+        subscription = Subscription.objects.filter(user=request.user).first()
+        if not subscription:
+            messages.error(request, "No subscription found.")
+            return redirect('settings')
+
+        if subscription.plan_name == plan:
+            messages.info(request, "You are already subscribed to this plan.")
+            return redirect('settings')
+
+        subscription.plan_name = plan
+        if plan == 'free':
+            subscription.stripe_subscription_id = None
+            subscription.expires_at = None
+            subscription.save()
+            messages.success(request, "Your plan has been changed to Free.")
+        else:
+            stripe_subscription = self.update_stripe_subscription(subscription, plan)
+            subscription.stripe_subscription_id = stripe_subscription.id
+            subscription.save()
+            messages.success(request, f"Your plan has been changed to {subscription.get_plan_name_display()}.")
+
+        return redirect('settings')
+
+    @staticmethod
+    def update_stripe_subscription(subscription, plan):
+        """Helper function to update Stripe subscription."""
+        price_id = settings.STRIPE_PRICE_IDS.get(plan)
+
+        # Ensure the customer exists
+        if not subscription.stripe_customer_id:
+            # Create a new Stripe customer if one doesn't exist
+            customer = stripe.Customer.create(email=subscription.user.email)
+            subscription.stripe_customer_id = customer.id
+            subscription.save()
+        else:
+            customer = stripe.Customer.retrieve(subscription.stripe_customer_id)
+
+        if subscription.stripe_subscription_id:
+            # Update the existing subscription
+            stripe_subscription = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
+            stripe_subscription.items = [{
+                'id': stripe_subscription.items.data[0].id,
+                'price': price_id
+            }]
+            stripe_subscription.save()
+        else:
+            # Create a new subscription if one doesn't exist
+            stripe_subscription = stripe.Subscription.create(
+                customer=customer.id,
+                items=[{'price': price_id}],
+                payment_behavior='default_incomplete',
+                expand=['latest_invoice.payment_intent'],
+            )
+
+        return stripe_subscription
 
 
 class SettingsView(LoginRequiredMixin, TemplateView):
@@ -30,17 +113,20 @@ class SettingsView(LoginRequiredMixin, TemplateView):
         except UserSocialAuth.DoesNotExist:
             github_account = None
 
+        subscription = Subscription.objects.filter(user=self.request.user).first()
+
         # Calculate the current folder size
         current_folder_size = self.get_folder_size(request.user.project_dir)  # In MB
 
         # Get the folder size limit (assuming it's a model field for user)
-        user_storage_limit = request.user.user_storage_limit
+        storage_limit = subscription.storage_limit
 
         # Calculate remaining space
-        remaining_size = user_storage_limit - current_folder_size
+        remaining_size = storage_limit - current_folder_size
 
         context = {
-            'needs_password': bool(request.user.password),
+            'subscription': Subscription.objects.filter(user=self.request.user).first(),
+            'needs_password': not bool(request.user.password),
             'github_account': github_account,
             'enabled_notifications': ActivityLog.objects.filter(user=request.user, notification_enabled=True),
             'new_follower': ActivityLog.objects.filter(user=request.user, activity_type='new_follower', notification_enabled=True).first(),
@@ -49,7 +135,7 @@ class SettingsView(LoginRequiredMixin, TemplateView):
             'project': ActivityLog.objects.filter(user=request.user, activity_type='project', notification_enabled=True).first(),
             'current_folder_size': current_folder_size,
             'remaining_size': remaining_size,
-            'user_storage_limit': user_storage_limit
+            'user_storage_limit': storage_limit
         }
 
         return self.render_to_response(context)
@@ -135,20 +221,25 @@ class SettingsView(LoginRequiredMixin, TemplateView):
     def update_notifications(request):
         """Update notification preferences."""
 
-        ActivityLog.objects.filter(user=request.user, activity_type='new_follower').update(
-            notification_enabled='new_follower_notifications' in request.POST
-        )
-        ActivityLog.objects.filter(user=request.user, activity_type='new_task').update(
-            notification_enabled='task_notifications' in request.POST
-        )
-        ActivityLog.objects.filter(user=request.user, activity_type='new_message').update(
-            notification_enabled='message_notifications' in request.POST
-        )
-        ActivityLog.objects.filter(user=request.user, activity_type='project').update(
-            notification_enabled='project_notifications' in request.POST
-        )
+        notification_map = {
+            'new_follower': 'new_follower_notifications',
+            'new_message': 'message_notifications',
+            'task_created': 'task_notifications',
+            'task_updated': 'task_notifications',
+            'task_deleted': 'task_notifications',
+            'project_created': 'project_notifications',
+            'project_updated': 'project_notifications',
+            'project_deleted': 'project_notifications',
+            'collaborator_added': 'project_notifications',
+        }
 
-        return redirect('settings', username=request.user.username)
+        user = request.user
+        for activity_type, post_key in notification_map.items():
+            ActivityLog.objects.filter(user=user, activity_type=activity_type).update(
+                notification_enabled=post_key in request.POST
+            )
+
+        return redirect('settings', username=user.username)
 
     @staticmethod
     def clear_notifications(request):
@@ -236,142 +327,154 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 
 
 class LoginView(View):
-    """Handle user login by rendering login form and authenticating user."""
+    """Handle user login."""
     template_name = 'login.html'
 
     def get(self, request):
-        """Render login form."""
         return render(request, self.template_name)
 
     def post(self, request):
-        """Authenticate user and log them in if credentials are valid."""
-        username, password = request.POST.get('username'), request.POST.get('password')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
 
         if user:
             login(request, user)
-            messages.success(request, 'Login successful!')
-
-            if not user.password:
-                return redirect('settings', username=request.user.username)
-
-            return redirect('profile', username=request.user.username)
+            return redirect('settings' if not user.password else 'profile', username=user.username)
 
         messages.error(request, 'Invalid username or password')
         return redirect('login')
 
 
 class RegisterView(View):
-    """Handle user registration by rendering registration form and creating a new user."""
+    """Handle user registration."""
     template_name = 'register.html'
 
     def get(self, request):
-        """Render registration form."""
         return render(request, self.template_name)
 
     def post(self, request):
-        """Validate input and create a new user if no conflicts are found."""
-        email, username, password = map(request.POST.get, ('email', 'username', 'password'))
+        email = request.POST.get('email')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
         if CustomUser.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken')
         elif CustomUser.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered')
         else:
-            CustomUser.objects.create_user(username=username, email=email, password=password)
-            messages.success(request, 'Registration successful! Please log in.')
-            return redirect(reverse_lazy('login'))
+            user = CustomUser.objects.create_user(username=username, email=email, password=password, is_active=False)
+            self.send_verification_email(user, request)
+            messages.success(request, 'Registration successful! Please check your email to verify your account.')
+            return redirect('login')
 
         return redirect('register')
 
+    @staticmethod
+    def send_verification_email(user, request):
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        verification_url = request.build_absolute_uri(reverse('verify_email', kwargs={'uidb64': uid, 'token': token}))
 
-class GithubLoginView(View):
-    """Handle GitHub login."""
+        send_mail(
+            "Verify Your Email Address",
+            render_to_string('email_verification.html', {'user': user, 'verification_url': verification_url}),
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+
+
+class VerifyEmailView(View):
+    """Handle email verification and activation."""
+
+    def get(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = CustomUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            messages.error(request, "Invalid verification link.")
+            return redirect('login')
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            messages.success(request, "Your email has been verified! You can now log in.")
+        else:
+            self.send_verification_email(user, request)
+            messages.warning(request, "Verification link expired. A new email has been sent.")
+
+        return redirect('login')
+
+    @staticmethod
+    def send_verification_email(user, request):
+        RegisterView.send_verification_email(user, request)
+
+
+class GithubAuthView(View):
+    """Handle GitHub authentication."""
+    provider = 'github'
 
     def get(self, request):
-        user = request.user
-        if user.is_authenticated:
-            # Check if user has a GitHub account linked
-            if user.social_auth.filter(provider='github').exists():
-                messages.success(request, 'You are already logged in with GitHub!')
-            else:
-                messages.info(request, 'You can link your GitHub account now!')
-        return redirect('social:begin', args=['github'])
-
-
-class GithubRegisterView(View):
-    """Handle GitHub registration."""
-
-    def get(self, request):
-        return redirect('social:begin', args=['github'])
+        return redirect('social:begin', self.provider)
 
 
 class GithubCompleteRedirectView(View):
-    """
-    Handles the redirect from GitHub authentication
-    """
+    """Handle GitHub authentication redirect."""
 
     def get(self, request):
         user = request.user
-        if user.is_authenticated:
-            # Check if the GitHub account is already linked
-            if user.social_auth.filter(provider='github').exists():
-                messages.success(request, 'GitHub account is successfully linked to your profile!')
-            else:
-                messages.info(request, 'You can now link your GitHub account.')
-
-        # You can redirect to the desired profile or home page
+        if user.is_authenticated and user.social_auth.filter(provider='github').exists():
+            messages.success(request, 'GitHub account successfully linked!')
         return redirect('home')
 
 
 class LogoutView(View):
     """Handle user logout."""
 
-    def post(self, request, *args, **kwargs):
-        """Log the user out and redirect to home page."""
+    def post(self, request):
         logout(request)
         return redirect('home')
 
 
 class PasswordResetView(View):
-    """Handle the password reset process by sending an email with a reset link."""
+    """Handle password reset."""
+    template_name = 'reset_password.html'
 
     def get(self, request):
-        """Render password reset form."""
-        return render(request, 'reset_password.html')
+        return render(request, self.template_name)
 
     def post(self, request):
-        """Send password reset email if the email is associated with a user."""
         email = request.POST.get('email')
         user = CustomUser.objects.filter(email=email).first()
 
         if user:
             token = default_token_generator.make_token(user)
             reset_link = request.build_absolute_uri(
-                reverse_lazy('password_reset_confirm', kwargs={'uidb64': user.pk, 'token': token}))
-
+                reverse_lazy('password_reset_confirm',
+                             kwargs={'uidb64': urlsafe_base64_encode(force_bytes(user.pk)), 'token': token})
+            )
             send_mail(
                 'Password Reset Request',
                 render_to_string('password_reset_email.html', {'user': user, 'reset_link': reset_link}),
-                SenderEmailSettings.objects.first().sender_email,
+                settings.DEFAULT_FROM_EMAIL,
                 [email]
             )
             messages.success(request, 'Password reset link has been sent to your email.')
-            return redirect('login')
+        else:
+            messages.error(request, 'No user found with that email address.')
 
-        messages.error(request, 'No user found with that email address.')
         return redirect('reset_password')
 
 
 class ForgotUsernameView(View):
-    """Handle the forgot username process by sending the username to the user's email."""
+    """Handle forgot username process."""
+    template_name = 'reset_username.html'
 
     def get(self, request):
-        """Render forgot username form."""
-        return render(request, 'reset_username.html')
+        return render(request, self.template_name)
 
     def post(self, request):
-        """Send username to the email if it exists."""
         email = request.POST.get('email')
         user = CustomUser.objects.filter(email=email).first()
 
@@ -379,11 +482,11 @@ class ForgotUsernameView(View):
             send_mail(
                 'Forgot Username Request',
                 render_to_string('username_reset_email.html', {'username': user.username}),
-                SenderEmailSettings.objects.first().sender_email,
+                settings.DEFAULT_FROM_EMAIL,
                 [email]
             )
             messages.success(request, 'Your username has been sent to your email.')
-            return redirect('login')
+        else:
+            messages.error(request, 'No user found with that email address.')
 
-        messages.error(request, 'No user found with that email address.')
         return redirect('reset_username')

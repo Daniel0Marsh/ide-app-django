@@ -132,123 +132,91 @@
         </div>
     </div>
 
-    <!-- user storage limit -->
-    <div class="card border border-danger shadow mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0 text-danger">Storage Limit Settings</h5>
+
+    <!-- Subscriptions Settings -->
+    <div class="card border border-primary shadow-lg mb-4">
+        <div class="card-header ">
+            <h5 class="card-title mb-0">Subscription Plan: {{ subscription.plan_name }}</h5>
         </div>
-        <div class="card-body">
-            <form method="POST" action="">
-            {% csrf_token %}
-                <div class="mb-3">
-                    <label for="user_storage_limit" class="form-label text-light">Storage Limit</label>
-                    <input type="text"
-                           class="form-control"
-                           id="user_storage_limit"
-                           name="user_storage_limit"
-                           value="{{ user.user_storage_limit }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the maximum size allowed for your project storage (in MB).</small>
-                </div>
-                <div class="mb-3">
-                    <label for="current_folder_size" class="form-label text-light">Current Storage Size</label>
-                    <input type="text"
-                           class="form-control"
-                           id="current_folder_size"
-                           name="current_folder_size"
-                           value="{{ current_folder_size }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the current size of the folder containing all your projects (in MB).</small>
-                </div>
-                <div class="mb-3">
-                    <label for="remaining_size" class="form-label text-light">Remaining Storage Space</label>
-                    <input type="text"
-                           class="form-control"
-                           id="remaining_size"
-                           name="remaining_size"
-                           value="{{ remaining_size }} MB"
-                           disabled>
-                    <small class="form-text text-light">This is the remaining space in your storage (in MB).</small>
-                </div>
-                <div class="text-end">
-                    {% if not user.is_admin %}
-                        <p class="text-light">You are not permitted to change Storage Limit Settings</p>
-                    {% else %}
-                        <button type="submit"
-                                name="storage_limit"
-                                class="btn btn-danger">
-                            Update Docker Settings
-                        </button>
-                    {% endif %}
-                </div>
-            </form>
+        <div class="card-body bg-dark text-light">
+            <!-- Storage Limit -->
+            <div class="mb-3">
+                <label for="storage_limit" class="form-label">Storage Limit</label>
+                <input type="text"
+                       class="form-control"
+                       id="storage_limit"
+                       value="{{ subscription.storage_limit }} MB"
+                       disabled>
+            </div>
+
+            <!-- Current Storage Size -->
+            <div class="mb-3">
+                <label for="current_folder_size" class="form-label">Current Storage Size</label>
+                <input type="text"
+                       class="form-control"
+                       id="current_folder_size"
+                       value="{{ current_folder_size }} MB"
+                       disabled>
+            </div>
+
+            <!-- Remaining Storage Space -->
+            <div class="mb-3">
+                <label for="remaining_size" class="form-label">Remaining Storage Space</label>
+                <input type="text"
+                       class="form-control"
+                       id="remaining_size"
+                       value="{{ remaining_size }} MB"
+                       disabled>
+            </div>
+
+            <!-- Memory Limit -->
+            <div class="mb-3">
+                <label for="mem_limit" class="form-label">Memory Limit</label>
+                <input type="text"
+                       class="form-control"
+                       id="mem_limit"
+                       value="{{ subscription.mem_limit }}"
+                       disabled>
+            </div>
+
+            <!-- Memory + Swap Limit -->
+            <div class="mb-3">
+                <label for="memswap_limit" class="form-label">Memory + Swap Limit</label>
+                <input type="text"
+                       class="form-control"
+                       id="memswap_limit"
+                       value="{{ subscription.memswap_limit }}"
+                       disabled>
+            </div>
+
+            <!--CPUs -->
+            <div class="mb-3">
+                <label for="cpus" class="form-label">CPUs</label>
+                <input type="number"
+                       step="0.1"
+                       class="form-control"
+                       id="cpus"
+                       value="{{ subscription.cpus }}"
+                       disabled>
+            </div>
+
+            <!-- CPU Shares -->
+            <div class="mb-3">
+                <label for="cpu_shares" class="form-label">CPU Shares</label>
+                <input type="number"
+                       class="form-control"
+                       id="cpu_shares"
+                       value="{{ user.subscription.cpu_shares }}"
+                       disabled>
+            </div>
+
+            <!-- Update Button -->
+            <div class="text-end">
+                <a class="btn btn-secondary" href="{% url 'subscription' username=user.username %}">Update Your Subscription</a>
+            </div>
         </div>
     </div>
 
-    <!-- Docker Settings -->
-    <div class="card border border-danger shadow mb-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0 text-danger">Docker Settings</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="default_mem_limit" class="form-label text-light">Default Memory Limit</label>
-                    <input type="text"
-                           class="form-control"
-                           id="default_mem_limit"
-                           name="default_mem_limit"
-                           value="{{ user.default_mem_limit }}"
-                           {% if not user.is_admin %}disabled{% endif %}>
-                    <small class="form-text text-light">Set the maximum amount of memory (e.g., 512m, 2g) that a container can use by default.</small>
-                </div>
-                <div class="mb-3">
-                    <label for="default_memswap_limit" class="form-label text-light">Default Memory + Swap Limit</label>
-                    <input type="text"
-                           class="form-control"
-                           id="default_memswap_limit"
-                           name="default_memswap_limit"
-                           value="{{ user.default_memswap_limit }}"
-                           {% if not user.is_admin %}disabled{% endif %}>
-                    <small class="form-text text-light">Specify the total memory and swap limit (e.g., 1g, 4g) available to a container.</small>
-                </div>
-                <div class="mb-3">
-                    <label for="default_cpus" class="form-label text-light">Default CPUs</label>
-                    <input type="number"
-                           step="0.1"
-                           class="form-control"
-                           id="default_cpus"
-                           name="default_cpus"
-                           value="{{ user.default_cpus }}"
-                           {% if not user.is_admin %}disabled{% endif %}>
-                    <small class="form-text text-light">Define the number of CPU cores (e.g., 1.5) allocated to containers by default.</small>
-                </div>
-                <div class="mb-3">
-                    <label for="default_cpu_shares" class="form-label text-light">Default CPU Shares</label>
-                    <input type="number"
-                           class="form-control"
-                           id="default_cpu_shares"
-                           name="default_cpu_shares"
-                           value="{{ user.default_cpu_shares }}"
-                           {% if not user.is_admin %}disabled{% endif %}>
-                    <small class="form-text text-light">Set the relative CPU weight for containers (e.g., 1024 for default, higher for more priority).</small>
-                </div>
-                <div class="text-end">
-                    {% if not user.is_admin %}
-                        <p class="text-light">You are not permitted to change Docker settings.</p>
-                    {% else %}
-                        <button type="submit"
-                                name="update_docker_settings"
-                                class="btn btn-danger"
-                                {% if not user.is_admin %}disabled{% endif %}>
-                            Update Docker Settings
-                        </button>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Update Password -->
     <div class="card border border-danger shadow mb-4">

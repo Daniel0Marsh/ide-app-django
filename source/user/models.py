@@ -8,18 +8,58 @@ import os
 from enum import Enum
 
 
-default_user_dir = os.path.join(settings.BASE_DIR, "UserDir")
+class Subscription(models.Model):
+    PLAN_CHOICES = [
+        ('free', 'Free'),
+        ('basic', 'Basic'),
+        ('full', 'Full'),
+    ]
 
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    stripe_customer_id = models.CharField(max_length=255, unique=True)
+    stripe_subscription_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    plan_name = models.CharField(max_length=50, choices=PLAN_CHOICES, default='free')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
 
-class SenderEmailSettings(models.Model):
-    sender_email = models.EmailField(
-        max_length=255,
-        verbose_name="Sender Email Address",
-        help_text="The email address used as the sender for password reset and other emails."
-    )
+    mem_limit = models.CharField(max_length=10, default='512m',
+                                         help_text="Memory limit for Docker containers.")
+    memswap_limit = models.CharField(max_length=10, default='1g',
+                                             help_text="Memory + swap limit for Docker containers.")
+    cpus = models.DecimalField(max_digits=3, decimal_places=2, default=0.5,
+                                       help_text="Number of CPUs allocated for Docker containers.")
+    cpu_shares = models.PositiveIntegerField(default=512,
+                                                     help_text="Relative CPU weight for Docker containers.")
+    storage_limit = models.PositiveIntegerField(default=10000,
+                                                     help_text="Maximum size of the directory containing all user projects in megabytes (MB).")
 
     def __str__(self):
-        return self.sender_email
+        return f"{self.user.username} - {self.get_plan_name_display()}"
+
+    def save(self, *args, **kwargs):
+        # Set plan-specific values
+        if self.plan_name == 'free':
+            self.mem_limit = '512m'
+            self.memswap_limit = '1g'
+            self.cpus = 0.5
+            self.cpu_shares = 512
+            self.storage_limit = 10000  # 10GB for free users
+
+        elif self.plan_name == 'basic':
+            self.mem_limit = '1g'
+            self.memswap_limit = '2g'
+            self.cpus = 1.0
+            self.cpu_shares = 1024
+            self.storage_limit = 50000  # 50GB for basic users
+
+        elif self.plan_name == 'full':
+            self.mem_limit = '4g'
+            self.memswap_limit = '8g'
+            self.cpus = 4.0
+            self.cpu_shares = 2048
+            self.storage_limit = 200000  # 200GB for full users
+
+        super().save(*args, **kwargs)
 
 
 class DockerSessionStatus(Enum):
@@ -43,21 +83,11 @@ class DockerSession(models.Model):
 
 class CustomUser(AbstractUser):
     """Custom user model extending the default user with additional fields."""
+    is_active = models.BooleanField(default=False)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     following = models.ManyToManyField('self', symmetrical=False, related_name='followers', blank=True)
     bio = models.TextField(blank=True)
     project_dir = models.CharField(max_length=512, null=True, blank=True)
-
-    default_mem_limit = models.CharField(max_length=10, default='512m',
-                                         help_text="Default memory limit for Docker containers.")
-    default_memswap_limit = models.CharField(max_length=10, default='1g',
-                                             help_text="Memory + swap limit for Docker containers.")
-    default_cpus = models.DecimalField(max_digits=3, decimal_places=2, default=0.5,
-                                       help_text="Number of CPUs allocated for Docker containers.")
-    default_cpu_shares = models.PositiveIntegerField(default=512,
-                                                     help_text="Relative CPU weight for Docker containers.")
-    user_storage_limit = models.PositiveIntegerField(default=10000,
-                                                            help_text="Maximum size of the directory containing all user projects in megabytes (MB).")
 
     def __str__(self):
         """Return the username of the user."""
@@ -130,7 +160,7 @@ def create_default_profile(sender, instance, created, **kwargs):
             instance.follow(admin_user)
 
         # Create a directory for the user's projects
-        user_project_dir = os.path.join(default_user_dir, instance.username)
+        user_project_dir = os.path.join(os.path.join(settings.BASE_DIR, "UserDir"), instance.username)
         if not os.path.exists(user_project_dir):
             os.makedirs(user_project_dir)
 
@@ -139,6 +169,13 @@ def create_default_profile(sender, instance, created, **kwargs):
 
         # Create default IDE settings for the user
         IDESettings.objects.create(user=instance)
+
+        # Create a default subscription for the user (e.g., 'free' plan)
+        Subscription.objects.create(
+            user=instance,
+            stripe_customer_id=None,
+            plan_name='free',
+        )
 
 
 class IDESettings(models.Model):
@@ -187,4 +224,3 @@ class IDESettings(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s IDE Settings"
-
